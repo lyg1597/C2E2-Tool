@@ -8,7 +8,7 @@ fi
 
 echo "Dependencies"
 apt-get update
-apt-get install build-essential
+apt-get install -y build-essential
 apt-get remove glpk
 apt-get remove libglpk-dev
 apt-get remove libglpk0
@@ -19,9 +19,9 @@ cd glpk-4.55
 make
 make install
 cd ..
-apt-get install libglpk-dev
-apt-get install libglpk0
-apt-get install bison
+apt-get install -y libglpk-dev
+apt-get install -y libglpk0
+apt-get install -y bison
 sudo -u $SUDO_USER wget -O bison-3.0.2.tar.gz http://ftp.gnu.org/gnu/bison/bison-3.0.2.tar.gz
 sudo -u $SUDO_USER tar -xhvf bison-3.0.2.tar.gz
 cd bison-3.0.2
@@ -29,22 +29,24 @@ cd bison-3.0.2
 make
 make install
 cd ..
-apt-get install flex
-apt-get install python-dev
-apt-get install python-ply
-apt-get install python-matplotlib
-apt-get install python-gtk2
-apt-get install pkg-config
-apt-get install autoconf
-apt-get install python-pip
-apt-get install libppl0.11-dev
-apt-get install libppl9
-apt-get install ligppl
-apt-get install ppl-dev
-apt-get install libgmp10
-apt-get install gnuplot
-apt-get install python-gnuplot
-apt-get install python-sympy
+apt-get install -y flex
+apt-get install -y python-dev
+apt-get install -y python-ply
+apt-get install -y python-matplotlib
+apt-get install -y python-gtk2
+apt-get install -y pkg-config
+apt-get install -y autoconf
+apt-get install -y python-pip
+apt-get install -y libppl0.11-dev
+apt-get install -y libppl9
+apt-get install -y ligppl
+apt-get install -y ppl-dev
+apt-get install -y libgmp10
+apt-get install -y gnuplot
+apt-get install -y python-gnuplot
+apt-get install -y python-sympy
+apt-get install -y libxslt1-dev
+
 apt-get build-dep python-lxml
 pip install lxml
 pip install psutil
