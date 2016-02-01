@@ -1,0 +1,3 @@
+#!/bin/sh
+cd Hylink
+python c2e2.py > ../wd/Verbose 2> ../wd/warnings

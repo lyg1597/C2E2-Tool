@@ -1,0 +1,24 @@
+Input file would include the following
+
+second argument - verify
+
+third argument - option 1-GLPK, 2-RealPaver, 3-REDLOG
+
+fourth argument - type of example and from where you get the simulation runs
+
+have to hardcode this with the example problem
+
+
+In the input file
+
+dimension
+delta
+Delta T
+Global Time 
+
+Initial state
+
+number of points in unsafe set
+
+Unsafe set points (convex combination)
+

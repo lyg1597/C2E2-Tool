@@ -1,0 +1,2 @@
+#!/bin/sh
+./C2E2 < Configuration-C2E2 >log

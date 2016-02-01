@@ -1,0 +1,8 @@
+#!/bin/sh
+cd c2e2
+make
+cp C2E2 ../wd/
+cd ..
+cd capd
+./configure
+make
