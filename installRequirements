@@ -54,3 +54,7 @@ pip install psutil
 sudo -u $SUDO_USER wget -O pyglpk.zip http://publish.illinois.edu/c2e2-tool/files/2014/10/pyglpk.zip
 sudo -u $SUDO_USER unzip -q pyglpk
 cd pyglpk && make && make install
+
+#Removes compressed files
+rm *.tar.gz
+rm *.zip

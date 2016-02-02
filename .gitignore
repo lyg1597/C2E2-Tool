@@ -1,0 +1,5 @@
+# Excludes library directories
+./bison-3.0.2/
+./glpk-4.55/
+./pyglkp/
+./capd/
