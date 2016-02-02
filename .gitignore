@@ -3,3 +3,28 @@ bison-3.0.2/
 glpk-4.55/
 pyglpk/
 capd/
+
+#Working directory
+wd/*
+
+#C++ files
+*.d
+*.o
+*.obj
+
+#Python files
+*.py[cod]
+
+#Temporary files
+*~
+*.sw[op]
+
+#Excutables
+C2E2
+
+#Miscellaneous files
+Hylink/form.gp
+Hylink/parselog.txt
+Hylink/parser.out
+Hylink/parsetab.py
+Hylink/simulatorannot
