@@ -2,7 +2,7 @@
 C2E2: Compare Execute Check Engine 
 Copyright (c) 2014
 University of Illinois at Urbana Champaign
-Contributors: Parasara Sridhar Duggirala, Sayan Mitra, Patthew Potok, Mahesh Viswanathan 
+Contributors: Parasara Sridhar Duggirala, Sayan Mitra, Matthew Potok, Mahesh Viswanathan 
 *********************************************
 
 C2E2 is a tool for veryfying bounded time invariant properties of Stateflow models. 
@@ -43,4 +43,3 @@ The following libraries and packages are required and will be installed by the a
 - Packing configurations library (pkg-config) : http://www.freedesktop.org/wiki/Software/pkg-config/
 - GNU Autoconf (autoconf): http://www.gnu.org/software/autoconf/
 - lxml: XML/HTML Parsing: http://lxml.de
-
