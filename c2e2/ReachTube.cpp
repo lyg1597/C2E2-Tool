@@ -13,6 +13,7 @@
 #include <fstream>
 #include <vector>
 #include <cstdlib>
+#include <cmath>
 
 using namespace std;
 
@@ -188,7 +189,7 @@ class ReachTube* ReachTube::bloatReachTube(double bloatingFactor){
 
 }
 
-class ReachTube* ReachTube::bloatReachTube(double delta, class Annotation* currentAnnotation){
+class ReachTube* ReachTube::bloatReachTube(double* deltaArray, class Annotation* currentAnnotation){
 
 
 	int iterator,j;
@@ -204,6 +205,8 @@ class ReachTube* ReachTube::bloatReachTube(double delta, class Annotation* curre
 
 	double tmin, tmax;
 	double epsilon;
+
+	double delta;
 
 	cout << " In bloating \n";
 
@@ -223,9 +226,13 @@ class ReachTube* ReachTube::bloatReachTube(double delta, class Annotation* curre
 		tmin = tempPointL->getCoordiate(0);
 		tmax = tempPointU->getCoordiate(0);
 
-		epsilon = currentAnnotation->getED(delta, tmin,tmax,reachTubeMode);
+		
 
 		for(j = 1; j < addingPointL->getDimension(); j++){
+			delta = deltaArray[j-1];
+
+			epsilon = currentAnnotation->getED(delta,tmin,tmax,reachTubeMode);
+			//cout<<"at dimensions "<<j<< " the epsilon is "<<epsilon<<endl;
 
 			value1 = tempPointL->getCoordiate(j);
 			value2 = tempPointU->getCoordiate(j);
@@ -235,6 +242,7 @@ class ReachTube* ReachTube::bloatReachTube(double delta, class Annotation* curre
 				value2 = value1;
 				value1 = tempvalue;
 			}
+
 
 			addingPointL->setCoordinate(j,value1-epsilon);
 			addingPointU->setCoordinate(j,value2+epsilon);
@@ -615,16 +623,17 @@ int ReachTube::checkunsafe(double* forM, double* forB, int numofeq){
 
 }
 
-class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int exceptPoints){
+class InitialSet* ReachTube::getNextSet(){
 
 	std::vector<int> modesInSet;
 
 	class InitialSet* ToBeReturned = NULL;
-
 	class InitialSet* indexSet;
 	class InitialSet* modeSet;
 
 	class Point* currPoint;
+
+	double deltaArray[dimensions];
 
 	int modeIndex;
 	int tempMode;
@@ -664,6 +673,10 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 		for(indexDimension=1;indexDimension<=dimensions; indexDimension++){
 			double minValue = getMinCoordinate(indexDimension,tempMode);
 			double maxValue = getMaxCoordinate(indexDimension,tempMode);
+			cout<<"the max value is "<< maxValue<<endl;
+			cout<<"the min value is "<< minValue<<endl;
+			deltaArray[indexDimension-1] = abs(maxValue-minValue)/2;
+			cout<<"the delta is "<<deltaArray[indexDimension-1]<<endl;
 			*(b+2*(indexDimension-1)) = -1*minValue;
 			*(b+2*(indexDimension-1)+1) = maxValue;
 			*(matrix+2*(indexDimension-1)*dimensions+(indexDimension-1)) = -1;
@@ -675,14 +688,10 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 		modeLinear->setNumEqns(2*dimensions);
 		modeLinear->setB(b);
 		modeLinear->setMatrix(matrix);
-		modeLinear->setExceptPoints(exceptPoints);
+		
+		modeSet = modeLinear->getCover(deltaArray);
+	
 
-		modeSet = modeLinear->getCover(delta);
-		int error = modeSet->getMode();
-		if(error == -999){
-			cout <<"find error, too much point, return" <<endl;
-			return modeSet;
-		}
 		cout << "Size of just the partitioning is " << modeSet->getLength() << "\n";
 
 		// modeSet->print();
@@ -697,31 +706,14 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 			currPoint = indexSet->getState();
 			int curMode = tempMode;
 
-			if(checkIntersection(curMode, currPoint, delta)){
+			if(checkIntersection(curMode, currPoint, deltaArray)){
 
 //				cout << "Checking intersections \n";
-				double tmin = getMinTime(curMode, currPoint, delta);
+				double tmin = getMinTime(curMode, currPoint, deltaArray);
 				//cout << "  The time minimum time is " << tmin << "\n";
 				currPoint->setCoordinate(0,tmin);
 				TempToBeAdded->add(currPoint);
 
-				//double tmax = getMaxTime(curMode, currPoint, delta);
-
-				//double tempTime = tmin;
-
-//				cout << "Temp timings are " << tmin << " and " << tmax << " thats all \n";
-
-				/*
-
-				while(tempTime < tmax){
-					cout << "How many times is it adding? \n";
-					class Point* addedPoint = new Point(currPoint->getDimension(), currPoint->getCoordinates());
-					addedPoint->setCoordinate(0,tempTime);
-					TempToBeAdded->add(addedPoint);
-					tempTime += timeStep;
-				}
-
-				*/
 
 			}
 
@@ -738,7 +730,7 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 
 		cout << " Size if to be added is " << TempToBeAdded->getLength() << "\n";
 		TempToBeAdded->setMode(tempMode);
-
+		TempToBeAdded->setDelta(deltaArray);
 //		cout << " Added? \n";
 
 
@@ -753,16 +745,16 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 
 	}
 
-	if(ToBeReturned != NULL){
-		ToBeReturned->setDelta(delta);
-	}
+	/*if(ToBeReturned != NULL){
+		ToBeReturned->setDelta(deltaArray);
+	}*/
 
 	return ToBeReturned;
 
 }
 
 
-int ReachTube::checkIntersection(int curMode, class Point* currPoint, double delta){
+int ReachTube::checkIntersection(int curMode, class Point* currPoint, double* deltaArray){
 
 	int index;
 	int hasIntersection;
@@ -771,12 +763,14 @@ int ReachTube::checkIntersection(int curMode, class Point* currPoint, double del
 	class Point* lowerBoundPoint;
 	double maxDim, minDim;
 	double maxPointDim, minPointDim;
+	double delta;
 	for(index=0;index < mode.size(); index++){
 		if(mode.at(index) == curMode){
 			hasIntersection = 1;
 			upperBoundPoint = upperBound.at(index);
 			lowerBoundPoint = lowerBound.at(index);
 			for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
+				delta = deltaArray[dimIndex-1];
 				maxDim = upperBoundPoint->getCoordiate(dimIndex);
 				minDim = lowerBoundPoint->getCoordiate(dimIndex);
 				maxPointDim = currPoint->getCoordiate(dimIndex)+delta;
@@ -794,7 +788,7 @@ int ReachTube::checkIntersection(int curMode, class Point* currPoint, double del
 
 }
 
-double ReachTube::getMinTime(int curMode, class Point* currPoint, double delta){
+double ReachTube::getMinTime(int curMode, class Point* currPoint, double* deltaArray){
 
 	int index;
 	int hasIntersection;
@@ -804,12 +798,14 @@ double ReachTube::getMinTime(int curMode, class Point* currPoint, double delta){
 	double maxDim, minDim;
 	double maxPointDim, minPointDim;
 	double minTime = 1000000;
+	double delta;
 	for(index=0;index < mode.size(); index++){
 		if(mode.at(index) == curMode){
 			hasIntersection = 1;
 			upperBoundPoint = upperBound.at(index);
 			lowerBoundPoint = lowerBound.at(index);
 			for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
+				delta = deltaArray[dimIndex-1];
 				maxDim = upperBoundPoint->getCoordiate(dimIndex);
 				minDim = lowerBoundPoint->getCoordiate(dimIndex);
 				maxPointDim = currPoint->getCoordiate(dimIndex)+delta;
@@ -830,11 +826,12 @@ double ReachTube::getMinTime(int curMode, class Point* currPoint, double delta){
 
 }
 
-double ReachTube::getMaxTime(int curMode, class Point* currPoint, double delta){
+double ReachTube::getMaxTime(int curMode, class Point* currPoint, double* deltaArray){
 
 	int index;
 	int hasIntersection;
 	int dimIndex;
+	double delta;
 	class Point* upperBoundPoint;
 	class Point* lowerBoundPoint;
 	double maxDim, minDim;
@@ -846,6 +843,7 @@ double ReachTube::getMaxTime(int curMode, class Point* currPoint, double delta){
 			upperBoundPoint = upperBound.at(index);
 			lowerBoundPoint = lowerBound.at(index);
 			for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
+				delta = deltaArray[dimIndex-1];
 				maxDim = upperBoundPoint->getCoordiate(dimIndex);
 				minDim = lowerBoundPoint->getCoordiate(dimIndex);
 				maxPointDim = currPoint->getCoordiate(dimIndex)+delta;
