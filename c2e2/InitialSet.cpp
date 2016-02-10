@@ -31,7 +31,8 @@ void InitialSet::setState(class Point* P){
 }
 
 void InitialSet::setDelta(double* value){
-	int arraysize = sizeof(value)/sizeof(value[0]);
+	//cout<<"Point Dimension is "<<State->getDimension()<<endl;
+	int arraysize =State->getDimension()-1;
 	int i;
 	deltaArray = new double[arraysize];
 	if(next == NULL){
