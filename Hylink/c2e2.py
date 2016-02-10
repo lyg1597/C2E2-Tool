@@ -12,6 +12,9 @@ import numpy as np
 import numpy.linalg as la
 from propDialog import *
 
+#FIXME
+from genSimulator import *
+
 verifLog = logging.getLogger('c2e2VerificationLog') 
 
 #verifLog.setLevel()
@@ -197,6 +200,9 @@ class Main(gtk.Window):
     dupHybridRep.printInvariants()
     #print "before converting simulator"
     dupHybridRep.convertToCAPD("simulator")
+
+    #FIXME generates boost.odeint simulator
+    gen_simulator("../Simulator/simulator.cpp", dupHybridRep)
 
     #END OF THE CHANGES HERE
     

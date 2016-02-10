@@ -1,5 +1,8 @@
 #!/bin/bash
 
+APT_IN="apt-get install -y"
+APT_IN_NR="apt-get install -y --no-install-recommends"
+
 if [ $UID != 0 ]
 then
   echo "Please run this script with sudo: sudo $0"
@@ -44,10 +47,10 @@ apt-get install -y ppl-dev
 apt-get install -y libgmp10
 apt-get install -y gnuplot
 apt-get install -y python-gnuplot
-apt-get install -y python-sympy
+$APT_IN_NR python-sympy
 apt-get install -y libxslt1-dev
 
-apt-get build-dep python-lxml
+apt-get install python-lxml
 pip install lxml
 pip install psutil
 

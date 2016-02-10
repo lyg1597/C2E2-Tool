@@ -1,0 +1,4 @@
+Clean up
+********
+-Simplify automata parsing in C2E2 (ask about it as well) because currently it 
+supports only a single automata
