@@ -589,6 +589,7 @@ class HyIR:
         try:
             #file = open(self.file_name+".cpp", "w")
             try:
+                print(self.file_name)
                 self.convertToCAPD(self.file_name)
                 dialog = gtk.MessageDialog(None,0,gtk.MESSAGE_INFO, gtk.BUTTONS_CLOSE,"CAPD C++ file has been created")
                 dialog.set_title("Success")

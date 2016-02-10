@@ -12,6 +12,9 @@ import numpy as np
 import numpy.linalg as la
 from propDialog import *
 
+#FIXME
+from testODE import *
+
 verifLog = logging.getLogger('c2e2VerificationLog') 
 
 #verifLog.setLevel()
@@ -197,6 +200,10 @@ class Main(gtk.Window):
     dupHybridRep.printInvariants()
     #print "before converting simulator"
     dupHybridRep.convertToCAPD("simulator")
+
+    #FIXME
+    generate_odeint_simulator(dupHybridRep)
+    
 
     #END OF THE CHANGES HERE
     
