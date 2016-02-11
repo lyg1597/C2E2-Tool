@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Simulator
 *********
 c2e2.py creates all the C++ files on lines 193 - 199
@@ -16,3 +17,9 @@ printGuardsResets -
 hyirXML (ln 1492) - generates the hybrid representation which is used later tused for conversion to CAPD
 
 convertToCAPD (ln 702) - generates the simulator.cpp code
+=======
+Clean up
+********
+-Simplify automata parsing in C2E2 (ask about it as well) because currently it 
+supports only a single automata
+>>>>>>> fd6f400a7a981ef961b04fd7869ea4bf195722cf

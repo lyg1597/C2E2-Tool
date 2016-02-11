@@ -13,7 +13,11 @@ import numpy.linalg as la
 from propDialog import *
 
 #FIXME
+<<<<<<< HEAD
 from testODE import *
+=======
+from genSimulator import *
+>>>>>>> fd6f400a7a981ef961b04fd7869ea4bf195722cf
 
 verifLog = logging.getLogger('c2e2VerificationLog') 
 
@@ -201,9 +205,14 @@ class Main(gtk.Window):
     #print "before converting simulator"
     dupHybridRep.convertToCAPD("simulator")
 
+<<<<<<< HEAD
     #FIXME
     generate_odeint_simulator(dupHybridRep)
     
+=======
+    #FIXME generates boost.odeint simulator
+    gen_simulator("../Simulator/simulator.cpp", dupHybridRep)
+>>>>>>> fd6f400a7a981ef961b04fd7869ea4bf195722cf
 
     #END OF THE CHANGES HERE
     
