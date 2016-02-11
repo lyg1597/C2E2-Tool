@@ -1,5 +1,0 @@
-odeint allows you to simulate by a single time step so this may be useful for checking the invariant and guards on the fly. This will require dynamically compiling and loading the library (if I make it into a library)
-
-odeint and capd result in essentially the same results. scipy.integrate as about a 10^-7 or 10^-8 difference.
-
-Python allows dynamic function creatation which may be useful (?)
