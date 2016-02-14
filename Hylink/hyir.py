@@ -589,7 +589,6 @@ class HyIR:
         try:
             #file = open(self.file_name+".cpp", "w")
             try:
-                print(self.file_name)
                 self.convertToCAPD(self.file_name)
                 dialog = gtk.MessageDialog(None,0,gtk.MESSAGE_INFO, gtk.BUTTONS_CLOSE,"CAPD C++ file has been created")
                 dialog.set_title("Success")
@@ -782,9 +781,12 @@ class HyIR:
                     difvarstring = difvarstring + ","
                 for dai in curMode.dais:
                     flag = 0
+
+                    #NOTE THIS IS ONLY FOR DAI WITH VAR THAT HAVE OUT
                     for v in out_vars:
                         if dai.raw.count(v) > 0:
                             flag = 1
+
                     if flag == 0:
                         if collapse(dai.parsed.children[0]) == variable+"_dot":
                             #dai.parsed.children[1].bolunprints()
