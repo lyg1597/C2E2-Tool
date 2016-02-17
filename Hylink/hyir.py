@@ -708,16 +708,20 @@ class HyIR:
         #for traverseIndex in range(0,len(bufferString2)):
         #    if bufferString2[traverseIndex] == 'i' && bufferString2[traverseIndex+1] == 'n' && bufferString2[traverseIndex+2] == 'i' && bufferString2[traverseIndex+3] == 'i' 
         
-        file = open(filename+".cpp","w")
+        #FIXME
+        #file = open(filename+".cpp","w")
         ''' Creates a C++ file which uses CAPD classes and gives a simulator after compiling \n '''
         infoFile = '''/* CAPD C++ file generated Automatically from HyLink */\n'''
-        file.write(infoFile)
+        #FIXME
+        #file.write(infoFile)
         declarationsReqd = ''' #include <iostream> \n #include "capd/capdlib.h" \n using namespace std; \n using namespace capd; \n '''
-        file.write(declarationsReqd)
+        #FIXME
+        #file.write(declarationsReqd)
         curAut = self.automata[0]
         
         declarationsReqd = "\nint getNextMode(int curMode, interval curModeTime);\n"
-        file.write(declarationsReqd)
+        #FIXME
+        #file.write(declarationsReqd)
         
         #print " Have to give definition of automata and all the modes "
         out_vars = []
@@ -725,7 +729,8 @@ class HyIR:
         cont_vars = []
         
         mainDeclaration = '''main(){ \n \n  cout.precision(10);\n  try{ \n'''
-        file.write(mainDeclaration)
+        #FIXME
+        #file.write(mainDeclaration)
 
         for vars in self.vars:
             #print vars.name + " this is a variable \n"
@@ -759,7 +764,8 @@ class HyIR:
             #if(curMode.)
             #print " Now generate diff eqns for each mode \n"
             newDiff = ''' /* Differential equation for mode ''' + curMode.name + ''' Testing */ \n'''
-            file.write(newDiff)
+            #FIXME
+            #file.write(newDiff)
             varstring = "var:"
             difvarstring=''
             diffunstring=''
@@ -805,7 +811,8 @@ class HyIR:
     
             jff = "mode"+str(numModes)+" (\""+varstring+funstring+"\");\n"
             temp= temp+jff
-            file.write(modeString)
+            #FIXME
+            #file.write(modeString)
             
         taylorString = "    ITaylor* solvers[] = {\n"
         i = 0
@@ -817,7 +824,8 @@ class HyIR:
         taylorString = taylorString + "     new ITaylor(mode"+str(i+1)+",5)\n"
         """
         taylorString = taylorString + "    };\n"
-        file.write(taylorString)
+        #FIXME
+        #file.write(taylorString)
         
         declarationString = "    double initialState["+str(countVars)+"];\n"
         declarationString+= "    IVector IState("+str(countVars)+");\n"
@@ -835,7 +843,8 @@ class HyIR:
         declarationString+= "    interval currTime(curTime), currModeTime(0.0);\n"
         #declarationString+= "    int curMode = "+ str(initialMode)+", nextMode = "+ str(initialMode)+";\n"
         declarationString+= "    C0HORect2Set SimSet(IState);\n"
-        file.write(declarationString)
+        #FIXME
+        #file.write(declarationString)
         
         # New way for generating simulations
         declarationString = "    ITimeMap timeMap(*solvers[curMode-1]);\n"
@@ -890,10 +899,17 @@ class HyIR:
         solverString+= "        curMode = nextMode; currModeTime = 0.0;\n"
         solverString+= "      }\n"
         solverString+= "    }\n"
-        file.write(solverString)
+        #FIXME
+        #file.write(solverString)
             
         closeString = "  }catch(exception& e){\n    cout << \"Exception caught!\" << e.what() << endl << endl;\n  }\n}\n\n"
-        file.write(closeString)
+        #FIXME
+        #file.write(closeString)
+        print("\n\nPRINTINT LIST")
+        print(difvarstring) 
+        print(diffunstring)
+        print(delete_element_list)
+        print("\n\n")
         createCDFfunction(delete_element_list)
         switchingString = "int getNextMode(int curMode, interval curModeTime){\n"
         
@@ -922,8 +938,9 @@ class HyIR:
                             
         switchingString+= "  return curMode;\n"
         switchingString+= "}\n"
-        file.write(switchingString)
-        file.close()
+        #FIXME
+        #file.write(switchingString)
+        #file.close()
 
 
         

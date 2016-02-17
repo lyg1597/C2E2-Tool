@@ -6,6 +6,7 @@ sys7d=sys7d/sys7d
 sys7d_tdot=sys7d_tdot/sys7d_tdot
 power_train=power_train/power_train
 reversionary=reversionary/reversionary
+const=const/const
 
 .PHONY: all
 all: bruss sys7d sys7d_tdot power_train
@@ -29,3 +30,7 @@ power_train:
 .PHONY: reversionary
 reversionary:
 	$(CC) $(CFLAGS) $(reversionary).cpp -o $(reversionary)
+
+.PHONY: const
+const:
+	$(CC) $(CFLAGS) $(const).cpp -o $(const)

@@ -10,14 +10,14 @@ typedef vector<double> state;
 //RHS definition of the ODE
 void ode(const state &x, state &dxdt, const double /* t */)
 {
-  dxdt[0] = 1.0;
-  dxdt[1] = 1.4 * x[2] - 0.9 * x[0];
-  dxdt[2] = 2.5 * x[4] - 1.5 * x[1];
-  dxdt[3] = 0.6 * x[6] - 0.8 * x[2] * x[1];
-  dxdt[4] = 2.0 - 1.3 * x[3] * x[2];
-  dxdt[5] = 0.7 * x[0] - 1.0 * x[3] * x[4];
-  dxdt[6] = 0.3 * x[0] - 3.1 * x[5];
-  dxdt[7] = 1.8 * x[5] - 1.5 * x[6] * x[1];
+  dxdt[0] = 1.4 * x[2] - 0.9 * x[0];
+  dxdt[1] = 2.5 * x[4] - 1.5 * x[1];
+  dxdt[2] = 0.6 * x[6] - 0.8 * x[2] * x[1];
+  dxdt[3] = 2.0 - 1.3 * x[3] * x[2];
+  dxdt[4] = 0.7 * x[0] - 1.0 * x[3] * x[4];
+  dxdt[5] = 0.3 * x[0] - 3.1 * x[5];
+  dxdt[6] = 1.8 * x[5] - 1.5 * x[6] * x[1];
+  dxdt[7] = 1.0;
 }
 
 //Integrator observer
@@ -40,14 +40,14 @@ int main()
 {
   //Configuration params
   state x(8);
-  x[0] = 0.0;
-  x[1] = 1.2;
-  x[2] = 1.05;
-  x[3] = 1.5;
-  x[4] = 2.4;
-  x[5] = 1;
-  x[6] = 0.1;
-  x[7] = 0.45;
+  x[0] = 1.2;
+  x[1] = 1.05;
+  x[2] = 1.5;
+  x[3] = 2.4;
+  x[4] = 1;
+  x[5] = 0.1;
+  x[6] = 0.45;
+  x[7] = 1.25;
 
   //Times 
   //NOTE these need to be of type Time to pass into function
@@ -83,7 +83,7 @@ int main()
     cout << fixed;
     cout << setprecision(3) << t;
 
-    for (int j = 0; j < 7; j++)
+    for (int j = 0; j < 8; j++)
     {
       cout << setprecision(10) << '\t' << x[j];
     }

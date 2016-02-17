@@ -1,4 +1,5 @@
 from hyir import *
+from jacobiancalc import *
 import re
 
 def gen_simulator(file_path, hybrid_rep, **kwargs):
@@ -28,21 +29,33 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
     #Obtain and parse differential algebraic equations
     modes = []
     dxdt = []
+    del_list = []
     automata = hybrid_rep.automata[0]
     for i, cur_mode in enumerate(automata.modes):
         modes.append(cur_mode.name) 
         dxdt.append([])
+        orig_eqns = []
 
         #Find variables with '_dot' and extract rhs
         for dai in cur_mode.dais:
             if '_dot' in dai.raw:
                 rhs = dai.raw.split('=', 1)[1]
+                rhs = rhs.strip()
+                orig_eqns.append(rhs)
 
-                #Modify rhs for odeint
+                #Replace variables with 'x[i]'
                 for j, var in enumerate(vars):
                     rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
-                    #rhs = rhs.replace(var, 'x[' + str(j) + ']')
-                dxdt[i].append(rhs.strip()) 
+                dxdt[i].append(rhs) 
+
+        #Bloating factor calculation/generation
+        var_str = ','.join(vars)
+        eqn_str = ','.join(orig_eqns)
+        del_elem = jacobian(var_str, eqn_str, i)
+        del_list.append(del_elem)
+
+    #Generate python file for bloating
+    createCDFfunction(del_list)
 
     #Generate dxdt
     for i, mode in enumerate(modes):

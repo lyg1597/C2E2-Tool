@@ -18,7 +18,24 @@ hyirXML (ln 1492) - generates the hybrid representation which is used later tuse
 
 convertToCAPD (ln 702) - generates the simulator.cpp code
 
+Models
+******
+To create an input variable, add data and set scope to input. Change the initial value to take in the input variable instead.
+
+Workspace - in the workspace, initialize the value as <var> = [time, scalar] where time is the time-stamp (I just set it to 0) and scalar is the value that we actually want to use.
+
+File - the data has to be stored in the format in a *.mat file
+[ t_1 t_2 ... t_k]
+[ a_1 a_2 ... a_k]
+[  .   .   .   . ]
+[  .   .   .   . ]
+[ z_1 z_2 ... z_k]
+
+The output has to be set to be in array format and is stored in the same fashion as above.
+
 Clean up
 ********
 -Simplify automata parsing in C2E2 (ask about it as well) because currently it 
 supports only a single automata
+
+
