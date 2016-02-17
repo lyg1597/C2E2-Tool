@@ -1,12 +1,14 @@
 CC = g++
-CFLAGS = -w -O2
+CFLAGS = -g -Wall -O2 -std=c++11
 
 bruss=bruss/bruss
 sys7d=sys7d/sys7d
 sys7d_tdot=sys7d_tdot/sys7d_tdot
+power_train=power_train/power_train
+reversionary=reversionary/reversionary
 
 .PHONY: all
-all: bruss sys7d sys7d_tdot
+all: bruss sys7d sys7d_tdot power_train
 
 .PHONY: bruss
 bruss:
@@ -19,3 +21,11 @@ sys7d:
 .PHONY: sys7d_tdot
 sys7d_tdot:
 	$(CC) $(CFLAGS) $(sys7d_tdot).cpp -o $(sys7d_tdot)
+
+.PHONY: power_train
+power_train:
+	$(CC) $(CFLAGS) $(power_train).cpp -o $(power_train)
+
+.PHONY: reversionary
+reversionary:
+	$(CC) $(CFLAGS) $(reversionary).cpp -o $(reversionary)

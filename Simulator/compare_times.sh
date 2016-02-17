@@ -3,7 +3,7 @@
 MAKE=0
 TIMEFORMAT="%3R"
 
-systems=(bruss sys7d)
+systems=(bruss sys7d power_train)
 
 #Make files
 if [ $MAKE -eq 1 ]; then
@@ -20,7 +20,7 @@ for mdl in ${systems[@]}; do
   c_time=$({ time ./$c_path/$mdl < $c_path/Config > $c_path/trace.txt; } 2>&1 )
 
   #Getting ODEINT time
-  o_time=$({ time ./$o_path/$mdl > $o_path/trace.txt; } 2>&1 )
+  o_time=$({ time ./$o_path/$mdl < $o_path/Config > $o_path/trace.txt; } 2>&1 )
 
   #echo $o_time
   speedup=$(bc -l <<< "scale=2;$c_time/$o_time")

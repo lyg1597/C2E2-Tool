@@ -202,7 +202,13 @@ class Main(gtk.Window):
     dupHybridRep.convertToCAPD("simulator")
 
     #FIXME generates boost.odeint simulator
-    gen_simulator("../Simulator/autogen/odeint/simulator.cpp", dupHybridRep)
+    #Below are a set of options for ODEINT simulator
+    #step_type: adaptive, constant
+    st = 'constant'
+    #path = '../wd/simulator.cpp'
+    path = '../Simulator/autogen/odeint/simulator.cpp'
+
+    gen_simulator(path, dupHybridRep, step_type=st)
 
     #END OF THE CHANGES HERE
     

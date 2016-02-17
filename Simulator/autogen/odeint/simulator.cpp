@@ -9,57 +9,78 @@ using namespace boost::numeric::odeint;
 
 typedef vector<double> state_t;
 
+//INTEGRATOR OBSERVER
+class IntObs {
+	private:
+		vector<state_t> &io_states;
+		vector<double> &io_times;
+
+	public:
+		IntObs(vector<state_t> &states, vector<double> &times)
+			: io_states(states), io_times(times) { }
+
+		void operator()(const state_t &x, double t) {
+			io_states.push_back(x);
+			io_times.push_back(t);
+		}
+};
+
 //ODE FUNCTIONS
-void stimOn(const state_t &x, state_t &dxdt, const double t) {
-			dxdt[0]=-0.9*x[0]*x[0]-x[0]*x[0]*x[0]-0.9*x[0]-x[1]+1;
-			dxdt[1]=x[0]-2*x[1];
+void Mode0(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=0.41328*(2*247*(-2.3421*x[0]*x[0]+2.7799*x[0]-0.3273)-0.9*(-3.66+0.08979*104.71975511*x[0]-0.0337*104.71975511*x[0]*x[0]+0.0001*104.71975511*104.71975511*x[0]));
+			dxdt[1]=4*(13.893-35.2518*1*((1/14.7)*(-3.66+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511))+20.7364*1*1*((1/14.7)*(-3.66+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511))*((1/14.7)*(-3.66+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511))+2.6287*(0.9*(-3.66+0.08979*104.71975511*x[0]-0.0337*104.71975511*x[0]*x[0]+0.0001*x[0]*104.71975511*104.71975511))-1.592*(0.9*(-3.66+0.08979*104.71975511*x[0]-0.0337*104.71975511*x[0]*x[0]+0.0001*x[0]*104.71975511*104.71975511))*1*((1/14.7)*(-3.66+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511))-x[1]);
+			dxdt[2]=0.41328*(2*1*(247)*(-2.3421*x[0]*x[0]+2.7799*x[0]-0.3273)-(-3.66+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511));
+			dxdt[3]=0;
 }
 
-void stimOff(const state_t &x, state_t &dxdt, const double t) {
-			dxdt[0]=-0.9*x[0]*x[0]-x[0]*x[0]*x[0]-0.9*x[0]-x[1];
-			dxdt[1]=x[0]-2*x[1];
+void Mode1(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=0.41328*(2*247.0*(-2.3421*x[0]*x[0]+2.7799*x[0]-0.3273)-0.9*(-0.366+0.08979*104.71975511*x[0]-0.0337*104.71975511*x[0]*x[0]+0.0001*104.71975511*104.71975511*x[0]));
+			dxdt[1]=4*(13.893-35.2518*1*((1/14.7)*(1+x[3]+0.04*(1*x[1]-14.7))*(-0.366+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511))+20.7364*1*1*((1/14.7)*(1+x[3]+0.04*(1*x[1]-14.7))*(-0.366+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511))*((1/14.7)*(1+x[3]+0.04*(1*x[1]-14.7))*(-0.366+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511))+2.6287*(0.9*(-0.366+0.08979*104.71975511*x[0]-0.0337*104.71975511*x[0]*x[0]+0.0001*x[0]*104.71975511*104.71975511))-1.592*(0.9*(-0.366+0.08979*104.71975511*x[0]-0.0337*104.71975511*x[0]*x[0]+0.0001*x[0]*104.71975511*104.71975511)) *1*((1/14.7)*(1+x[3]+0.04*(1*x[1]-14.7))*(-0.366+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511))-x[1]);
+			dxdt[2]=0.41328*(2*1*(247.0)*(-2.3421*x[0]*x[0]+2.7799*x[0]-0.3273)-(-0.366+0.08979*104.71975511*x[2]-0.0337*104.71975511*x[2]*x[2]+0.0001*x[2]*104.71975511*104.71975511));
+			dxdt[3]=0.14*(1*x[1]-14.7);
 }
 
 //ODE FUNCTION POINTER
 void (*rhs[2])(const state_t &x, state_t &dxdt, const double t) =
-	{stimOn, stimOff};
+	{Mode0, Mode1};
 
 int main() {
 	//VARIABLES
 	double ts, dt, te;
 	double abs_err, rel_err;
 	int cur_mode;
-	state_t x(2);
-	runge_kutta4<state_t> stepper;
+	state_t x(4);
+	vector<double> times;
+	vector<state_t> trace;
 
 	//PARSING CONFIG
 	cin >> ts;
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 4; i++) {
 		cin >> x[i];
 	}
 	cin >> abs_err >> rel_err >> dt >> te >> cur_mode;
 	cur_mode--;
 
 	//INTEGRATING
-	int end = (int)((te - ts) / dt + 0.5);
-	for (int i=0; i<end; i++) {
-		//PRINTING PRE-STEP
-			cout << fixed;
-		cout << setprecision(9) << ts;
-		for (int i = 0; i < 2; i++) {
-			cout << setprecision(10) << ' ' << x[i];
+	runge_kutta4<state_t> stepper;
+	size_t steps = integrate_const(stepper, rhs[cur_mode], x, ts, te, dt,	IntObs(trace, times));
+
+	//PRINTING STEPS
+	for (size_t i = 0; i <= steps; i++) {
+		cout << fixed;
+		cout << setprecision(9) << times[i];
+		for (int j = 0; j < 4; j++) {
+			cout << setprecision(10) << ' ' << trace[i][j];
 		}
 		cout << endl;
 
-		stepper.do_step(rhs[cur_mode], x, ts, dt);
-		ts += dt;
-
-		//PRINTING POST-STEP
+		if (i != 0 && i != steps) {
 			cout << fixed;
-		cout << setprecision(9) << ts;
-		for (int i = 0; i < 2; i++) {
-			cout << setprecision(10) << ' ' << x[i];
+			cout << setprecision(9) << times[i];
+			for (int j = 0; j < 4; j++) {
+				cout << setprecision(10) << ' ' << trace[i][j];
+			}
+			cout << endl;
 		}
-		cout << endl;
 	}
 }

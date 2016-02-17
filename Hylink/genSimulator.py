@@ -1,6 +1,23 @@
 from hyir import *
+import re
 
-def gen_simulator(file_path, hybrid_rep):
+def gen_simulator(file_path, hybrid_rep, **kwargs):
+    #Get kwargs
+    step_type = kwargs.pop('step_type', 'adaptive')
+
+    #Setting spefic variables
+    if step_type == 'constant':
+        integrator = ['runge_kutta4<state_t> stepper;',
+                      'size_t steps = integrate_const(stepper, rhs[cur_mode], '
+                      'x, ts, te, dt,'
+                      '\tIntObs(trace, times));']
+    else:
+        integrator = ['auto stepper = make_controlled(abs_err, rel_err, '
+                      'runge_kutta_dopri5<state_t>());',
+                      'size_t steps = integrate_adaptive(stepper, '
+                      'rhs[cur_mode], x, ts, te, dt,',
+                      '\tIntObs(trace, times));']
+
     #Obtain and parse variables
     vars = []
     for var in hybrid_rep.vars:
@@ -23,7 +40,8 @@ def gen_simulator(file_path, hybrid_rep):
 
                 #Modify rhs for odeint
                 for j, var in enumerate(vars):
-                    rhs = rhs.replace(var, 'x[' + str(j) + ']')
+                    rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
+                    #rhs = rhs.replace(var, 'x[' + str(j) + ']')
                 dxdt[i].append(rhs.strip()) 
 
     #Generate dxdt
@@ -49,6 +67,21 @@ def gen_simulator(file_path, hybrid_rep):
     #Create typdef
     typedef = 'typedef vector<double> state_t;\n'
 
+    #Create integrator observer
+    int_obs = ('//INTEGRATOR OBSERVER\n'
+               'class IntObs {\n'
+               '\tprivate:\n'
+               '\t\tvector<state_t> &io_states;\n'
+               '\t\tvector<double> &io_times;\n\n'
+               '\tpublic:\n'
+               '\t\tIntObs(vector<state_t> &states, vector<double> &times)\n'
+               '\t\t\t: io_states(states), io_times(times) { }\n\n'
+               '\t\tvoid operator()(const state_t &x, double t) {\n'
+               '\t\t\tio_states.push_back(x);\n'
+               '\t\t\tio_times.push_back(t);\n'
+               '\t\t}\n'
+               '};\n')
+
     #ODE functions
     odes = []
     for i, mode in enumerate(modes):
@@ -66,64 +99,87 @@ def gen_simulator(file_path, hybrid_rep):
                '\t{' + ', '.join(modes) + '};\n')
 
     #Initialize variables
-    init_vars = ['//VARIABLES\n',
-                 'double ts, dt, te;\n',
-                 'double abs_err, rel_err;\n',
-                 'int cur_mode;\n',
-                 'state_t x(' + str(len(vars)) + ');\n',
-                 'runge_kutta4<state_t> stepper;\n']
-    init_vars = '\t' + '\t'.join(init_vars)
-
+    init_vars = ['//VARIABLES',
+                 'double ts, dt, te;',
+                 'double abs_err, rel_err;',
+                 'int cur_mode;',
+                 'state_t x(' + str(len(vars)) + ');',
+                 'vector<double> times;',
+                 'vector<state_t> trace;']
+    init_vars = '\t' + '\n\t'.join(init_vars) + '\n'
 
     #Read configuration file
-    parse = ['//PARSING CONFIG\n',
-             'cin >> ts;\n',
-             'for (int i = 0; i < ' + str(len(vars)) + '; i++) {\n',
-             '\tcin >> x[i];\n',
-             '}\n',
-             'cin >> abs_err >> rel_err >> dt >> te >> cur_mode;\n',
-             'cur_mode--;\n']
-    parse = '\t' + '\t'.join(parse)
+    parse = ['//PARSING CONFIG',
+             'cin >> ts;',
+             'for (int i = 0; i < ' + str(len(vars)) + '; i++) {',
+             '\tcin >> x[i];',
+             '}',
+             'cin >> abs_err >> rel_err >> dt >> te >> cur_mode;',
+             'cur_mode--;']
+    parse = '\t' + '\n\t'.join(parse) + '\n'
 
-    #FIXME need to fix the time prevision variable
-    #Pre step
-    print_step = ['cout << fixed;\n',
-                  'cout << setprecision(9) << ts;\n',
-                  'for (int i = 0; i < ' + str(len(vars)) + '; i++) {\n',
-                  '\tcout << setprecision(10) << \' \' << x[i];\n',
-                  '}\n',
-                  'cout << endl;\n']
-    print_step = '\t\t' + '\t\t'.join(print_step)
-    
     #Integrate ODE
-    integrate = ['//INTEGRATING\n',
-                 'int end = (int)((te - ts) / dt + 0.5);\n',
-                 'for (int i=0; i<end; i++) {\n',
-                 '\t//PRINTING PRE-STEP\n',
-                 print_step + '\n',
-                 '\tstepper.do_step(rhs[cur_mode], x, ts, dt);\n',
-                 '\tts += dt;\n\n',
-                 '\t//PRINTING POST-STEP\n',
-                 print_step,
-                 '}\n']
-    integrate = '\t' + '\t'.join(integrate)
+    integrate = ['//INTEGRATING']
+    integrate.extend(integrator)
+    integrate = '\t' + '\n\t'.join(integrate) + '\n'
 
+    #FIXME have it only print the steps once without duplicate
+    #Print step
+    #FIXME code that I should be using
+    """
+    print_steps = ['//PRINTING STEPS',
+                   'for (size_t i = 0; i <= steps; i++) {',
+                   '\tcout << fixed;',
+                   '\tcout << setprecision(9) << times[i];',
+                   '\tfor (int j = 0; j < ' + str(len(vars)) + '; j++) {',
+                   '\t\tcout << setprecision(10) << \' \' << trace[i][j];',
+                   '\t}',
+                   '\tcout << endl;',
+                   '}']
+    print_steps = '\t' + '\n\t'.join(print_steps)
+    """
+
+    #FIXME temporary to match CAPD simulator output
+    print_steps = ['//PRINTING STEPS',
+                   'for (size_t i = 0; i <= steps; i++) {',
+                   '\tcout << fixed;',
+                   '\tcout << setprecision(9) << times[i];',
+                   '\tfor (int j = 0; j < ' + str(len(vars)) + '; j++) {',
+                   '\t\tcout << setprecision(10) << \' \' << trace[i][j];',
+                   '\t}',
+                   '\tcout << endl;\n',
+                   '\tif (i != 0 && i != steps) {',
+                   '\t\tcout << fixed;',
+                   '\t\tcout << setprecision(9) << times[i];',
+                   '\t\tfor (int j = 0; j < ' + str(len(vars)) + '; j++) {',
+                   '\t\t\tcout << setprecision(10) << \' \' << trace[i][j];',
+                   '\t\t}',
+                   '\t\tcout << endl;',
+                   '\t}',
+                   '}']
+    print_steps = '\t' + '\n\t'.join(print_steps)
+    
     #Generate main
-    main = ('int main() {\n'
-            + init_vars + '\n'
-            + parse + '\n'
-            + integrate +
-            '}')
+    main = ['int main() {',
+            init_vars,
+            parse,
+            integrate,
+            print_steps,
+            '}']
+    main = '\n'.join(main)
 
-    cpp_file = (auto_gen + '\n'
-                + includes + '\n'
-                + namespace + '\n'
-                + typedef + '\n'
-                + odes + '\n'
-                + ode_ptr + '\n'
-                + main)
+    #Generate CPP file
+    cpp_file = [auto_gen,
+                includes,
+                namespace,
+                typedef,
+                int_obs,
+                odes,
+                ode_ptr,
+                main]
+    cpp_file = '\n'.join(cpp_file)
 
-    #Generate .cpp file
+    #Write CPP file
     file = open(file_path, 'w')
     file.write(cpp_file);
     file.close();

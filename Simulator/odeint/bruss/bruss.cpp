@@ -1,3 +1,5 @@
+/* AUTO-GENERATED SIMULATOR BY C2E2 */
+
 #include <iostream>
 #include <vector>
 #include <boost/numeric/odeint.hpp>
@@ -5,75 +7,54 @@
 using namespace std;
 using namespace boost::numeric::odeint;
 
-typedef vector<double> state;
+typedef vector<double> state_t;
 
-class ode
-{
-  public:
-    ode() { }
+//ODE FUNCTIONS
+void Brussellator(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=1+x[0]*x[0]*x[1]-2.5*x[0];
+			dxdt[1]=1.5*x[0]-x[0]*x[0]*x[1];
+}
 
-    void operator() (const state &x, state &dxdt, const double t)
-    {
-      dxdt[0] = 1 + x[0] * x[0] * x[1] - 2.5 * x[0];
-      dxdt[1] = 1.5 * x[0] - x[0] * x[0] * x[1];
-    }
-};
+//ODE FUNCTION POINTER
+void (*rhs[1])(const state_t &x, state_t &dxdt, const double t) =
+	{Brussellator};
 
-//Integrator observer
-/*
-struct push_back_state_and_time
-{
-  vector<state> &m_states;
-  vector<double> &m_times;
+int main() {
+	//VARIABLES
+	double ts, dt, te;
+	double abs_err, rel_err;
+	int cur_mode;
+	state_t x(2);
+	runge_kutta4<state_t> stepper;
 
-  push_back_state_and_time(vector<state> &states, vector<double> &times ) : m_states(states), m_times(times) { }
+	//PARSING CONFIG
+	cin >> ts;
+	for (int i = 0; i < 2; i++) {
+		cin >> x[i];
+	}
+	cin >> abs_err >> rel_err >> dt >> te >> cur_mode;
+	cur_mode--;
 
-  void operator()(const state &x, double t)
-  {
-    m_states.push_back( x );
-    m_times.push_back( t );
-  }
-};
-*/
+	//INTEGRATING
+	int end = (int)((te - ts) / dt + 0.5);
+	for (int i=0; i<end; i++) {
+		//PRINTING PRE-STEP
+			cout << fixed;
+		cout << setprecision(9) << ts;
+		for (int i = 0; i < 2; i++) {
+			cout << setprecision(10) << ' ' << x[i];
+		}
+		cout << endl;
 
-int main()
-{
-  //Configuration params
-  state x(2);
-  x[0] = 1.93;
-  x[1] = 1.06;
-  ode rhs;
+		stepper.do_step(rhs[cur_mode], x, ts, dt);
+		ts += dt;
 
-  //Times 
-  double dt = 0.01;
-  double ts = 0.0;
-  double te = 10.0;
-  runge_kutta4<state> stepper;
-
-  //Integrating all at once
-  /*
-  vector<state> x_vec;
-  vector<double> times;
-  size_t steps = integrate_const(stepper, ode, x, 0.0, 10.0, 0.01, 
-      push_back_state_and_time(x_vec, times));
-
-  for (size_t i = 0; i <= steps; i++)
-  {
-    cout << std::fixed;
-    cout << setprecision(2) << times[i] 
-         << std::setprecision(10) << '\t' << x_vec[i][0] 
-         << setprecision(10) << '\t' << x_vec[i][1] << endl;
-  }
-  */
-
-  //Integrating with steps
-  for (double t = ts; t <= te; t += dt)
-  {
-    cout << fixed;
-    cout << setprecision(2) << t 
-         << setprecision(10) << '\t' << x[0] 
-         << setprecision(10) << '\t' << x[1] << endl;
-
-    stepper.do_step(rhs, x, t, dt);
-  }
+		//PRINTING POST-STEP
+			cout << fixed;
+		cout << setprecision(9) << ts;
+		for (int i = 0; i < 2; i++) {
+			cout << setprecision(10) << ' ' << x[i];
+		}
+		cout << endl;
+	}
 }
