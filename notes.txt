@@ -9,7 +9,8 @@ The system is then checked using ./invariants and ./guards (ln 359 - 360)
 
 The following functions are in hyir.py:
 
-printInvariants - reads from the reachtube.dat file and writes into the invariant.dat file. For each line read from the reachtube, the code checks whether the invariant was satisfied by the reachtube.
+printInvariants - reads from the reachtube.dat file and writes into the invariant.dat file. 
+For each line read from the reachtube, the code checks whether the invariant was satisfied by the reachtube.
 
 printGuardsResets - 
 

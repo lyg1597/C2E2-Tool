@@ -47,7 +47,6 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
     #Generate dxdt
     for i, mode in enumerate(modes):
         for j, eqn in enumerate(dxdt[i]):
-            print(eqn)
             dxdt[i][j] = 'dxdt[' + str(j) + ']=' + eqn
         dxdt[i] = '\t\t\t' + ';\n\t\t\t'.join(dxdt[i]) + ';'
 
