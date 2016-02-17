@@ -202,7 +202,7 @@ class Main(gtk.Window):
 
     #FIXME remove this in the future
     #I also modified DeleteEX.sh to stop removing simulator.cpp
-    dupHybridRep.convertToCAPD("simulator")
+    #dupHybridRep.convertToCAPD("simulator")
 
     #FIXME generates boost.odeint simulator
     #Below are a set of options for ODEINT simulator
