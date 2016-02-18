@@ -1,0 +1,42 @@
+function dy = reversionary(t, y)
+dy = zeros(7,1);
+
+DEG2RAD = pi / 180;         % Degrees to rad
+MPH2FPS = 5280 / 3600;      % Miles-per-hour to ft/s
+
+% y(1) -> T; y(2) -> L; y(3) -> Phi; y(4) ->V; y(5)->gamma; y(6) -> psi;
+% y(7) -> M
+T = y(1);
+L = y(2);
+Phi = y(3);
+V = y(4);
+Gamma = y(5);
+Psi = y(6);
+M = y(7);
+
+g = 32.2;
+Kv = 1;
+Kr = 1;
+KPsi = 1;
+Kd = 0.0019;
+Km = 4.0e-06;
+tauT = 1;
+tauL =1;
+tauPhi =1;
+Vd = 90*MPH2FPS;
+Rd = 1*DEG2RAD;
+Psid = 10*DEG2RAD;
+
+
+T_RC = M*Kv*(Vd-V)+M*g*sin(Gamma);
+L_RC = M*(sqrt((g*cos(Gamma)+V*Kr*(Rd-Gamma))^2+(V*KPsi*(Psid-Psi)*cos(Gamma))^2));
+Phi_RC = atan((V*KPsi*(Psid-Psi)*cos(Gamma))/(g*cos(Gamma)+V*Kr*(Rd-Gamma)));
+
+dy(1) = (T_RC - T)/tauT;
+dy(2) = (L_RC-L)/tauL;
+dy(3) = (Phi_RC-Phi)/tauPhi;
+
+dy(4) = (T-Kd*V*V)/M - g*sin(Gamma);
+dy(5) = L*cos(Phi)/M/V - g*cos(Gamma)/V;
+dy(6) = L*sin(Phi)/M/V/cos(Gamma);
+dy(7) = -Km*T;
