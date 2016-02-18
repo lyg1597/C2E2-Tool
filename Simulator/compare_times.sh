@@ -11,6 +11,7 @@ if [ $MAKE -eq 1 ]; then
   make -C odeint
 fi
 
+
 #Compare execution times
 for mdl in ${systems[@]}; do
   c_path=capd/$mdl
