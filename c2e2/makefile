@@ -17,6 +17,8 @@ CPP_SRCS += \
 ./simuverif.tab.c \
 ./lex.yy.c \
 ./Annotation.cpp \
+./RepPoint.cpp \
+./CoverStack.cpp \
 ./Checker.cpp \
 ./InitialSet.cpp \
 ./main.cpp \
@@ -32,6 +34,8 @@ CPP_SRCS += \
 
 OBJS += \
 ./Annotation.o \
+./RepPoint.o \
+./CoverStack.o \
 ./Checker.o \
 ./InitialSet.o \
 ./main.o \
@@ -48,6 +52,8 @@ CPP_DEPS += \
 ./y.tab.d \
 ./lex.yy.d \
 ./Annotation.d \
+./RepPoint.d \
+./CoverStack.d \
 ./Checker.d \
 ./InitialSet.d \
 ./main.d \
@@ -75,7 +81,6 @@ Annotation.o: ./Annotation.cpp ./Annotation.h
 	@echo 'Finished building: $<'
 	@echo ' '
 
-
 Checker.o: ./Checker.cpp ./Checker.h
 	$(CXX) -lglpk -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"Checker.d" -MT"Checker.d" -o"Checker.o" "$<"
 	@echo 'Finished building: $<'
@@ -83,6 +88,16 @@ Checker.o: ./Checker.cpp ./Checker.h
 
 InitialSet.o: ./InitialSet.cpp ./InitialSet.h
 	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"InitialSet.d" -MT"InitialSet.d" -o"InitialSet.o" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+RepPoint.o: ./RepPoint.cpp ./RepPoint.o
+	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"RepPoint.d" -MT"RepPoint.d" -o"RepPoint.o" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+CoverStack.o: ./CoverStack.cpp ./CoverStack.o
+	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"CoverStack.d" -MT"CoverStack.d" -o"CoverStack.o" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

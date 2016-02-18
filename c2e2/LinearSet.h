@@ -12,6 +12,8 @@
 #include<cstdlib>
 #include"Point.h"
 #include"InitialSet.h"
+#include"CoverStack.h"
+
 using namespace std;
 
 class LinearSet {
@@ -42,6 +44,7 @@ public:
 	double getMax(int dimID);
 	double getMin(int dimID);
 	class InitialSet* getCover(double* deltaArray);
+	class CoverStack* getCoverStack(double *deltaArray, int mode, int refineTime);
 
 };
 

@@ -14,6 +14,10 @@
 #include "Annotation.h"
 #include "InitialSet.h"
 #include "LinearSet.h"
+#include "CoverStack.h"
+#include "RepPoint.h"
+
+
 using namespace std;
 
 class ReachTube{
@@ -59,7 +63,7 @@ public:
 	int checkIntersection(int mode, class Point* currPoint, double* deltaArray);
 	double getMinTime(int mode, class Point* currPoint, double* deltaArray);
 	double getMaxTime(int mode, class Point* currPoint, double* deltaArray);
-
+	int getNextSetStack(class CoverStack* ItrStack, class RepPoint* parentRepPoint);
 
 };
 

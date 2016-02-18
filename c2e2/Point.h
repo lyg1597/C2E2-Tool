@@ -17,7 +17,9 @@ public:
 	Point();
 	Point(int dim);
 	Point(int dim, double* coArray);
-	virtual ~Point();
+	Point(const class Point &obj);
+	Point & operator= (const class Point & other);
+	~Point();
 
 	void setDimension(int dim);
 	void setCoordinates(double* coArray);
