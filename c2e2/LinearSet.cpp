@@ -15,23 +15,11 @@ using namespace std;
 
 LinearSet::LinearSet() {
 	// TODO Auto-generated constructor stub
-	exceptPoints=0;
-
 }
 
 LinearSet::~LinearSet() {
 	// TODO Auto-generated destructor stub
 }
-
-void LinearSet::setExceptPoints(int p){
-	exceptPoints = p;
-}
-	
-
-int LinearSet::getExceptPoints(){
-	return exceptPoints;
-}
-
 
 void LinearSet::setDimensions(int dim){
 	dimensions = dim;
@@ -163,14 +151,16 @@ int LinearSet::isInternal(class Point* RefPoint){
 
 }
 
-int LinearSet::hasIntersection(class Point* RefPoint, double delta){
+int LinearSet::hasIntersection(class Point* RefPoint, double* deltaArray){
 
 	int dim, numEq;
 	dim = dimensions;
 	numEq = numberOfEquations;
-
+	double delta;
 	glp_prob* feas;
 
+	cout<<numberOfEquations<<endl;
+	cout<<dimensions<<endl;
 	feas = glp_create_prob();
 
 	int* irow, *icol;
@@ -193,20 +183,21 @@ int LinearSet::hasIntersection(class Point* RefPoint, double delta){
 
 	int i,j,k;
 
-	for(i=1;i<=dim;i++){
-
+	for(i=1;i<=dim;i++){	
+		delta = deltaArray[i-1];
 		if(RefPoint->getDimension() == dimensions){
 			//cout << " Same dimensions -- " << PtL->getCoordiate(i-1) << " and " << PtU->getCoordiate(i-1) << endl;
+			
 			glp_set_col_bnds(feas,i,GLP_DB,RefPoint->getCoordiate(i-1)-delta,RefPoint->getCoordiate(i-1)+delta);
 		}
 		if(RefPoint->getDimension() == dimensions+1){
 //			cout << " Not same dimensions -- " << PtL->getCoordiate(i) << " and " << PtU->getCoordiate(i) << endl;
+
 			glp_set_col_bnds(feas,i,GLP_DB,RefPoint->getCoordiate(i)-delta,RefPoint->getCoordiate(i)+delta);
 		}
 
 
-		// cout << " Same dimensions -- " << RefPoint->getCoordiate(i-1)-delta << " and " << RefPoint->getCoordiate(i-1)+delta << endl;
-		// glp_set_col_bnds(feas,i,GLP_DB,RefPoint->getCoordiate(i-1)-delta,RefPoint->getCoordiate(i-1)+delta);
+	
 	}
 	for(i=1;i<=numEq;i++){
 		glp_set_row_bnds(feas,i,GLP_UP,-10000,getBElement(i-1));
@@ -458,12 +449,12 @@ double LinearSet::getMin(int dimID){
 	}
 }
 
-class InitialSet* LinearSet::getCover(double delta){
-	// return NULL;
-
+class InitialSet* LinearSet::getCover(double* deltaArray){
+	
 	// Logic is the following - partition the region with delta
 	// and then check is intersection for every delta;
 
+	
 	class InitialSet* prevDimIter;
 	class InitialSet* currDimIter;
 	class InitialSet* tempDimIter;
@@ -475,60 +466,30 @@ class InitialSet* LinearSet::getCover(double delta){
 	double dimMaxVal, dimMinVal;
 	double midVal, refVal;
 	double subDimIterator;
-
-	#ifdef DEBUG
-	cout<<"the delta value is "<<delta<<endl;
-	#endif
-
+	double delta;
+	
 	for(dimIterator = 0; dimIterator < dimensions; dimIterator++){
-		cout << " current dimension is " << dimIterator << endl;
+		delta = deltaArray[dimIterator];
 		if(dimIterator == 0){
-			// create the new initial set, define the logic for partitioning
-			// push all of those into the currDimIter
-			// after the else, put prevDimIter = currDimIter;
-
 			currDimIter = new InitialSet();
 			partitionPoint = new Point(dimensions);
 			dimMaxVal = getMax(dimIterator);
 			dimMinVal = getMin(dimIterator);
 
-			midVal = 0.5*(dimMaxVal + dimMinVal);
 
-			// partitionPoint->setCoordinate(0,0);
-			partitionPoint->setCoordinate(dimIterator,midVal);
+			refVal = dimMinVal+delta;
+			partitionPoint->setCoordinate(dimIterator,refVal);
 			currDimIter->add(partitionPoint);
-
-			// Logic for traversing higher and lower on the dimension;
-			
-			refVal = midVal;
-
-			#ifdef DEBUG
-
-			double difference = dimMaxVal-dimMinVal;
-			cout<< "the difference in" << dimIterator << " is "<< difference<<endl;
-
-			#endif
-
-			while(refVal + delta < dimMaxVal){
-				refVal = refVal + delta + 0.9*delta;
-				partitionPoint = new Point(dimensions);
-				// partitionPoint->setCoordinate(0,0);
+			refVal = refVal + 2*delta;
+			while(refVal<dimMaxVal){
+				partitionPoint = new Point (dimensions);
 				partitionPoint->setCoordinate(dimIterator,refVal);
 				currDimIter->add(partitionPoint);
-			}
-
-			refVal = midVal;
-			while(refVal - delta > dimMinVal){
-				refVal = refVal - delta - 0.9*delta;
-				partitionPoint = new Point(dimensions);
-				// partitionPoint->setCoordinate(0,0);
-				partitionPoint->setCoordinate(dimIterator,refVal);
-				currDimIter->add(partitionPoint);
+				refVal = refVal + 2*delta;
 			}
 
 		}
 		else{
-
 			currDimIter = new InitialSet();
 			tempDimIter = prevDimIter;
 			dimMaxVal = getMax(dimIterator);
@@ -537,7 +498,7 @@ class InitialSet* LinearSet::getCover(double delta){
 			#ifdef DEBUG
 
 			double difference = dimMaxVal-dimMinVal;
-			cout<< "the difference in " << dimIterator << " is "<< difference<<endl;
+			//cout<< "the difference in " << dimIterator << " is "<< difference<<endl;
 
 			#endif
 
@@ -550,76 +511,83 @@ class InitialSet* LinearSet::getCover(double delta){
 					partitionPoint->setCoordinate(subDimIterator,referencePoint->getCoordiate(subDimIterator));
 				}
 
-				partitionPoint->setCoordinate(dimIterator,midVal);
+				refVal = dimMinVal+delta;
+				partitionPoint->setCoordinate(dimIterator,refVal);
 				currDimIter->add(partitionPoint);
 
-				refVal = midVal;
 
-				while(refVal + delta < dimMaxVal){
-					refVal = refVal + delta + 0.9*delta;
+				refVal = refVal + 2*delta;
+				while(refVal < dimMaxVal){
+					
 					partitionPoint = new Point(dimensions);
 					for(subDimIterator = 0; subDimIterator < dimIterator; subDimIterator++){
 						partitionPoint->setCoordinate(subDimIterator,referencePoint->getCoordiate(subDimIterator));
 					}
 					partitionPoint->setCoordinate(dimIterator, refVal);
 					currDimIter->add(partitionPoint);
+					refVal = refVal + 2*delta;
 				}
 
-				refVal = midVal;
 
-				while(refVal - delta > dimMinVal){
-					refVal = refVal - delta - 0.9*delta;
-					partitionPoint = new Point(dimensions);
-					for(subDimIterator = 0; subDimIterator < dimIterator; subDimIterator++){
-						partitionPoint->setCoordinate(subDimIterator,referencePoint->getCoordiate(subDimIterator));
-					}
-					partitionPoint->setCoordinate(dimIterator, refVal);
-					currDimIter->add(partitionPoint);
-				}
 
 				tempDimIter = tempDimIter->getNext();
 			}
 
 		}
-		#ifdef DEBUG
-		cout<< "number of points in " << dimIterator << " is "<< currDimIter->getLength() <<endl;
-		#endif
-		int numpoints = currDimIter->getLength();
-		if (exceptPoints!=0 && numpoints > exceptPoints){
-			InitialSet* errorInitSet = new InitialSet();
-			errorInitSet->setMode(-999);
-			cout << "Too much points, break" << endl;
-			return errorInitSet;
-		}
+
 		prevDimIter = currDimIter;
 	}
 
-	#ifdef DEBUG
-	cout << "start to check intersection "<<endl;
-	#endif
+
 	class InitialSet* finalInitSet = new InitialSet();
 	class Point* iteratorPoint;
 	class Point* acceptorPoint;
 	int finalDimIterator;
+
+
 	tempDimIter = currDimIter;
+	
 	while(tempDimIter != NULL){
 		iteratorPoint = tempDimIter->getState();
-		if( hasIntersection(iteratorPoint,delta) == 1){
+		//if( hasIntersection(iteratorPoint,deltaArray) ==1){
 			acceptorPoint = new Point(dimensions+1);
 			acceptorPoint->setCoordinate(0,0);
 			for(finalDimIterator = 1;finalDimIterator <= dimensions; finalDimIterator++){
 				acceptorPoint->setCoordinate(finalDimIterator,iteratorPoint->getCoordiate(finalDimIterator-1));
 			}
 			finalInitSet->add(acceptorPoint);
-		}
+		//}
 		tempDimIter = tempDimIter->getNext();
 	}
 
-	cout << "check intersection done" <<endl;
 	return finalInitSet;
-
-	// return currDimIter;
 
 
 }
 
+class CoverStack* LinearSet::getCoverStack(double *deltaArray, int mode, int refineTime){
+	//only work for non-convex set
+	class CoverStack* initCover = new CoverStack();
+	class RepPoint* initRepPoint = new RepPoint();
+	class Point* initPoint = new Point(dimensions+1);
+	initPoint->setCoordinate(0,0);
+	int i;
+	for(i=1;i<=dimensions;i++)
+		initPoint->setCoordinate(i,getMin(i-1)+deltaArray[i-1]);
+	initRepPoint->setState(initPoint);
+	delete initPoint;
+	initRepPoint->setDimension(dimensions);
+	initRepPoint->setMode(mode);
+	initRepPoint->setDeltaArray(deltaArray);
+	initRepPoint->setRefineTime(refineTime);
+	initCover->push(initRepPoint);
+	//initRepPoint->print();
+	return initCover;
+
+
+
+
+
+
+
+}
