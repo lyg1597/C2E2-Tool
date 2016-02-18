@@ -1,6 +1,7 @@
 #!/bin/sh
 echo Compiling CAPD files to generate Simulator
-g++ -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`
+#g++ -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`
+g++ -w -O2 -std=c++11 simulator.cpp -o simu 
 g++ -w -O2 guardGen.cpp -o guards `../capd/bin/capd-config --cflags --libs`
 g++ -w -O2 Invcheck.cpp -o invariants `../capd/bin/capd-config --cflags --libs`
 echo Executables from CAPD generated, Verification process starts

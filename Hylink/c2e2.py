@@ -12,6 +12,9 @@ import numpy as np
 import numpy.linalg as la
 from propDialog import *
 
+#FIXME
+from genSimulator import *
+
 verifLog = logging.getLogger('c2e2VerificationLog') 
 
 #verifLog.setLevel()
@@ -196,7 +199,19 @@ class Main(gtk.Window):
     #print "After guards printed"
     dupHybridRep.printInvariants()
     #print "before converting simulator"
-    dupHybridRep.convertToCAPD("simulator")
+
+    #FIXME remove this in the future
+    #I also modified DeleteEX.sh to stop removing simulator.cpp
+    #dupHybridRep.convertToCAPD("simulator")
+
+    #FIXME generates boost.odeint simulator
+    #Below are a set of options for ODEINT simulator
+    #step_type: adaptive, constant
+    st = 'constant'
+    path = '../wd/simulator.cpp'
+    #path = '../Simulator/autogen/odeint/simulator.cpp'
+
+    gen_simulator(path, dupHybridRep, step_type=st)
 
     #END OF THE CHANGES HERE
     
@@ -251,6 +266,9 @@ class Main(gtk.Window):
       verifLog.info(' File opened ' + fileName)
       self.loadFileChoosen(fileName)
       self.fileOpened=True
+
+    #FIXME
+
     os.system("./DeleteEX.sh")
     openDialog.destroy()
     
@@ -1009,10 +1027,14 @@ class PropertiesFrame(gtk.Frame):
 
       if self.firstTimeVerification == True:
         
+        #FIXME
 
-        arguments1 = ['mv', 'guardGen.cpp', 'Invcheck.cpp', 'simulator.cpp', '../wd/']
+        #arguments1 = ['mv', 'guardGen.cpp', 'Invcheck.cpp', 'simulator.cpp', '../wd/']
+        arguments1 = ['mv', 'guardGen.cpp', 'Invcheck.cpp', '../wd/']
         subp1 = subprocess.Popen(arguments1)
         subp1.wait()
+
+
         '''
         while subp1.poll() == None:
           while gtk.events_pending():
@@ -1021,6 +1043,8 @@ class PropertiesFrame(gtk.Frame):
             if not subp1.poll()==None:
               break
         '''
+
+        #FIXME
 
         arguments = ['sh', './compileAndExecute']
         subp = subprocess.Popen(arguments,cwd="../wd/")
