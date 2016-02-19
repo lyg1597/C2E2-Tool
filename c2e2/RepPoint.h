@@ -17,6 +17,7 @@ private:
 	double* deltaArray;
 	class Point* parentState;
 	double* parentDeltaArray;
+	int parentMode;
 	int dimension;
 	int refineTime;
 
@@ -33,6 +34,7 @@ public:
 	void setParentDeltaArray(double* value);
 	void setDimension(int d);
 	void setRefineTime(int t);
+	void setParentMode(int m);
 
 	
 	class Point* getState();
@@ -42,6 +44,7 @@ public:
 	double* getParentDeltaArray();
 	int getDimension();
 	int getRefineTime();
+	int getParentMode();
 	
 	void print();
 };

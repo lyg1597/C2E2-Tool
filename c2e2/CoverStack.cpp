@@ -47,17 +47,20 @@ void CoverStack::refine(class RepPoint *P, int dimindex){
 	double min[dim];
 	double* deltaArray;
 	class Point* tempPoint;
+	int initMode;
 	int reft = P->getRefineTime();
 	if (P->getParentState()!=NULL){
 		cout<<"===========Trace back to init mode, refine, Push two rep point to Stack!==============="<<endl;
 		deltaArray = P->getParentDeltaArray();
 		tempPoint = P->getParentState();
+		initMode = P->getParentMode();
 	}
 
 	else{
 		cout<<"======refine happen in init mode, using it's own state, Push two rep point to Stack!===="<<endl;
 		deltaArray = P->getDeltaArray();
 		tempPoint = P->getState();
+		initMode = P->getMode();
 	}
 
 	for(int i=0; i<dim; i++){
@@ -75,7 +78,7 @@ void CoverStack::refine(class RepPoint *P, int dimindex){
 	RP1->setState(P1);
 	delete P1;
 	RP1->setDimension(dim);
-	RP1->setMode(1);
+	RP1->setMode(initMode);
 	RP1->setDeltaArray(deltaArray);
 	RP1->setRefineTime(reft+1);
 	elems.push(RP1);
@@ -88,7 +91,7 @@ void CoverStack::refine(class RepPoint *P, int dimindex){
 	RP2->setState(P2);
 	delete P2;
 	RP2->setDimension(dim);
-	RP2->setMode(1);
+	RP2->setMode(initMode);
 	RP2->setDeltaArray(deltaArray);
 	RP2->setRefineTime(reft+1);
 	elems.push(RP2);

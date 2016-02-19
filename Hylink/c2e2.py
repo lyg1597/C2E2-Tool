@@ -438,6 +438,7 @@ class ParameterFrame(gtk.Frame):
     Return: none
   """
   def __init__(self,paramData,propertyList,listView,rendererStatus,hybridRep):
+    self.prevSimuIndex =0
     gtk.Frame.__init__(self,"Parameters")
     self.paramData=paramData
     self.propertyList=propertyList
@@ -445,8 +446,7 @@ class ParameterFrame(gtk.Frame):
     self.rendererStatus=rendererStatus
     self.initParameterFrame()
     self.hybridRep = hybridRep
-    self.prevSimuIndex = 0
-    #self.LinearModel = 0
+    
     
   """
     initParameterFrame
@@ -1093,18 +1093,12 @@ class PropertiesFrame(gtk.Frame):
     if btn.get_label()=="Verify" and self.editListLen > 0:
 
       self.showGenerationMessage()
-#      while gtk.events_pending():
-#        gtk.main_iteration()
-
-      
-        
-     
 
       os.system("./DeleteRE.sh")
       
-      self.enableAllButtons()
-#      while gtk.events_pending():
-#        gtk.main_iteration()
+      #self.enableAllButtons()
+      #while gtk.events_pending():
+      #  gtk.main_iteration()
 
       self.enableWidgets(False)
       for prop in self.propertyList:
@@ -1160,7 +1154,7 @@ class PropertiesFrame(gtk.Frame):
           thoriz = self.paramData[2][1]
           tstep = self.paramData[1][1]
           global Global_Refine
-          delta = Global_Refine
+          delta = str(Global_Refine)
           prop.paramData[0]=float(delta)
           prop.paramData[1]=float(tstep)
           prop.paramData[2]=float(thoriz)
@@ -1319,15 +1313,7 @@ class PropertiesFrame(gtk.Frame):
                   c2e2String+= "gamma=\"0.0\"\n"
                   i+=1   
         
-      
-#          while i < len(self.modeList) :
-#            c2e2String+= "annotation-mode=\""+str(i+1)+"\"\n"
-#            c2e2String+= "annotation-type=\"contraction\"\n"
-#            c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
-#            c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-#            c2e2String+= "k=\"1.1\"\n"
-#            c2e2String+= "gamma=\"0.0\"\n"
-#            i+=1
+
             
           c2e2String+= "visualize all to ReachSet"+prop.name+"\n"
           

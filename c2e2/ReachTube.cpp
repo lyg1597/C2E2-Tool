@@ -763,17 +763,20 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 	class RepPoint* tempRepPoint;
 	class Point* tempPoint;
 	int refinetime = parentRepPoint->getRefineTime();
+	int initMode;
 
 
 
 	if (parentRepPoint->getParentState()!=NULL){
 		parentPoint = parentRepPoint->getParentState();
 		parentDeltaArray = parentRepPoint->getParentDeltaArray();
+		initMode = parentRepPoint->getParentMode();
 	}
 
 	else{
 		parentPoint = parentRepPoint->getState();
 		parentDeltaArray = parentRepPoint->getDeltaArray();
+		initMode = parentRepPoint->getMode();
 	}
 
 	double deltaArray[dimensions];
@@ -864,6 +867,7 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 				tempRepPoint->setDeltaArray(deltaArray);
 				tempRepPoint->setParentState(parentPoint);
 				tempRepPoint->setParentDeltaArray(parentDeltaArray);
+				tempRepPoint->setParentMode(initMode);
 				ItrStack->push(tempRepPoint);
 
 				cout<<"====Find next region Information, recalculating deltaArray, generate one RepPoint, Push to stack===="<<endl;

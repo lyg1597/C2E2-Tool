@@ -17,6 +17,7 @@ RepPoint::RepPoint() {
 	mode = -1;
 	parentState = NULL;
 	parentDeltaArray = NULL;
+	parentMode = 0;
 	dimension = -1;
 	refineTime = 0;
 
@@ -34,6 +35,7 @@ RepPoint::RepPoint(const class RepPoint &obj){
 	dimension = obj.dimension;
 	mode = obj.mode;
 	refineTime = obj.refineTime;
+	parentMode = obj.parentMode;
 	int i;
 	deltaArray = new double[dimension];
 	for(i=0;i<dimension;i++)
@@ -63,6 +65,7 @@ RepPoint & RepPoint :: operator= (const class RepPoint & obj){
 		dimension = obj.dimension;
 		mode = obj.mode;
 		refineTime = obj.refineTime;
+		parentMode = obj.parentMode;
 		int i;
 		deltaArray = new double[dimension];
 		for(i=0;i<dimension;i++)
@@ -130,6 +133,10 @@ void RepPoint::setParentDeltaArray(double* value){
 		parentDeltaArray[i] = value[i];
 }
 
+void RepPoint::setParentMode(int m){
+	parentMode = m;
+}
+
 void RepPoint::setDimension(int d){
 	dimension = d;
 }
@@ -158,6 +165,10 @@ class Point* RepPoint::getParentState(){
 
 double* RepPoint::getParentDeltaArray(){
 	return parentDeltaArray;
+}
+
+int RepPoint::getParentMode(){
+	return parentMode;
 }
 
 int RepPoint::getDimension(){
