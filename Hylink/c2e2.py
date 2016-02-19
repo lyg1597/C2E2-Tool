@@ -27,6 +27,8 @@ verifLog.addHandler(F1)
 
 verifLog.info('Launching the logger')
 Global_Linear = 0
+Global_Refine = 0
+Global_Simulation =0
 #verifLog.basicConfig(filename='../wd/.c2e2verification.log', level=verifLog.DEBUG, format='%(asctime)s %(message)s')  
 
 
@@ -101,10 +103,14 @@ class Main(gtk.Window):
     Return: none
   """
   def loadFileChoosen(self,fileChoosen):
+    os.system("./DeleteEX.sh")
     if self.fileOpened:
       self.modelNotebook.destroy()
     global Global_Linear
     Global_Linear = 0
+    global Global_Simulation
+    Global_Simulation = 0
+
     fileName,fileExtension=os.path.splitext(os.path.basename(fileChoosen))
     self.set_title("C2E2: "+fileName)
     propList=[]
@@ -196,25 +202,13 @@ class Main(gtk.Window):
     dupHybridRep = hybridRep
     verifLog.info('Model is \n' + hybridRep.convertToXML([]))
     dupHybridRep.printGuardsResets()
-    #print "After guards printed"
     dupHybridRep.printInvariants()
-    #print "before converting simulator"
-
-    #FIXME remove this in the future
-    #I also modified DeleteEX.sh to stop removing simulator.cpp
     #dupHybridRep.convertToCAPD("simulator")
-
-    #FIXME generates boost.odeint simulator
-    #Below are a set of options for ODEINT simulator
-    #step_type: adaptive, constant
+    #generate default Simulator
     st = 'constant'
-    path = '../wd/simulator.cpp'
-    #path = '../Simulator/autogen/odeint/simulator.cpp'
-
+    path = '../Hylink/simulator.cpp'
     gen_simulator(path, dupHybridRep, step_type=st)
 
-    #END OF THE CHANGES HERE
-    
     parseTree,vList,mList=hybridRep.display_system("System")
     
     if typeInput == 1 :
@@ -223,6 +217,15 @@ class Main(gtk.Window):
         self.modelNotebook=ModelNotebook(parseTree,hybridRep,propList,vList,mList,None)
 
     #self.ModelNotebook.propertiesFrame.disableAllButtons()
+    arguments1 = ['mv', 'guardGen.cpp', 'Invcheck.cpp', 'simulator.cpp', '../wd/']
+    subp1 = subprocess.Popen(arguments1)
+    subp1.wait()
+
+  
+    arguments = ['sh', './compileAndExecute', "0"]
+    subp = subprocess.Popen(arguments,cwd="../wd/")
+    subp.wait()
+
 
     self.fileLabel.hide()
     self.windowVBox.pack_start(self.modelNotebook)
@@ -269,7 +272,7 @@ class Main(gtk.Window):
 
     #FIXME
 
-    os.system("./DeleteEX.sh")
+   
     openDialog.destroy()
     
     
@@ -362,7 +365,7 @@ class ModelNotebook(gtk.Notebook):
                                          self.propertyListLen,self.editListLen,self.varList,
                                          self.modeList,self.paramData,self.hybridRep,self.verifyingPlotting)
     self.parameterFrame=ParameterFrame(self.paramData,self.propertyList,self.propertiesFrame.listView,
-                                       self.propertiesFrame.rendererStatus)
+                                       self.propertiesFrame.rendererStatus,self.hybridRep)
 
     self.infoVBox=gtk.VBox(False,0)
     self.infoVBox.pack_start(self.parameterFrame,False,False,0)
@@ -434,14 +437,16 @@ class ParameterFrame(gtk.Frame):
     Outputs: none
     Return: none
   """
-  def __init__(self,paramData,propertyList,listView,rendererStatus):
+  def __init__(self,paramData,propertyList,listView,rendererStatus,hybridRep):
     gtk.Frame.__init__(self,"Parameters")
     self.paramData=paramData
     self.propertyList=propertyList
     self.listView=listView
     self.rendererStatus=rendererStatus
     self.initParameterFrame()
-    self.LinearModel = 0
+    self.hybridRep = hybridRep
+    self.prevSimuIndex = 0
+    #self.LinearModel = 0
     
   """
     initParameterFrame
@@ -453,7 +458,7 @@ class ParameterFrame(gtk.Frame):
   def initParameterFrame(self):
     self.paramVBox=gtk.VBox(False,0)
 
-    for i in xrange(len(self.paramData)):
+    for i in xrange(1,len(self.paramData)):
       paramHBox=gtk.HBox(False,0)
       label=gtk.Label(self.paramData[i][0])
       label.set_alignment(0,0)
@@ -470,21 +475,88 @@ class ParameterFrame(gtk.Frame):
       paramHBox.pack_start(checkImage,False,False,5)
       entry.connect("changed",self.entryCallback,i,checkImage)
       self.paramVBox.pack_start(paramHBox,True,True,0)
+
+    paramHBox1 = gtk.HBox(False,0)
     linearbutton = gtk.CheckButton("Linear Model")
     linearbutton.connect("toggled", self.linarcallback, "Linear Model")
-    self.paramVBox.pack_start(linearbutton,True,True,2)
+    paramHBox1.pack_start(linearbutton,True,True,2)
+
+    SimulationButton = gtk.CheckButton("Simulation")
+    SimulationButton.connect("toggled", self.simulationcallback, "Simulation")
+    paramHBox1.pack_start(SimulationButton,True,True,2)
+
+    self.paramVBox.pack_start(paramHBox1,True,True,0)
+
+    combobox = gtk.combo_box_new_text()
+    combobox.connect('changed', self.changed_cb)
+    self.paramVBox.pack_start(combobox,True,True,2)
+    combobox.append_text('ODEINT:FIXED')
+    combobox.append_text('ODEINT:ADAPTIVE')
+    combobox.append_text('CAPD')
+    combobox.set_active(0)
+
+    refinecombobox = gtk.combo_box_new_text()
+    refinecombobox.connect("changed", self.changed_refine_cb)
+    self.paramVBox.pack_start(refinecombobox,True,True,2)
+    refinecombobox.append_text('DEFAULT REFINE STRATEGY')
+    refinecombobox.append_text('USER DEFINE STRATEGY')
+    refinecombobox.set_active(0)
+
+
     #linearbutton.show()
 
     self.add(self.paramVBox)
 
+
+  def changed_refine_cb(self,combobox):
+    index = combobox.get_active()
+    global Global_Refine
+    Global_Refine = index
+
+
+  def changed_cb(self,combobox):
+    index = combobox.get_active()
+    if index != self.prevSimuIndex:
+      self.prevSimuIndex = index
+      if index == 2:
+        self.hybridRep.convertToCAPD("simulator")
+        arguments1 = ['mv','simulator.cpp', '../wd/']
+        subp1 = subprocess.Popen(arguments1)
+        subp1.wait()
+        arguments = ['sh', './compileSimulator', "2"]
+        subp = subprocess.Popen(arguments,cwd="../wd/")
+        subp.wait()
+      if index == 0:
+        st = 'constant'
+        path = '../Hylink/simulator.cpp'
+        gen_simulator(path, self.hybridRep, step_type=st)
+        arguments1 = ['mv','simulator.cpp', '../wd/']
+        subp1 = subprocess.Popen(arguments1)
+        subp1.wait()
+        arguments = ['sh', './compileSimulator', "0"]
+        subp = subprocess.Popen(arguments,cwd="../wd/")
+        subp.wait()
+
+      if index == 1:
+        st = 'adaptive'
+        path = '../Hylink/simulator.cpp'
+        gen_simulator(path, self.hybridRep, step_type=st)
+        arguments1 = ['mv','simulator.cpp', '../wd/']
+        subp1 = subprocess.Popen(arguments1)
+        subp1.wait()
+        arguments = ['sh', './compileSimulator', "1"]
+        subp = subprocess.Popen(arguments,cwd="../wd/")
+        subp.wait()
+
+
   def linarcallback(self, widget, data):
-    #self.LinearModel = 1-self.LinearModel
     global Global_Linear
     Global_Linear = 1- Global_Linear
-    print(Global_Linear)
-    #print(self.LinearModel)
 
-    #print(widget)
+  def simulationcallback(self, widget, data):
+    global Global_Simulation
+    Global_Simulation = 1- Global_Simulation
+
 
   """
     entryCallback
@@ -612,7 +684,6 @@ class PropertiesFrame(gtk.Frame):
     self.hybridRep=hybridRep
     self.subp=None
     self.abortedVerifying=False
-    self.firstTimeVerification=True
     self.verifyingPlotting=verifyingPlotting
     self.initPropertiesFrame()
 
@@ -1025,40 +1096,9 @@ class PropertiesFrame(gtk.Frame):
 #      while gtk.events_pending():
 #        gtk.main_iteration()
 
-      if self.firstTimeVerification == True:
+      
         
-        #FIXME
-
-        #arguments1 = ['mv', 'guardGen.cpp', 'Invcheck.cpp', 'simulator.cpp', '../wd/']
-        arguments1 = ['mv', 'guardGen.cpp', 'Invcheck.cpp', '../wd/']
-        subp1 = subprocess.Popen(arguments1)
-        subp1.wait()
-
-
-        '''
-        while subp1.poll() == None:
-          while gtk.events_pending():
-            gtk.main_iteration()
-            time.sleep(0.2)
-            if not subp1.poll()==None:
-              break
-        '''
-
-        #FIXME
-
-        arguments = ['sh', './compileAndExecute']
-        subp = subprocess.Popen(arguments,cwd="../wd/")
-        subp.wait()
-        '''
-        while subp.poll() == None:
-          while gtk.events_pending():
-            gtk.main_iteration()
-            time.sleep(0.2)
-            if not subp.poll()==None:
-              break
-        '''
-        
-        self.firstTimeVerification = False
+     
 
       os.system("./DeleteRE.sh")
       
@@ -1119,7 +1159,8 @@ class PropertiesFrame(gtk.Frame):
           abserr = "0.00001"
           thoriz = self.paramData[2][1]
           tstep = self.paramData[1][1]
-          delta =self.paramData[0][1]
+          global Global_Refine
+          delta = Global_Refine
           prop.paramData[0]=float(delta)
           prop.paramData[1]=float(tstep)
           prop.paramData[2]=float(thoriz)
