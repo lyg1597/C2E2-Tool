@@ -281,46 +281,55 @@ int main(int argc, char* argv[]) {
 		simulationTube->setMode(modeSimulated);
 		simulationTube->parseInvariantTube("SimuOutput");
 
-		//Step2. Set up python value for Non-Linear bloating, bloating with python helper function
-		if (linear_from_parser[modeSimulated-1]==0){
-			//cout<<"non-linear model"<<endl;
-			double CT_step = KConstArray[modeSimulated-1];
-			int modeforpython = simulationTube->getMode();
-
-		    strcpy (input_buff, "delta = [");
-
-  			for (int i = 0; i< dimensions; i++){
-    			char temp [8];
-    			sprintf(temp,"%f", refDeltaArray[i]);
-    			strcat(input_buff,temp);
-    			if (i<dimensions-1)
-        			strcat(input_buff,",");
-  			}
-  			strcat(input_buff,"]");
-  			//cout<<input_buff<<endl;
-		    PyRun_SimpleString(input_buff);
-		    sprintf(input_buff2,"CT_step = int(%f)", CT_step);
-		    PyRun_SimpleString(input_buff2);
-		    sprintf(input_buff3,"state = '%d'", modeforpython);
-		    PyRun_SimpleString(input_buff3);
-		    sprintf(input_buff4,"Is_linear = int(%f)",linear_from_parser[modeSimulated-1]);
-		    PyRun_SimpleString(input_buff4);
-		  
-		    fid = fopen(filename, "r");
-		    PyRun_SimpleFile(fid, filename);
-		    fclose(fid);
+		if (simulation_flag){
+			simulationTube->printReachTube("reachtube.dat",0);
 		}
 
-		// Bloating for Linear Model
 		else{
-			//cout<<"linear model"<<endl;
-		    class ReachTube* bloatedTube;
-			// Obtaining the bloating of the tube
-			bloatedTube = simulationTube->bloatReachTube(refDeltaArray,annotVerify);
-			// Printing the bloated tube;
-			bloatedTube->printReachTube("reachtube.dat",0);
-		}
 
+		//Step2. Set up python value for Non-Linear bloating, bloating with python helper function
+			if (linear_from_parser[modeSimulated-1]==0){
+				//cout<<"non-linear model"<<endl;
+				double CT_step = KConstArray[modeSimulated-1];
+				int modeforpython = simulationTube->getMode();
+
+			    strcpy (input_buff, "delta = [");
+
+	  			for (int i = 0; i< dimensions; i++){
+	    			char temp [8];
+	    			sprintf(temp,"%f", refDeltaArray[i]);
+	    			strcat(input_buff,temp);
+	    			if (i<dimensions-1)
+	        			strcat(input_buff,",");
+	  			}
+	  			strcat(input_buff,"]");
+	  			//cout<<input_buff<<endl;
+			    PyRun_SimpleString(input_buff);
+			    sprintf(input_buff2,"CT_step = int(%f)", CT_step);
+			    PyRun_SimpleString(input_buff2);
+			    sprintf(input_buff3,"state = '%d'", modeforpython);
+			    PyRun_SimpleString(input_buff3);
+			    sprintf(input_buff4,"Is_linear = int(%f)",linear_from_parser[modeSimulated-1]);
+			    PyRun_SimpleString(input_buff4);
+			  
+			    fid = fopen(filename, "r");
+			    PyRun_SimpleFile(fid, filename);
+			    fclose(fid);
+			}
+
+			// Bloating for Linear Model
+			else{
+				//cout<<"linear model"<<endl;
+			    class ReachTube* bloatedTube;
+				// Obtaining the bloating of the tube
+				bloatedTube = simulationTube->bloatReachTube(refDeltaArray,annotVerify);
+				// Printing the bloated tube;
+				bloatedTube->printReachTube("reachtube.dat",0);
+
+				delete bloatedTube;
+			}
+		}
+		delete simulationTube;
 
 		//Step3. Check invarant and guard
 		system("./invariants");
