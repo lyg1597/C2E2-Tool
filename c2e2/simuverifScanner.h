@@ -30,9 +30,11 @@ class FlexScanner : public yyFlexLexer {
 		int modes;
 		int initMode;
 		int curMode;
+		int refineVal;
+		int simuval;
 		double* initMin, *initMax, *forbMin, *forbMax;
 		double absoluteError, relativeError;
-		double deltaVal, tStep, tGlobal;
+		double  tStep, tGlobal;
 		double* kConst, *gamma;
 		int* islinear;
 		int typeAnnot;

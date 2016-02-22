@@ -1092,7 +1092,7 @@ class PropertiesFrame(gtk.Frame):
 
     if btn.get_label()=="Verify" and self.editListLen > 0:
 
-      self.showGenerationMessage()
+      #self.showGenerationMessage()
 
       os.system("./DeleteRE.sh")
       
@@ -1111,16 +1111,7 @@ class PropertiesFrame(gtk.Frame):
           verifLog.info(' Property - initial set - ' + prop.initialSetStr + ' - unsafe set - ' + prop.unsafeSetStr + ' - ')
           
           prop.reachSetPath=pathString
-          #writer1=open(pathString,"w")
-          #writer1.close()
-
-#          print("This is property 7")
-#          print(prop[7])
-#          print("This is property 9")
-#          print(prop[9])
-#          print("End of printing properties")
-          
-          
+ 
           # Here we will print the entire file where the file is automatically generated
           c2e2String = ""
           c2e2String+= "dimensions=\""+str(len(self.varList))+"\"\n"
@@ -1154,16 +1145,20 @@ class PropertiesFrame(gtk.Frame):
           thoriz = self.paramData[2][1]
           tstep = self.paramData[1][1]
           global Global_Refine
-          delta = str(Global_Refine)
+          refine = str(Global_Refine)
+          delta = "0"
           prop.paramData[0]=float(delta)
           prop.paramData[1]=float(tstep)
           prop.paramData[2]=float(thoriz)
           prop.paramData[3]=float(taylor)
-          c2e2String+= "delta=\""+delta+"\"\n"
+          c2e2String+= "refine=\""+refine+"\"\n"
           c2e2String+= "time-step=\""+tstep+"\"\n"
           c2e2String+= "abs-error=\""+abserr+"\"\n"
           c2e2String+= "rel-error=\""+relerr+"\"\n"
           c2e2String+= "time-horizon=\""+thoriz+"\"\n"
+          global Global_Simulation
+          c2e2String+= "simuflag = \""+str(Global_Simulation)+"\"\n"
+
           
           verifLog.info(' partiotion - ' + delta + ' - time-step - ' + tstep + ' - time-horizon - ' + thoriz + ' - ')
           
@@ -1359,16 +1354,11 @@ class PropertiesFrame(gtk.Frame):
               self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
               while gtk.events_pending():
                 gtk.main_iteration()
-              time.sleep(0.5) 
+              time.sleep(0.5)
+              if not self.subp.poll()==None:
+                break
 
-          #print c2e2String
-#              self.paramTable=gtk.Table(5,2,False)
-#    paramLabels=["Partitioning:","Time-step:","Absolute error:","Relative error:","Taylor model order:"]
-
-#          print prop[1] + " -- "
-#          print str(prop[2]) + " -- "
-#          print prop[3] + " -- "
-#          print prop[4] + " -- "
+    
           checkfilename = "../wd/ReachSet"+prop.name
 
           self.subp=None
