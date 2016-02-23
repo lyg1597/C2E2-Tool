@@ -49,7 +49,8 @@ using namespace std;
 int main(int argc, char* argv[]) {
 
 
-	clock_t begin = clock();
+	//clock_t begin = clock();
+	std::time_t start = std::time(NULL);
 
 	Parser parser;
 	parser.parse();
@@ -275,6 +276,9 @@ int main(int argc, char* argv[]) {
 		//Step1. Simulation
 		simVerify->Simulate(simulationPoint,modeSimulated);
 
+		//cout<<"Simulation Done! Stop running to check file"<<endl;
+		//sleep(5);
+
 		//Read simulation result
 		class ReachTube* simulationTube = new ReachTube();
 		simulationTube->setDimensions(dimensions);
@@ -331,9 +335,15 @@ int main(int argc, char* argv[]) {
 		}
 		delete simulationTube;
 
+		//cout<<"Bloating Done! Stop running to check file"<<endl;
+		//sleep(5);
+
 		//Step3. Check invarant and guard
 		system("./invariants");
 		system("./guards");
+
+		//cout<<"Inv && guard Done! Stop running to check file"<<endl;
+		//sleep(5);
 
 		//Step4. Check unsafe 
 		class ReachTube* invariantTube = new ReachTube();
@@ -419,6 +429,7 @@ int main(int argc, char* argv[]) {
 			for(ResultTubeLength=0;ResultTubeLength<resultTube.size();ResultTubeLength++){
 				InvTube = resultTube.at(0);
 				InvTube->printReachTube(visuFileName,1);
+				delete InvTube;
 			}
 
 			cout << " The system is unsafe \n";
@@ -427,9 +438,7 @@ int main(int argc, char* argv[]) {
 			resultStream << "-1" << endl;
 			resultStream.close();
 
-			clock_t end = clock();
-			double elapsed_sec = double(end-begin)/CLOCKS_PER_SEC;
-			cout << "Execution time "<<elapsed_sec<<endl;
+			std::cout << "Execution time: "<< std::difftime(std::time(NULL), start) << " s.\n";
 			exit(-1);
 
 		}
@@ -441,6 +450,7 @@ int main(int argc, char* argv[]) {
 	for(ResultTubeLength=0;ResultTubeLength<resultTube.size();ResultTubeLength++){
 		InvTube = resultTube.at(ResultTubeLength);
 		InvTube->printReachTube(visuFileName,1);
+		delete InvTube;
 	}
 
 	cout << "System is safe" << endl;
@@ -453,9 +463,8 @@ int main(int argc, char* argv[]) {
 	resultStream << numberRefinements << endl;
 	resultStream.close();
 	Py_Finalize(); //finalize Python session
-	clock_t end = clock();
-	double elapsed_sec = double(end-begin)/CLOCKS_PER_SEC;
-	cout << "Execution time "<<elapsed_sec<<endl;
+
+	std::cout << "Execution time: "<< std::difftime(std::time(NULL), start) << " s.\n";
 
 	exit(1);
 }
