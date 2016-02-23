@@ -426,8 +426,9 @@ int main(int argc, char* argv[]) {
 			delete curItrRepPoint;
 			class ReachTube* InvTube = NULL;
 			int ResultTubeLength = 0;
+			//cout<<resultTube.size()<<endl;
 			for(ResultTubeLength=0;ResultTubeLength<resultTube.size();ResultTubeLength++){
-				InvTube = resultTube.at(0);
+				InvTube = resultTube.at(ResultTubeLength);
 				InvTube->printReachTube(visuFileName,1);
 				delete InvTube;
 			}
