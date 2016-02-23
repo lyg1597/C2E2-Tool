@@ -1,0 +1,5 @@
+The input file needs to provide the initial conditions for the integrators:
+p - 0.6353
+lambda - 14.7
+pe - 0.5573
+i - 0.017
