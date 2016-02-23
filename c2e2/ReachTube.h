@@ -14,6 +14,10 @@
 #include "Annotation.h"
 #include "InitialSet.h"
 #include "LinearSet.h"
+#include "CoverStack.h"
+#include "RepPoint.h"
+
+
 using namespace std;
 
 class ReachTube{
@@ -43,7 +47,7 @@ public:
 	class Point* getLowerBound(int index);
 	void parseInvariantTube(char* filename);
 	class ReachTube* bloatReachTube(double bloatingFactor);
-	class ReachTube* bloatReachTube(double delta, class Annotation* currentAnnotation);
+	class ReachTube* bloatReachTube(double* deltaArray, class Annotation* currentAnnotation);
 	void parseGuardsTube(char* filename);
 	void printReachTube(char* filename, int flag);
 	int getGuardMode(int index);
@@ -55,11 +59,11 @@ public:
 	vector<double> MinCoordinate(int dimension);
 	int checkunsafe(double* forM, double* forB, int numofeq);
 	int checkunsafe_rest(double* forM, double* forB, int numofeq, int index);
-	class InitialSet* getNextSet(double delta, double timeStep, int exceptPoints);
-	int checkIntersection(int mode, class Point* currPoint, double delta);
-	double getMinTime(int mode, class Point* currPoint, double delta);
-	double getMaxTime(int mode, class Point* currPoint, double delta);
-
+	class InitialSet* getNextSet();
+	int checkIntersection(int mode, class Point* currPoint, double* deltaArray);
+	double getMinTime(int mode, class Point* currPoint, double* deltaArray);
+	double getMaxTime(int mode, class Point* currPoint, double* deltaArray);
+	int getNextSetStack(class CoverStack* ItrStack, class RepPoint* parentRepPoint);
 
 };
 

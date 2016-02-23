@@ -22,7 +22,7 @@ init-b				{return yy::BisonParser::token::INITB;}
 init-mode			{return yy::BisonParser::token::INITMODE;}
 time-step			{return yy::BisonParser::token::TSTEP;}
 time-horizon			{return yy::BisonParser::token::THORIZON;}
-delta				{return yy::BisonParser::token::DELTA;}
+refine				{return yy::BisonParser::token::REFINE;}
 forbidden			{return yy::BisonParser::token::FORB;}
 unsafe-eqns			{return yy::BisonParser::token::FORBE;}
 unsafe-matrix		{return yy::BisonParser::token::FORBM;}
@@ -31,6 +31,7 @@ annotation-type			{return yy::BisonParser::token::ANNOTTYPE;}
 annotation-mode			{return yy::BisonParser::token::ANNOTMODE;}
 annotation			{return yy::BisonParser::token::ANNOT;}
 is_linear		{return yy::BisonParser::token::ISLINEAR;}
+simuflag 			{return yy::BisonParser::token::SIMU;}
 k				{return yy::BisonParser::token::KCONST;}
 time				{return yy::BisonParser::token::TIME;}
 gamma				{return yy::BisonParser::token::GAMMA;}

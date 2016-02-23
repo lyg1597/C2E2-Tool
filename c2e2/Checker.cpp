@@ -38,6 +38,10 @@ vector<char*> Checker::getForbidden(){
 
 int Checker::check(class InitialSet* sequence, class Annotation* A, double delta){
 
+/*
+	double Boluntemp[4];
+
+
 	class Point* Pt1;
 	class Point* Pt2;
 
@@ -78,7 +82,8 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 
 		valueDouble = A->getED(delta, tmin, tmax);
 
-		refSequence->setDelta(valueDouble);
+		//refSequence->setDelta(valueDouble);
+		refSequence->setDelta(Boluntemp);
 
 		int sanityReturn;
 		sanityReturn = checkGLPKSol(Pt1,Pt2,valueDouble, tmin, tmax);
@@ -89,10 +94,13 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 	}
 
 	return 1;
-
+*/
 }
 
 int Checker::check(class InitialSet* sequence, class Annotation* A, double delta, class Point* Pt3, class Point* Pt4){
+/*
+
+	double Boluntemp[4];
 
 	class Point* Pt1;
 	class Point* Pt2;
@@ -140,8 +148,8 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 
 		valueDouble = A->getED(delta, tmin, tmax);
 
-		refSequence->setDelta(valueDouble);
-
+		//refSequence->setDelta(valueDouble);
+		refSequence->setDelta(Boluntemp);
 		int sanityReturn;
 		int newUnsafe = 0;
 
@@ -155,13 +163,13 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 			return newUnsafe;
 		}
 	}
-
+*/
 	return 1;
 
 }
 
 int Checker::check(class InitialSet* sequence, class Annotation* A, double delta, class Point* Pt3, class Point* Pt4, int modeSimu){
-
+/*
 	class Point* Pt1;
 	class Point* Pt2;
 
@@ -227,7 +235,7 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 			return newUnsafe;
 		}
 	}
-
+*/
 	return 1;
 
 }

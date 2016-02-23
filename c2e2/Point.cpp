@@ -4,9 +4,11 @@
  *  Created on: Feb 12, 2012
  *      Author: parasara
  */
-
+#include<iostream>
+#include<cstdlib>
 #include "Point.h"
 #include <cstdlib>
+using namespace std;
 
 Point::Point() {
 	// TODO Auto-generated constructor stub
@@ -16,6 +18,7 @@ Point::Point() {
 
 Point::~Point() {
 	// TODO Auto-generated destructor stub
+	delete[] coordinates;
 }
 
 Point::Point(int dim){
@@ -25,6 +28,34 @@ Point::Point(int dim){
 	for(i=0;i<dimension;i++){
 		*(coordinates+i)=0;
 	}
+}
+
+
+Point::Point(const class Point &obj){
+	//cout <<"creating new point"<<endl;
+	//cout <<obj.dimension<<endl;
+	dimension = obj.dimension;
+	coordinates = new double[dimension];
+	int i;
+	for(i=0; i<dimension; i++){
+		*(coordinates+i) = *(obj.coordinates+i);
+	}
+
+}
+
+Point & Point :: operator= (const class Point & other){
+	if (this != &other){
+		delete [] coordinates;
+		dimension = other.dimension;
+		coordinates = new double[dimension];
+		int i;
+		for(i=0; i<dimension; i++){
+			*(coordinates+i) = *(other.coordinates+i);
+		}
+	}
+       
+
+       return *this;
 }
 
 Point::Point(int dim, double* coArray){

@@ -14,18 +14,18 @@ class InitialSet {
 private:
 	int mode;
 	class Point* State;
-	double delta;
+	double* deltaArray;
 	class InitialSet* next;
 
 public:
 	InitialSet();
 	virtual ~InitialSet();
 	void setState(class Point* P);
-	void setDelta(double value);
+	void setDelta(double* value);
 	void setMode(int mode);
 	void setNext(class InitialSet* N);
 	class Point* getState();
-	double getDelta();
+	double* getDelta();
 	int getMode();
 	class InitialSet* getNext();
 	void append(class InitialSet* L);
