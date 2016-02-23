@@ -2,7 +2,7 @@
 bison-3.0.2/
 glpk-4.55/
 pyglpk/
-capd/
+#capd/
 
 #Working directory
 wd/*
