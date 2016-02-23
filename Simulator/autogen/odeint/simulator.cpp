@@ -1,8 +1,8 @@
 /* AUTO-GENERATED SIMULATOR BY C2E2 */
 
-#include <iostream>
-#include <vector>
-#include <boost/numeric/odeint.hpp>
+# include <iostream>
+# include <vector>
+# include <boost/numeric/odeint.hpp>
 
 using namespace std;
 using namespace boost::numeric::odeint;
@@ -26,33 +26,85 @@ class IntObs {
 };
 
 //ODE FUNCTIONS
-void VO(const state_t &x, state_t &dxdt, const double t) {
-			dxdt[0]=1.4*x[2]-0.9*x[0];
-			dxdt[1]=2.5*x[4]-1.5*x[1];
-			dxdt[2]=0.6*x[6]-0.8*x[2]*x[1];
-			dxdt[3]=2.0-1.3*x[3]*x[2];
-			dxdt[4]=0.7*x[0]-1.0*x[3]*x[4];
-			dxdt[5]=0.3*x[0]-3.1*x[5];
-			dxdt[6]=1.8*x[5]-1.5*x[6]*x[1];
-      dxdt[7]=2;
+void SlowDown(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=x[1]-2.5;
+			dxdt[1]=0.1*x[2];
+			dxdt[2]=-0.01*x[0] -0.01*10.3 + 0.3*2.8 - 0.3*x[1] - 0.5*x[2];
+			dxdt[3]=-2*x[3];
+			dxdt[4]=-2*x[4];
+			dxdt[5]=0.1*x[3];
+}
+
+void StartTurn1(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=x[1]-2.5;
+			dxdt[1]=0.1*x[2];
+			dxdt[2]=-0.5*x[1]+1.4-0.5*x[2];
+			dxdt[3]=2.5*3 - 0.15*3*x[4] + 0.5 - 0.025*x[5] - 0.05*x[3];
+			dxdt[4]=3 - 3*0.05*x[4] + 0.2-0.01*x[5];
+			dxdt[5]=0.1*x[3];
+}
+
+void EndTurn1(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=x[1]-2.5;
+			dxdt[1]=0.1*x[2];
+			dxdt[2]=-0.5*x[1]+1.4-0.5*x[2];
+			dxdt[3]=-0.1*2.5*x[4] + 0.5 - 0.025*x[5] - 0.05*x[3];
+			dxdt[4]=-0.1*x[4] + 0.2 - 0.01*x[5];
+			dxdt[5]=0.1*x[3];
+}
+
+void EndTurn2(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=x[1]-2.5;
+			dxdt[1]=0.1*x[2];
+			dxdt[2]=-0.5*x[1]+1.4-0.5*x[2];
+			dxdt[3]=-0.1*2.5*x[4] + 0.5 - 0.025*x[5] - 0.05*x[3];
+			dxdt[4]=-0.1*x[4] + 0.2 - 0.01*x[5];
+			dxdt[5]=0.1*x[3];
+}
+
+void StartTurn2(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=x[1]-2.5;
+			dxdt[1]=0.1*x[2];
+			dxdt[2]=-0.5*x[1]+1.4-0.5*x[2];
+			dxdt[3]=-2.5*3 - 0.15*3*x[4] + 0.5 - 0.025*x[5] - 0.05*x[3];
+			dxdt[4]=-3 - 3*0.05*x[4] + 0.2-0.01*x[5];
+			dxdt[5]=0.1*x[3];
+}
+
+void SpeedUp(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=x[1]-2.5;
+			dxdt[1]=0.1*x[2];
+			dxdt[2]=-0.01*x[0] + 0.01*10.3 + 0.3*2.8 - 0.3*x[1] - 0.5*x[2];
+			dxdt[3]=-2*x[3];
+			dxdt[4]=-2*x[4];
+			dxdt[5]=0.1*x[3];
+}
+
+void Continue(const state_t &x, state_t &dxdt, const double t) {
+			dxdt[0]=x[1]-2.5;
+			dxdt[1]=0.1*x[2];
+			dxdt[2]=-0.5*x[1]+1.4-0.5*x[2];
+			dxdt[3]=-2*x[3];
+			dxdt[4]=-2*x[4];
+			dxdt[5]=0.1*x[3];
 }
 
 //ODE FUNCTION POINTER
-void (*rhs[1])(const state_t &x, state_t &dxdt, const double t) =
-	{VO};
+void (*rhs[7])(const state_t &x, state_t &dxdt, const double t) =
+	{SlowDown, StartTurn1, EndTurn1, EndTurn2, StartTurn2, SpeedUp, Continue};
 
 int main() {
 	//VARIABLES
 	double ts, dt, te;
 	double abs_err, rel_err;
 	int cur_mode;
-	state_t x(8);
+	state_t x(6);
 	vector<double> times;
 	vector<state_t> trace;
 
 	//PARSING CONFIG
 	cin >> ts;
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 6; i++) {
 		cin >> x[i];
 	}
 	cin >> abs_err >> rel_err >> dt >> te >> cur_mode;
@@ -66,7 +118,7 @@ int main() {
 	for (size_t i = 0; i <= steps; i++) {
 		cout << fixed;
 		cout << setprecision(9) << times[i];
-		for (int j = 0; j < 8; j++) {
+		for (int j = 0; j < 6; j++) {
 			cout << setprecision(10) << ' ' << trace[i][j];
 		}
 		cout << endl;
@@ -74,7 +126,7 @@ int main() {
 		if (i != 0 && i != steps) {
 			cout << fixed;
 			cout << setprecision(9) << times[i];
-			for (int j = 0; j < 8; j++) {
+			for (int j = 0; j < 6; j++) {
 				cout << setprecision(10) << ' ' << trace[i][j];
 			}
 			cout << endl;

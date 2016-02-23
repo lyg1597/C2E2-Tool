@@ -18,6 +18,8 @@ hyirXML (ln 1492) - generates the hybrid representation which is used later tuse
 
 convertToCAPD (ln 702) - generates the simulator.cpp code
 
+Matlab - I can set the ExtU/Y_Bruss_IO_T structs to whatever values I want. I will need to modify the rt_OneStep function to do the stepping. The stopping condition will require setting the RTM thing.
+
 Models
 ******
 To create an input variable, add data and set scope to input. Change the initial value to take in the input variable instead.

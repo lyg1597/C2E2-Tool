@@ -50,9 +50,9 @@ static void zeroCrossings_c1_Bruss_IO(SFc1_Bruss_IOInstanceStruct *chartInstance
 static void derivatives_c1_Bruss_IO(SFc1_Bruss_IOInstanceStruct *chartInstance);
 static void outputs_c1_Bruss_IO(SFc1_Bruss_IOInstanceStruct *chartInstance);
 static void initSimStructsc1_Bruss_IO(SFc1_Bruss_IOInstanceStruct *chartInstance);
-static void c1_eml_ini_fcn_to_be_inlined_21(SFc1_Bruss_IOInstanceStruct
+static void c1_eml_ini_fcn_to_be_inlined_42(SFc1_Bruss_IOInstanceStruct
   *chartInstance);
-static void c1_eml_term_fcn_to_be_inlined_21(SFc1_Bruss_IOInstanceStruct
+static void c1_eml_term_fcn_to_be_inlined_42(SFc1_Bruss_IOInstanceStruct
   *chartInstance);
 static void init_script_number_translation(uint32_T c1_machineNumber, uint32_T
   c1_chartNumber, uint32_T c1_instanceNumber);
@@ -345,13 +345,13 @@ static void initSimStructsc1_Bruss_IO(SFc1_Bruss_IOInstanceStruct *chartInstance
   (void)chartInstance;
 }
 
-static void c1_eml_ini_fcn_to_be_inlined_21(SFc1_Bruss_IOInstanceStruct
+static void c1_eml_ini_fcn_to_be_inlined_42(SFc1_Bruss_IOInstanceStruct
   *chartInstance)
 {
   (void)chartInstance;
 }
 
-static void c1_eml_term_fcn_to_be_inlined_21(SFc1_Bruss_IOInstanceStruct
+static void c1_eml_term_fcn_to_be_inlined_42(SFc1_Bruss_IOInstanceStruct
   *chartInstance)
 {
   (void)chartInstance;
