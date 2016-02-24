@@ -335,15 +335,15 @@ int main(int argc, char* argv[]) {
 		}
 		delete simulationTube;
 
-		//cout<<"Bloating Done! Stop running to check file"<<endl;
-		//sleep(5);
+		/*cout<<"Bloating Done! Stop running to check file"<<endl;
+		sleep(5);*/
 
 		//Step3. Check invarant and guard
 		system("./invariants");
 		system("./guards");
 
-		//cout<<"Inv && guard Done! Stop running to check file"<<endl;
-		//sleep(5);
+		/*cout<<"Inv && guard Done! Stop running to check file"<<endl;
+		sleep(5);*/
 
 		//Step4. Check unsafe 
 		class ReachTube* invariantTube = new ReachTube();

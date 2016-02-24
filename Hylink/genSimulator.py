@@ -45,20 +45,23 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
         # Find variables with '_dot' and extract rhs
         for dai in cur_mode.dais:
             if '_dot' in dai.raw:
+                # Split the equation and get lhs index
                 lhs, rhs = dai.raw.split('=')
-                lhs = lhs.strip()
+                lhs = lhs.split('_dot')[0] 
+                lhs_idx = vars.index(lhs)
                 rhs = rhs.strip()
-                orig_eqns.append(rhs)
+
+                # Generate jacobian in correct order
+                orig_eqns.insert(lhs_idx,rhs)
 
                 # Replace variables with 'x[i]'
                 for j, var in enumerate(vars):
                     rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
 
-                # Get variable index to generate dxdt in correct order
-                lhs = lhs.split('_dot')[0] 
-                dxdt[i].insert(vars.index(lhs), rhs) 
+                # Generate dxdt in correct order
+                dxdt[i].insert(lhs_idx, rhs) 
 
-        # Bloating factor calculation/generation
+        # Bloat factor calculation/generation
         var_str = ','.join(vars)
         eqn_str = ','.join(orig_eqns)
         del_elem = jacobian(var_str, eqn_str, i)

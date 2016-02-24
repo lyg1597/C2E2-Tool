@@ -42,7 +42,16 @@ bool CoverStack::empty(){
 }
 
 void CoverStack::refine(class RepPoint *P, int dimindex){
+
+
 	int dim = P->getDimension();
+
+	if(dimindex>=dim || dimindex<0){
+		cout<<"Invaild dimindex"<<endl;
+		return;
+	}
+
+	
 	double max[dim];
 	double min[dim];
 	double* deltaArray;

@@ -57,8 +57,9 @@ def jacobian(difvar,diffun,loop):
             matrixvarcommand = matrixvarcommand+'])'
         else:
             matrixvarcommand = matrixvarcommand+','
-    #print(matrixvarcommand)
+    print(matrixvarcommand)
     exec('Y ='+matrixvarcommand)
+    print(len(Y))
     matrixcommand  = 'Matrix(['
     for i in range (funlen):
         matrixcommand = matrixcommand + dfl[i]
@@ -68,9 +69,13 @@ def jacobian(difvar,diffun,loop):
             matrixcommand = matrixcommand+','
     print(matrixcommand)
     exec('X ='+matrixcommand)
+    print(len(X))
     jac = X.jacobian(Y)
     Ljac = jac.tolist()
-
+    # print(Ljac[0])
+    # print(len(Ljac))
+    # print(len(Ljac[0]))
+    # print varlen
     
    
     deleterow = []
@@ -194,8 +199,9 @@ def createCDFfunction(delete_element):
     ComputeLDFstring += "Simulation_data = np.array(Simulation_data)\n"
     ComputeLDFstring += "CT_step = min(CT_step,len(Simulation_data))\n"
     ComputeLDFstring += "blowting = np.zeros((int(len(x)),numofvar-1-len(notbloating)))\n"
-    ComputeLDFstring += "for i in range (len(notbloating)):\n"
+    ComputeLDFstring += "for i in range (len(notbloating)-1,-1,-1):\n"
     ComputeLDFstring += "   delta.pop(notbloating[i])\n"
+    ComputeLDFstring += "   notbloating[i]+=1\n"
     ComputeLDFstring += "blowting[0,:] = delta\n"
     ComputeLDFstring += "\n"
     ComputeLDFstring += "storevalue = []\n"

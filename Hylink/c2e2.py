@@ -1140,8 +1140,8 @@ class PropertiesFrame(gtk.Frame):
           c2e2String+= "init-mode=\""+str(initModeC2E2Rep)+"\"\n"
           print(self.paramData)
           taylor = self.paramData[3][1]
-          relerr = "0.0001"
-          abserr = "0.00001"
+          relerr = "0.000000001"
+          abserr = "0.0000000001"
           thoriz = self.paramData[2][1]
           tstep = self.paramData[1][1]
           global Global_Refine
