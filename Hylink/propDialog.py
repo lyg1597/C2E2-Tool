@@ -416,6 +416,8 @@ class PropertyDatum():
     self.tabChild=None
     self.reachSetPath=""
     self.paramData=[0,0,0,0]
+    self.simulator=-1
+    self.simulation = -1
 
   def copyDatum(self,propDatum,propertyListNames):
     copyNum=0

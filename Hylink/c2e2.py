@@ -28,7 +28,8 @@ verifLog.addHandler(F1)
 verifLog.info('Launching the logger')
 Global_Linear = 0
 Global_Refine = 0
-Global_Simulation =0
+Global_Simulator = 0
+
 #verifLog.basicConfig(filename='../wd/.c2e2verification.log', level=verifLog.DEBUG, format='%(asctime)s %(message)s')  
 
 
@@ -108,8 +109,9 @@ class Main(gtk.Window):
       self.modelNotebook.destroy()
     global Global_Linear
     Global_Linear = 0
-    global Global_Simulation
-    Global_Simulation = 0
+    global Global_Simulator
+    Global_Simulator = 0
+
 
     fileName,fileExtension=os.path.splitext(os.path.basename(fileChoosen))
     self.set_title("C2E2: "+fileName)
@@ -481,9 +483,9 @@ class ParameterFrame(gtk.Frame):
     linearbutton.connect("toggled", self.linarcallback, "Linear Model")
     paramHBox1.pack_start(linearbutton,True,True,2)
 
-    SimulationButton = gtk.CheckButton("Simulation")
-    SimulationButton.connect("toggled", self.simulationcallback, "Simulation")
-    paramHBox1.pack_start(SimulationButton,True,True,2)
+    # SimulationButton = gtk.CheckButton("Simulation")
+    # SimulationButton.connect("toggled", self.simulationcallback, "Simulation")
+    # paramHBox1.pack_start(SimulationButton,True,True,2)
 
     self.paramVBox.pack_start(paramHBox1,True,True,0)
 
@@ -547,15 +549,14 @@ class ParameterFrame(gtk.Frame):
         arguments = ['sh', './compileSimulator', "1"]
         subp = subprocess.Popen(arguments,cwd="../wd/")
         subp.wait()
+    global Global_Simulator
+    Global_Simulator = index    
 
 
   def linarcallback(self, widget, data):
     global Global_Linear
     Global_Linear = 1- Global_Linear
 
-  def simulationcallback(self, widget, data):
-    global Global_Simulation
-    Global_Simulation = 1- Global_Simulation
 
 
   """
@@ -586,6 +587,16 @@ class ParameterFrame(gtk.Frame):
         elif prop.status=="Verified*" and value==prop.paramData[index]:
           prop.status="Verified"
           self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
+        if prop.status=="Simulated" and not value==prop.paramData[index]:
+          prop.status="Simulated*"
+          self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
+          toolTip=gtk.Tooltip()
+          path=self.propertyList.get_path(self.propertyList.iter_nth_child(None,prop.index))
+          column=self.listView.get_column(2)
+          self.listView.set_tooltip_cell(toolTip,path,column,self.rendererStatus)
+        elif prop.status=="Simulated*" and value==prop.paramData[index]:
+          prop.status="Simulated"
+          self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))          
     except ValueError:
       image.set_from_stock(gtk.STOCK_CANCEL,gtk.ICON_SIZE_MENU)
       self.paramData[index][2]=0
@@ -697,6 +708,7 @@ class PropertiesFrame(gtk.Frame):
   def initPropertiesFrame(self):
     propTable=gtk.Table(3,3,False) 
     propHBox=gtk.HBox(True,0)
+    propHBox1 = gtk.HBox(True,0)
 
     self.addBtn=gtk.Button("Add")
     self.addBtn.connect("clicked",self.addEditBtnCallback)
@@ -716,6 +728,11 @@ class PropertiesFrame(gtk.Frame):
 
     self.verifyAbortBtn=gtk.Button("Verify")
     self.verifyAbortBtn.connect("clicked",self.verifyAbortBtnCallback)
+    propHBox1.pack_start(self.verifyAbortBtn,True,True,0)
+
+    self.simulateAbortBtn = gtk.Button("Simulate")
+    self.simulateAbortBtn.connect("clicked",self.simulateAbortBtnCallback)
+    propHBox1.pack_start(self.simulateAbortBtn,True,True,0)
 
     listSW=gtk.ScrolledWindow()
     listSW.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
@@ -770,7 +787,7 @@ class PropertiesFrame(gtk.Frame):
 
     propTable.attach(listSW,0,3,0,1)
     propTable.attach(propHBox,0,3,1,2,gtk.FILL|gtk.EXPAND,0)
-    propTable.attach(self.verifyAbortBtn,0,3,2,3,gtk.FILL|gtk.EXPAND,0)
+    propTable.attach(propHBox1,0,3,2,3,gtk.FILL|gtk.EXPAND,0)
     self.add(propTable)
 
   """
@@ -841,17 +858,6 @@ class PropertiesFrame(gtk.Frame):
     self.verifyAbortBtn.set_label("Generating Files")
     print "The generation message should be shown!"
 
-  def enableAllButtons(self):
-#    self.verifyingPlotting[0]=not True
-#    self.rendererToggle.set_activatable(True)
-    self.columnToggle.set_property("clickable",True)
-#    self.propToggleAll.set_sensitive(True)
-    self.addBtn.set_sensitive(True)
-    self.editBtn.set_sensitive(True)
-    self.copyBtn.set_sensitive(True)
-    self.removeBtn.set_sensitive(True)
-    self.verifyAbortBtn.set_sensitive(True)
-
   def enableWidgets(self,val):
     self.verifyingPlotting[0]=not val
     self.rendererToggle.set_activatable(val)
@@ -861,10 +867,27 @@ class PropertiesFrame(gtk.Frame):
     self.editBtn.set_sensitive(val)
     self.copyBtn.set_sensitive(val)
     self.removeBtn.set_sensitive(val)
+    self.simulateAbortBtn.set_sensitive(val)
     if val:
       self.verifyAbortBtn.set_label("Verify")
     else:
       self.verifyAbortBtn.set_label("Abort")
+     
+  def enableWidgetsSimulate(self,val):
+    self.verifyingPlotting[0]=not val
+    self.rendererToggle.set_activatable(val)
+    self.columnToggle.set_property("clickable",val)
+    self.propToggleAll.set_sensitive(val)
+    self.addBtn.set_sensitive(val)
+    self.editBtn.set_sensitive(val)
+    self.copyBtn.set_sensitive(val)
+    self.removeBtn.set_sensitive(val)
+    self.verifyAbortBtn.set_sensitive(val)
+    if val:
+      self.simulateAbortBtn.set_label("Simulate")
+    else:
+      self.simulateAbortBtn.set_label("Abort")
+
   
   """
     propToggleCallback
@@ -917,13 +940,20 @@ class PropertiesFrame(gtk.Frame):
       if not rowData==None and rowData[1].get_title()=="Result":
         propIter=self.propertyList.get_iter(rowData[0])
         verified=self.propertyList.get_value(propIter,0).status
-        if verified=="Verified" or verified=="Verified*":
+        if verified=="Verified" or verified=="Verified*" or verified=="Simulated" or verified=="Simulated*":
           prop=self.propertyList.get_value(propIter,0)
           if prop.tabChild==None:
             unsafeSet=prop.unsafeSetParsed
             reachSetPath=prop.reachSetPath
+            #print prop.simulator
+            if prop.simulator==1 or prop.simulation == 1:
+              ploterversion = 1 
+              #print ploterversion
+            else:
+              ploterversion = 2
+              #print ploterversion
             plotWindow=PlotWindow(["time"]+self.varList,self.modeList,unsafeSet,reachSetPath,
-                                  prop.paramData[1],prop.paramData[2],self.verifyingPlotting)
+                                  prop.paramData[1],prop.paramData[2],self.verifyingPlotting, ploterversion)
             tab=gtk.HBox()
             tab.pack_start(gtk.Label(prop.name),True,True)
             closeBtn=gtk.Button()
@@ -949,15 +979,17 @@ class PropertiesFrame(gtk.Frame):
       model,path,iter=widget.get_tooltip_context(x,y,keyboardMode)
       prop=self.propertyList[path][0]
       rowData = self.listView.get_path_at_pos(int(x),int(y)-20)
-#       print str(x) + " and " + str(y) + " OK! "
-#       if rowData == None:
-#         print "rowData is none"
-#       if not(rowData == None):
-#           print rowData[1].get_title()
+
       if (prop.status=="Verified*") and ((rowData == None) or not(rowData[1].get_title()=="Result")):
         toolTip.set_text("Partitioning: %s\nTime-step: %s\nTime horizon: %s\nTaylor order: %d"%(prop.paramData[0],prop.paramData[1],prop.paramData[2],prop.paramData[3]))
         return True
       if (prop.status=="Verified" or prop.status=="Verified*") and not (rowData == None) and rowData[1].get_title() == "Result":
+        toolTip.set_text("Plot")
+        return True
+      if (prop.status=="Simulated*") and ((rowData == None) or not(rowData[1].get_title()=="Result")):
+        toolTip.set_text("Partitioning: %s\nTime-step: %s\nTime horizon: %s\nTaylor order: %d"%(prop.paramData[0],prop.paramData[1],prop.paramData[2],prop.paramData[3]))
+        return True
+      if (prop.status=="Simulated" or prop.status=="Simulated*") and not (rowData == None) and rowData[1].get_title() == "Result":
         toolTip.set_text("Plot")
         return True
       else:
@@ -1084,26 +1116,20 @@ class PropertiesFrame(gtk.Frame):
     Return: none
   """
   #Change this to be verifyAbort instead
-  def verifyAbortBtnCallback(self,btn):
-    #print(Global_Linear)
+  def verifyAbortBtnCallback(self,btn):   
     for param in self.paramData:
       if param[2]==0:
         return
-
     if btn.get_label()=="Verify" and self.editListLen > 0:
-
-      #self.showGenerationMessage()
-
       os.system("./DeleteRE.sh")
-      
-      #self.enableAllButtons()
-      #while gtk.events_pending():
-      #  gtk.main_iteration()
-
       self.enableWidgets(False)
       for prop in self.propertyList:
         prop=prop[0]
         if prop.checked and prop.status=="Not verified":
+          global Global_Simulator
+          prop.simulator = Global_Simulator
+          prop.simulation  = 0
+
 
           pathString="../wd/ReachSet"+prop.name
           
@@ -1156,8 +1182,8 @@ class PropertiesFrame(gtk.Frame):
           c2e2String+= "abs-error=\""+abserr+"\"\n"
           c2e2String+= "rel-error=\""+relerr+"\"\n"
           c2e2String+= "time-horizon=\""+thoriz+"\"\n"
-          global Global_Simulation
-          c2e2String+= "simuflag = \""+str(Global_Simulation)+"\"\n"
+
+          c2e2String+= 'simuflag = "0"\n'
 
           
           verifLog.info(' partiotion - ' + delta + ' - time-step - ' + tstep + ' - time-horizon - ' + thoriz + ' - ')
@@ -1408,6 +1434,323 @@ class PropertiesFrame(gtk.Frame):
         parent.kill()
       self.abortedVerifying=True
       verifLog.info(' Verification completely aborted ')
+  
+  def simulateAbortBtnCallback(self,btn):
+    for param in self.paramData:
+      if param[2]==0:
+        return
+    if btn.get_label()=="Simulate" and self.editListLen > 0:
+      os.system("./DeleteRE.sh")
+      self.enableWidgetsSimulate(False)
+      for prop in self.propertyList:
+        prop=prop[0]
+        if prop.checked and prop.status=="Not verified":
+          global Global_Simulator
+          prop.simulator = Global_Simulator
+          prop.simulation  = 1
+
+          pathString="../wd/ReachSet"+prop.name
+          
+          verifLog.info(' Verification started - property name - ' + prop.name + ' - ')
+          verifLog.info(' Property - initial set - ' + prop.initialSetStr + ' - unsafe set - ' + prop.unsafeSetStr + ' - ')
+          
+          prop.reachSetPath=pathString
+ 
+          # Here we will print the entire file where the file is automatically generated
+          c2e2String = ""
+          c2e2String+= "dimensions=\""+str(len(self.varList))+"\"\n"
+          c2e2String+= "modes=\""+str(len(self.modeList))+"\"\n"
+          c2e2String+= "simulator=\"simu\"\n"
+          
+          initialSet = prop.initialSetParsed
+          unsafeSet = prop.unsafeSetParsed
+          
+          initialModeString = initialSet[0]
+          initialMatrix = initialSet[1]
+          initialB = initialSet[2]
+          initialIneqs = initialSet[3]
+          
+          unsafeMatrix = unsafeSet[0]
+          unsafeB = unsafeSet[1]
+          unsafeIneqs = unsafeSet[2]
+          initModeC2E2Rep = -1;
+          modesList = self.hybridRep.automata[0].modes
+          modeI = 0
+          for modeIndex in modesList:
+              modeI += 1
+              if(initialModeString == modeIndex.name):
+                  initModeC2E2Rep = modeI;
+          
+          c2e2String+= "init-mode=\""+str(initModeC2E2Rep)+"\"\n"
+          print(self.paramData)
+          taylor = self.paramData[3][1]
+          relerr = "0.000000001"
+          abserr = "0.0000000001"
+          thoriz = self.paramData[2][1]
+          tstep = self.paramData[1][1]
+          global Global_Refine
+          refine = str(Global_Refine)
+          delta = "0"
+          prop.paramData[0]=float(delta)
+          prop.paramData[1]=float(tstep)
+          prop.paramData[2]=float(thoriz)
+          prop.paramData[3]=float(taylor)
+          c2e2String+= "refine=\""+refine+"\"\n"
+          c2e2String+= "time-step=\""+tstep+"\"\n"
+          c2e2String+= "abs-error=\""+abserr+"\"\n"
+          c2e2String+= "rel-error=\""+relerr+"\"\n"
+          c2e2String+= "time-horizon=\""+thoriz+"\"\n"
+
+          c2e2String+= 'simuflag = "1"\n'
+
+          
+          verifLog.info(' partiotion - ' + delta + ' - time-step - ' + tstep + ' - time-horizon - ' + thoriz + ' - ')
+          
+          numInitEqns = len(initialIneqs)
+          c2e2String+= "init-eqns=\""+str(numInitEqns)+"\"\n"
+          c2e2String+= "init-matrix=["
+          commaCount = 0;
+          for j in range(0,numInitEqns):
+              multiplicity = 1;
+              rowMatrix = initialMatrix[j]
+              rowDir = initialIneqs[j][0]
+              
+              if rowDir == '>=':
+                  multiplicity = -1
+                  
+              for number in rowMatrix:
+                  if commaCount == 0:
+                      c2e2String += str(multiplicity*number)
+                      commaCount+=1
+                  else:
+                      c2e2String += ","+str(multiplicity*number)
+          
+          c2e2String += "]\n"
+          c2e2String += "init-b=["
+          commaCount = 0
+          for j in range(0,numInitEqns):
+              multiplicity = 1;
+              number = initialB[j][0]
+              rowDir = initialIneqs[j][0]
+              
+              if rowDir == '>=':
+                  multiplicity = -1
+              
+              if commaCount == 0:
+                  c2e2String += str(multiplicity*number)
+                  commaCount+=1
+              else:
+                  c2e2String += ","+str(multiplicity*number)
+          
+          c2e2String += "]\n"        
+              
+          numUnsafeEqns = len(unsafeIneqs)
+          c2e2String+= "unsafe-eqns=\""+str(numUnsafeEqns)+"\"\n"
+          c2e2String+= "unsafe-matrix=["
+          commaCount = 0;
+          for j in range(0,numUnsafeEqns):
+              multiplicity = 1;
+              rowMatrix = unsafeMatrix[j]
+              rowDir = unsafeIneqs[j][0]
+              
+              if rowDir == '>=':
+                  multiplicity = -1
+                  
+              for number in rowMatrix:
+                  if commaCount == 0:
+                      c2e2String += str(multiplicity*number)
+                      commaCount+=1
+                  else:
+                      c2e2String += ","+str(multiplicity*number)
+          
+          c2e2String += "]\n"
+          c2e2String += "unsafe-b=["
+          commaCount = 0
+          for j in range(0,numUnsafeEqns):
+              multiplicity = 1;
+              number = unsafeB[j][0]
+              rowDir = unsafeIneqs[j][0]
+              
+              if rowDir == '>=':
+                  multiplicity = -1
+              
+              if commaCount == 0:
+                  c2e2String += str(multiplicity*number)
+                  commaCount+=1
+              else:
+                  c2e2String += ","+str(multiplicity*number)
+          
+          c2e2String += "]\n"
+       
+
+          mode_num  = 1
+          if len(self.hybridRep.annotationsParsed) == len(self.modeList) :
+              for array in self.hybridRep.annotationsParsed :
+                  c2e2String+= "annotation-mode=\""+str(array[0])+"\"\n"
+                  if array[3] == 1 or array[3] == 3 :
+                      c2e2String+= "annotation-type=\"contraction\"\n"
+                  if array[3] == 2 :
+                      c2e2String+= "annotation-type=\"linear\"\n"
+                  c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
+                  c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
+                  if (Global_Linear):
+                      filename = ""
+                      filename +="../wd/jacobiannature"
+                      filename += str(mode_num)
+                      filename +=".txt"
+                      fid = open(filename,'r').read().split('\n')
+                      numofvar = int(fid[0])
+                      #print numofvar
+                      listofvar = []
+                      for i in range (numofvar):
+                        listofvar.append(fid[i+1])
+                      #rint listofvar
+                      equationpos = 1+numofvar
+                      numofeq = int(fid[equationpos])
+                      equationpos+=1
+                      listofeq = []
+                      for i in range (numofeq):
+                        listofeq.append(fid[equationpos+i])
+                      #print listofeq
+                      codestring = "def jcalc("
+                      codestring += "listofvar, "
+                      codestring += "listvalue"
+                      codestring+='):\n'
+                      codestring+=" for i in range (len(listofvar)):\n"
+                      codestring+="   temp = listofvar[i]\n"
+                      codestring+="   rightside = '='+str(listvalue[i])\n"
+                      codestring+="   exec(temp+rightside)\n"
+                      codestring+=" ret = []\n"
+                      for i in range (numofeq):
+                        codestring+=" "
+                        codestring+=listofeq[i]
+                        codestring+='\n'
+                        codestring+=' ret.append(Entry)\n'
+                      codestring+=' return ret'
+                      #print(codestring)
+                      exec(codestring)
+                      Constant_Jacobian = jcalc(listofvar,np.ones((1,numofvar))[0])
+                      Constant_Jacobian = np.reshape(Constant_Jacobian,(numofvar,numofvar))
+                      gamma_rate = la.eigvals(Constant_Jacobian).real
+                      array[2] = max(gamma_rate)
+                      if abs(max(gamma_rate)) < 0.00001:
+                        array[2] = 0                   
+                      array[1] = la.norm(Constant_Jacobian)
+                  c2e2String+= "k=\""+str(array[1])+"\"\n"
+                  c2e2String+= "gamma=\""+str(array[2])+"\"\n"
+                  c2e2String+= "is_linear=\""+str(Global_Linear)+"\"\n"
+                  mode_num = mode_num+1
+          
+          else:
+              i = 0
+              while i < len(self.modeList) :
+                  c2e2String+= "annotation-mode=\""+str(i+1)+"\"\n"
+                  c2e2String+= "annotation-type=\"contraction\"\n"
+                  c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
+                  c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
+                  c2e2String+= "k=\"1.1\"\n"
+                  c2e2String+= "gamma=\"0.0\"\n"
+                  i+=1   
+        
+
+            
+          c2e2String+= "visualize all to ReachSet"+prop.name+"\n"
+          
+          filenamestring = "ReachSet"+prop.name
+          os.system("rm ../wd/"+filenamestring)
+          writer = open("Configuration-C2E2","w")
+          writer.write(c2e2String)
+          writer.close()
+          
+          arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
+          subp1 = subprocess.Popen(arguments1); 
+    
+          arguments = ['sh', './ExecuteC2E2']
+          self.subp = subprocess.Popen(arguments,cwd="../wd/",preexec_fn=os.setsid)
+
+          #Might need a variable here to check if the process was aborted
+          while self.subp.poll() == None:
+              prop.status="Simulating"
+              self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
+              while gtk.events_pending():
+                gtk.main_iteration()
+              time.sleep(0.5) 
+              if not self.subp.poll()==None:
+                break
+
+              prop.status="Simulating."
+              self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
+              while gtk.events_pending():
+                gtk.main_iteration()
+              time.sleep(0.5) 
+              if not self.subp.poll()==None:
+                break
+
+              prop.status="Simulating.."
+              self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
+              while gtk.events_pending():
+                gtk.main_iteration()
+              time.sleep(0.5) 
+              if not self.subp.poll()==None:
+                break
+
+              prop.status="Simulating..."
+              self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
+              while gtk.events_pending():
+                gtk.main_iteration()
+              time.sleep(0.5)
+              if not self.subp.poll()==None:
+                break
+
+    
+          checkfilename = "../wd/ReachSet"+prop.name
+
+          self.subp=None
+          if self.abortedVerifying==False:
+            prop.status="Simulated"
+            with open("../wd/Result.dat",'r') as f:
+              res=f.readline()
+              print "This is the result read " + res
+              res = int(res)
+              print "This is the result read " + str(res)
+              if res<0:
+                prop.verifResult="Unsafe"
+              elif res==0:
+                prop.verifResult="Unknown"
+              else:
+                if os.stat(checkfilename).st_size == 0:
+                  prop.verifResult="ERROR"
+                else:
+                  prop.verifResult="Safe"
+            prop.newTabPixbuf=gtk.gdk.pixbuf_new_from_file("./Resources/newTab.png").scale_simple(16,16,
+                                                           gtk.gdk.INTERP_HYPER)
+            prop.reachSetPath=pathString
+            
+            verifLog.info(' Simulation Result Returned - ' + prop.verifResult + ' - ')
+            
+            self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
+          else:
+            self.abortedVerifying=False
+            prop.status="Not Simulated"
+            
+            verifLog.info(' Simulation Aborted ')
+
+            self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
+            print("Breaking")
+            break;
+
+      self.enableWidgetsSimulate(True)
+      self.notebook.set_current_page(self.notebook.get_current_page())
+    else:
+        #Note that I will have race conditions here regardless unless I have a lock
+        if not self.subp==None:
+          print("Here!",self.subp.pid)
+          parent=psutil.Process(self.subp.pid)
+          for child in parent.children(recursive=True):
+            child.kill()
+          parent.kill()
+        self.abortedVerifying=True
+        verifLog.info(' Verification completely aborted ')
     
 if __name__=="__main__":
   c2e2=Main()

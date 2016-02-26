@@ -26,7 +26,7 @@ class PlotWindow(gtk.Table):
     Outputs: none
     Return: none
   """
-  def __init__(self,varList,modeList,unsafeSet,reachSetPath,timeStep,timeHoriz,verifyingPlotting):
+  def __init__(self,varList,modeList,unsafeSet,reachSetPath,timeStep,timeHoriz,verifyingPlotting,plotterversion):
     gtk.Table.__init__(self,1,10,True)
     
     plotterLog.info(' Started the plotter ')
@@ -47,6 +47,7 @@ class PlotWindow(gtk.Table):
     self.timeHoriz=timeHoriz
     self.plotListLen=0
     self.editListLen=0
+    self.plotterversion = plotterversion
 
     if self.varList==None:
       self.varList=["t","x","y"]

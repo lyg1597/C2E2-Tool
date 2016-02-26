@@ -27,18 +27,7 @@ from math import floor as floor
 #Add a thread event here that will be checked
 def plotGraph(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,dispMode,
               timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist):
-  '''
-  print(reachSetPath)
-  print(unsafeSet)
-  print(varList)
-  print(modeList)
-  print(varPlotTuple)
-  print(dispMode)
-  print(timeStep)
-  print(timeHoriz)
-  print(plotStatus)
-  print(title)
-  '''
+
   
   
   if len(varPlotTuple)>2:
@@ -101,7 +90,7 @@ def plotMultipleVars(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,disp
   #set the plot x,y max and min variable
   xmin = float("Inf")
   ymin = float("Inf")
-  xmax = -float("Inf")
+  xmax = -float("Inf")  
   ymax = -float("Inf")
 
 
@@ -207,6 +196,18 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
                       timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist):
   colors=('blue','green','red','yellow','brown','orange','cyan','pink','magenta')
   plotStatus.set_label("Status: Reading Data")
+
+  print reachSetPath
+  print unsafeset
+  print varlist
+  print modelist
+  print varPlotTuple
+  print timeStep
+  print timeHoriz
+  print title
+  print filename
+  print xindex
+  print yindexlist
 
   #opne the file, and create 3D list to hold upper and lower bound data
   #the list looks like upperbound[mode][var][time_step]
