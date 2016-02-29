@@ -947,10 +947,10 @@ class PropertiesFrame(gtk.Frame):
             reachSetPath=prop.reachSetPath
             #print prop.simulator
             if prop.simulator==1 or prop.simulation == 1:
-              ploterversion = 1 
+              ploterversion = 2 
               #print ploterversion
             else:
-              ploterversion = 2
+              ploterversion = 1
               #print ploterversion
             plotWindow=PlotWindow(["time"]+self.varList,self.modeList,unsafeSet,reachSetPath,
                                   prop.paramData[1],prop.paramData[2],self.verifyingPlotting, ploterversion)

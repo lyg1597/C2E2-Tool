@@ -57,7 +57,7 @@ class PlotWindow(gtk.Table):
     self.plotView=PlotView(self.plotList,self.iconList)
     self.plotFrame=PlotFrame(self.plotList,self.plotListFilter,self.plotListLen,self.editListLen,
                              self.iconList,self.varList,self.modeList,self.reachSetPath,
-                             self.unsafeSet,self.timeStep,self.timeHoriz,verifyingPlotting)
+                             self.unsafeSet,self.timeStep,self.timeHoriz,verifyingPlotting,plotterversion)
 
     self.set_col_spacing(6,5)
     self.attach(self.plotView,0,7,0,1)
@@ -116,7 +116,7 @@ class PlotFrame(gtk.Frame):
     Return: None
   """
   def __init__(self,plotList,plotListFilter,plotListLen,editListLen,iconList,varList,modeList,
-               reachSetPath,unsafeSet,timeStep,timeHoriz,verifyingPlotting):
+               reachSetPath,unsafeSet,timeStep,timeHoriz,verifyingPlotting,plotterversion):
     gtk.Frame.__init__(self,"Plotter")
     self.plotList=plotList
     self.plotListFilter=plotListFilter
@@ -132,6 +132,7 @@ class PlotFrame(gtk.Frame):
     self.pStop=None
     self.abortedPlotting=False
     self.verifyingPlotting=verifyingPlotting
+    self.plotterversion = plotterversion
 
     self.initPlotFrame()
 
@@ -434,7 +435,7 @@ class PlotFrame(gtk.Frame):
           axes=tuple([plot.xVarIndex]+plot.yVarIndexList)
           self.pStop=threading.Event()
           taskQueue.put([plotGraph,(self.pStop,self.reachSetPath,self.unsafeSet,self.varList,self.modeList,
-                        axes,plot.dispMode,self.timeStep,self.timeHoriz,self.plotStatus,plot.plotTitle,plot.name,plot.xLabel,plot.yLabelList)])
+                        axes,plot.dispMode,self.timeStep,self.timeHoriz,self.plotStatus,plot.plotTitle,plot.name,plot.xLabel,plot.yLabelList,self.plotterversion)])
 
           p=threading.Thread(target=self.worker,args=(taskQueue,figureQueue))
           p.start()
