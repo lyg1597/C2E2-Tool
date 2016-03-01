@@ -368,6 +368,19 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
           ymax = upperbound[i][varPlotTuple[1]][j+1]
   Min_display_range = (float(ymax)-float(ymin))/200
 
+  if unsafeflag==1:
+    for i in range (len(modelist)):
+      for j in range (int(numberofstep)):
+        if (unsafelowerbound[i][0][j])!=float("Inf"):
+          if float(unsafelowerbound[i][varPlotTuple[0]][j])<float(xmin):
+            xmin = unsafelowerbound[i][varPlotTuple[0]][j]
+          if float(unsafelowerbound[i][varPlotTuple[1]][j])<float(ymin):
+            ymin = unsafelowerbound[i][varPlotTuple[1]][j]
+          if float(unsafeupperbound[i][varPlotTuple[0]][j+1])>float(xmax):
+            xmax = unsafeupperbound[i][varPlotTuple[0]][j+1]
+          if float(unsafeupperbound[i][varPlotTuple[1]][j+1])>float(ymax):
+            ymax = unsafeupperbound[i][varPlotTuple[1]][j+1]
+
   for i in range(len(modelist)):
     for j in range (int(numberofstep)):
       if (lowerbound[i][0][j])!=float("Inf"):
@@ -574,6 +587,20 @@ def plotMultipleModesV2(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
         xmax = upperbound[i][varPlotTuple[0]][j]
       if float(upperbound[i][varPlotTuple[1]][j])>float(ymax):
         ymax = upperbound[i][varPlotTuple[1]][j]
+
+  if unsafeflag == 1:
+    for i in range (len(modelist)):
+      for j in range (len(unsafelowerbound[i][0])):
+
+        if float(unsafelowerbound[i][varPlotTuple[0]][j])<float(xmin):
+          xmin = unsafelowerbound[i][varPlotTuple[0]][j]
+        if float(unsafelowerbound[i][varPlotTuple[1]][j])<float(ymin):
+          ymin = unsafelowerbound[i][varPlotTuple[1]][j]
+        if float(unsafeupperbound[i][varPlotTuple[0]][j])>float(xmax):
+          xmax = unsafeupperbound[i][varPlotTuple[0]][j]
+        if float(unsafeupperbound[i][varPlotTuple[1]][j])>float(ymax):
+          ymax = unsafeupperbound[i][varPlotTuple[1]][j]    
+              
   Min_display_range = (float(ymax)-float(ymin))/200
 
   for i in range(len(modelist)):
