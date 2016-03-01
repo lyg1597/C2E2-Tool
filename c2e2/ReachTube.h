@@ -64,6 +64,7 @@ public:
 	double getMinTime(int mode, class Point* currPoint, double* deltaArray);
 	double getMaxTime(int mode, class Point* currPoint, double* deltaArray);
 	int getNextSetStack(class CoverStack* ItrStack, class RepPoint* parentRepPoint);
+	void clear(int from);
 
 };
 

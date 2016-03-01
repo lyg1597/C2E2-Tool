@@ -5,46 +5,133 @@
  *      Author: parasara
  */
 
-#include"Polyhedron.h"
-#include"Vector.h"
-#include"Point.h"
-#include"Simulator.h"
-#include"Annotation.h"
-#include"Checker.h"
+#include "Polyhedron.h"
+#include "Vector.h"
+#include "Point.h"
+#include "Simulator.h"
+#include "Annotation.h"
+#include "Checker.h"
 //#include"y.tab.c"
-#include"InitialSet.h"
+#include "InitialSet.h"
 
-#include"Visualizer.h"
-#include"ReachTube.h"
-#include"LinearSet.h"
+#include "Visualizer.h"
+#include "ReachTube.h"
+#include "LinearSet.h"
 
-#include"RepPoint.h"
-#include"CoverStack.h"
+#include "RepPoint.h"
+#include "CoverStack.h"
 
 #include "simuverifScanner.h"
 #include "simuverifParser.h"
 #include "simuverif.tab.c"
 
-#include<iostream>
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <stdlib.h>
+#include <ctime>
+#include <cmath>
+#include <math.h>
+#include <time.h>
+#include <string.h>
 
-#include<fstream>
-#include<cstdlib>
-#include<stdlib.h>
-#include<ctime>
-#include<cmath>
-#include<math.h>
-
-#include<time.h>
-#include<string.h>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <iomanip>
 #include <Python.h>
-#include <iostream>
+#include <dlfcn.h>
+
 #include <stack> 
 using namespace std;
 
+void hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSet, int dimensions, Point *origin, int mode, char *file){
+	int traceSafeFlag;
+
+	typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
+	typedef bool (*inv_fn)(int, double *, double *);
+	
+	guard_fn guards;
+	inv_fn invs;
+
+    void *lib = dlopen("./libhybridsim.so", RTLD_LAZY);
+    if(!lib){
+    	cerr << "Cannot open library: " << dlerror() << '\n';
+    }
+
+    guards = (guard_fn) dlsym (lib, "hitsGuard");
+    invs = (inv_fn) dlsym(lib, "invariantSatisfied"); 
+    // invs = (inv_fn) dlsym(lib, "invariantSatisfied");
+    // int (*test)(int) = (int (*)(int)) dlsym(lib, "test");
+    if (guards && invs) {
+       cout << "EXISTS" << endl;
+       // cout << invs << endl;
+       // guards(0, NULL, NULL);
+       // cout << test(4) << endl;
+    }
+    else{
+    	cout << "HI" << endl;
+    }
+
+    while(true){
+		simulator->Simulate(origin, mode);
+
+		ReachTube* simulationTube = new ReachTube();
+		simulationTube->setDimensions(dimensions);
+		simulationTube->setMode(mode);
+		simulationTube->parseInvariantTube("SimuOutput");
+		// simulationTube->printReachTube("reachtube.dat",0);
+
+		// system("./invariants");
+		// system("./guards");
+		int size = simulationTube->getSize();
+		double *ptLower, *ptUpper;
+		vector< pair<int, double*> > guards_hit;
+		for(int i=0; i<size; i++){
+			ptLower = simulationTube->getLowerBound(i)->getCoordinates();
+			ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
+			guards_hit = guards(mode, ptLower, ptUpper);
+			if(!guards_hit.empty()){
+				pair<int, double *> guard_taken = guards_hit[rand() % guards_hit.size()];
+				mode = guard_taken.first;
+				origin = new Point(dimensions+1, guard_taken.second);
+				simulationTube->clear(i+1);
+				break;
+			}
+			if(!invs(mode, ptLower, ptUpper)){
+				simulationTube->clear(i);
+				break;
+			}
+		}
+
+		/* Checks that the given trace is safe w.r.t the boxes given as unsafe set */
+		traceSafeFlag = checker->checkHybridSimulation(simulationTube, unsafeSet);
+		if(traceSafeFlag==1){
+	       	simulationTube->printReachTube(file,1);
+		}
+		else if(traceSafeFlag==-1){
+	       	simulationTube->printReachTube(file,2);
+	       	ofstream resultStream;
+			resultStream.open("Result.dat");
+			resultStream << "-1" << endl;
+			resultStream.close();
+		    dlclose ( lib );
+			return;
+		}
+		else{
+			cout << "<SUKET> UNKNOWN TUBE";
+		}
+
+		if(guards_hit.empty()){
+			break;
+		}
+    }
+    ofstream resultStream;
+	resultStream.open("Result.dat");
+	resultStream << "1" << endl;
+	resultStream.close();
+	dlclose ( lib );
+}
 
 int main(int argc, char* argv[]) {
 
@@ -154,9 +241,9 @@ int main(int argc, char* argv[]) {
 	unsafeSet->setB(forbB);
 	double* initMatrix, *bRow;
 
+	cout << "dimensions: " << dimensions << endl;
 
 	int dimIndex;
-
 
 	double deltaArray[dimensions];
 	double initdeltaArray[dimensions];
@@ -164,15 +251,12 @@ int main(int argc, char* argv[]) {
 		deltaArray[dimIndex] = (initialSet->getMax(dimIndex)-initialSet->getMin(dimIndex))/2;
 		initdeltaArray[dimIndex] = deltaArray[dimIndex];
 		//cout<< "deltaArray at " <<dimIndex<< " is " << deltaArray[dimIndex] <<endl; 
-	}	
-
-
+	}
 
 	class CoverStack* ItrStack;
 	//class RepPoint* reptemp;
 
 	ItrStack = initialSet->getCoverStack(deltaArray,initMode,0);
-
 	
 	class Point* simulationPoint;
 	
@@ -183,7 +267,6 @@ int main(int argc, char* argv[]) {
 	std::vector<class ReachTube*> TraceTube;
 	class ReachTube* guardSet = new ReachTube();
 	guardSet->setDimensions(dimensions);
-
 
 	/* Initialized, now just add this to the Iterator when it becomes NULL */
 	int numberSamplePoints =0;
@@ -249,13 +332,29 @@ int main(int argc, char* argv[]) {
 	cout<<"-------"<<endl;
 
 	class RepPoint* curItrRepPoint;
+
+	//SUKET CODE
+	
+	if(simulation_flag){
+		// RepPoint *pt = ItrStack->top();
+		// ItrStack->pop();
+		// ItrStack->refine(pt, 0);
+		while(!ItrStack->empty()){
+			ItrStack->top()->print();
+			Point *origin = ItrStack->top()->getState();
+			int mode = ItrStack->top()->getMode();
+			hybridSimulation(simVerify, checkVerify, unsafeSet, dimensions, origin, mode, visuFileName);
+			ItrStack->pop();
+		}
+		exit(1);
+	}
+
 	while(!ItrStack->empty()){
 
 		//Step0. Get value for Rep Point
 		numberSamplePoints++;
 		//cout  << "\n Sample point " << numberSamplePoints << " being checked \n";
 		
-
 		curItrRepPoint = ItrStack->top();
 		ItrStack->pop();
 
@@ -267,8 +366,6 @@ int main(int argc, char* argv[]) {
 		cout<<"-------"<<endl;
 		curItrRepPoint->print();
 		
-
-
 		simulationPoint = curItrRepPoint->getState();
 		modeSimulated = curItrRepPoint->getMode();
 		double* refDeltaArray = curItrRepPoint->getDeltaArray();
@@ -427,7 +524,7 @@ int main(int argc, char* argv[]) {
 			class ReachTube* InvTube = NULL;
 			int ResultTubeLength = 0;
 			for(ResultTubeLength=0;ResultTubeLength<resultTube.size();ResultTubeLength++){
-				InvTube = resultTube.at(0);
+				InvTube = resultTube.at(ResultTubeLength);
 				InvTube->printReachTube(visuFileName,1);
 				delete InvTube;
 			}
@@ -468,3 +565,4 @@ int main(int argc, char* argv[]) {
 
 	exit(1);
 }
+

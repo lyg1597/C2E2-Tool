@@ -99,3 +99,11 @@ double* Point::getCoordinates(){
 double Point::getCoordiate(int index){
 	return *(coordinates+index);
 }
+
+void Point::print(){
+	cout << "Point: ";
+	for(int i=0; i<dimension; i++){
+		cout << coordinates[i] << " ";
+	}
+	cout << endl;
+}

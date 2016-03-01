@@ -13,5 +13,6 @@ fi
 
 g++ -w -O2 guardGen.cpp -o guards `../capd/bin/capd-config --cflags --libs`
 g++ -w -O2 Invcheck.cpp -o invariants `../capd/bin/capd-config --cflags --libs`
+g++ -fPIC -shared hybridSimGI.cpp -o libhybridsim.so
 echo Executables from CAPD generated, Verification process starts
 #sh ./C2E2 < capdsimannot

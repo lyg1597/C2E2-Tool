@@ -73,52 +73,116 @@ double LinearSet::getBElement(int index){
 	return *(b+index);
 }
 
-int LinearSet::isInternal(class Point* RefPoint){
+// int LinearSet::isInternal(class Point* RefPoint){
 
-	int dim, numEq;
-	dim = dimensions;
+// 	int dim, numEq;
+// 	dim = dimensions;
 
-	numEq = numberOfEquations;
+// 	numEq = numberOfEquations;
 
-	glp_prob* feas;
+// 	glp_prob* feas;
 
-	feas = glp_create_prob();
+// 	feas = glp_create_prob();
+
+// 	int* irow, *icol;
+// 	double* icoeffs;
+
+// 	irow = (int*)malloc((1+(numEq+1)*(dim+1))*sizeof(int));
+// 	icol = (int*)malloc((1+(numEq+1)*(dim+1))*sizeof(int));
+// 	icoeffs = (double*)malloc((1+(numEq+1)*(dim+1))*sizeof(double));
+
+// 	for(int h=0;h<(1+(numEq+1)*(dim+1));h++){
+// 			irow[h] =0;icol[h]=0;icoeffs[h]=0;
+// 	}
+
+// 	int status;
+
+// 	glp_set_prob_name(feas,"Feasibility checker");
+// 	glp_set_obj_dir(feas, GLP_MAX);
+// 	glp_add_rows(feas, numEq+1);
+// 	glp_add_cols(feas, dim+1);
+
+// 	int i,j,k;
+
+// 	for(i=1;i<=dim;i++){
+
+// 		if(RefPoint->getDimension() == dimensions){
+// 			// cout << " Same dimensions -- " << RefPoint->getCoordiate(i-1) << " and " << RefPoint->getCoordiate(i-1) << endl;
+// 			glp_set_col_bnds(feas,i,GLP_FX,RefPoint->getCoordiate(i-1),RefPoint->getCoordiate(i-1));
+// 		}
+// 		if(RefPoint->getDimension() == dimensions+1){
+// 			// cout << " Not same dimensions -- " << RefPoint->getCoordiate(i) << " and " << RefPoint->getCoordiate(i) << endl;
+// 			glp_set_col_bnds(feas,i,GLP_FX,RefPoint->getCoordiate(i),RefPoint->getCoordiate(i));
+// 		}
+
+// 		// glp_set_col_bnds(feas,i,GLP_DB,RefPoint->getCoordiate(i-1),RefPoint->getCoordiate(i-1));
+// 	}
+// 	for(i=1;i<=numEq;i++){
+// 		glp_set_row_bnds(feas,i,GLP_UP,-10000,getBElement(i-1));
+// 	}
+
+// 	int count;
+// 	count = 0;
+
+// 	for(j=1;j<=numEq;j++){
+// 		for(i=1;i<=dim;i++){
+// 			irow[count+1] = j; icol[count+1] = i;
+// 			icoeffs[count+1] = getMatrixElement(j-1,i-1);
+// 			count++;
+// 		}
+// 	}
+
+// 	glp_load_matrix(feas,count,irow,icol,icoeffs);
+// 	glp_set_obj_coef(feas,1,1.0);
+// 	glp_set_obj_dir(feas, GLP_MAX);
+// 	glp_term_out(GLP_OFF);
+// 	glp_simplex(feas, NULL);
+// 	status = glp_get_status(feas);
+// 	// cout << status << endl;
+// 	// cout << GLP_NOFEAS << endl;
+// 	if(status == GLP_INFEAS || status == GLP_NOFEAS || status == GLP_UNDEF){
+// 		glp_delete_prob(feas);
+// 		free(irow);free(icol);free(icoeffs);
+// 		return 0;
+// 	}
+// 	else{
+// 		glp_delete_prob(feas);
+// 		free(irow);free(icol);free(icoeffs);
+// 		return 1;
+// 	}
+
+// }
+
+bool LinearSet::isInternal(class Point* pt){
+	glp_prob* feas = glp_create_prob();
 
 	int* irow, *icol;
 	double* icoeffs;
 
-	irow = (int*)malloc((1+(numEq+1)*(dim+1))*sizeof(int));
-	icol = (int*)malloc((1+(numEq+1)*(dim+1))*sizeof(int));
-	icoeffs = (double*)malloc((1+(numEq+1)*(dim+1))*sizeof(double));
+	int dim = dimensions;
+	int numEq = numberOfEquations;
 
-	for(int h=0;h<(1+(numEq+1)*(dim+1));h++){
-			irow[h] =0;icol[h]=0;icoeffs[h]=0;
+	irow = (int*)malloc((1+(numEq)*(dim))*sizeof(int));
+	icol = (int*)malloc((1+(numEq)*(dim))*sizeof(int));
+	icoeffs = (double*)malloc((1+(numEq)*(dim))*sizeof(double));
+
+	for(int h=0; h<(1+(numEq)*(dim)); h++){
+		irow[h]=0; icol[h]=0; icoeffs[h]=0;
 	}
-
-	int status;
 
 	glp_set_prob_name(feas,"Feasibility checker");
 	glp_set_obj_dir(feas, GLP_MAX);
-	glp_add_rows(feas, numEq+1);
-	glp_add_cols(feas, dim+1);
+	glp_add_rows(feas, numEq);
+	glp_add_cols(feas, dim);
 
 	int i,j,k;
 
 	for(i=1;i<=dim;i++){
-
-		if(RefPoint->getDimension() == dimensions){
-			//cout << " Same dimensions -- " << RefPoint->getCoordiate(i-1) << " and " << RefPoint->getCoordiate(i-1) << endl;
-			glp_set_col_bnds(feas,i,GLP_FX,RefPoint->getCoordiate(i-1),RefPoint->getCoordiate(i-1));
-		}
-		if(RefPoint->getDimension() == dimensions+1){
-			//cout << " Not same dimensions -- " << RefPoint->getCoordiate(i) << " and " << RefPoint->getCoordiate(i) << endl;
-			glp_set_col_bnds(feas,i,GLP_FX,RefPoint->getCoordiate(i),RefPoint->getCoordiate(i));
-		}
-
-		// glp_set_col_bnds(feas,i,GLP_DB,RefPoint->getCoordiate(i-1),RefPoint->getCoordiate(i-1));
+		glp_set_col_bnds(feas, i, GLP_FX, pt->getCoordiate(i), pt->getCoordiate(i));
 	}
+
 	for(i=1;i<=numEq;i++){
-		glp_set_row_bnds(feas,i,GLP_UP,-10000,getBElement(i-1));
+		glp_set_row_bnds(feas, i, GLP_UP, 0, getBElement(i-1));
 	}
 
 	int count;
@@ -137,21 +201,21 @@ int LinearSet::isInternal(class Point* RefPoint){
 	glp_set_obj_dir(feas, GLP_MAX);
 	glp_term_out(GLP_OFF);
 	glp_simplex(feas, NULL);
-	status = glp_get_status(feas);
+	int status = glp_get_status(feas);
 	if(status == GLP_INFEAS || status == GLP_NOFEAS || status == GLP_UNDEF){
 		glp_delete_prob(feas);
 		free(irow);free(icol);free(icoeffs);
-		return 0;
+		return false;
 	}
 	else{
 		glp_delete_prob(feas);
 		free(irow);free(icol);free(icoeffs);
-		return 1;
+		return true;
 	}
-
 }
 
-int LinearSet::hasIntersection(class Point* RefPoint, double* deltaArray){
+
+int LinearSet::hasIntersection(class Point* pt, double* deltaArray){
 
 	int dim, numEq;
 	dim = dimensions;
@@ -185,15 +249,15 @@ int LinearSet::hasIntersection(class Point* RefPoint, double* deltaArray){
 
 	for(i=1;i<=dim;i++){	
 		delta = deltaArray[i-1];
-		if(RefPoint->getDimension() == dimensions){
+		if(pt->getDimension() == dimensions){
 			//cout << " Same dimensions -- " << PtL->getCoordiate(i-1) << " and " << PtU->getCoordiate(i-1) << endl;
 			
-			glp_set_col_bnds(feas,i,GLP_DB,RefPoint->getCoordiate(i-1)-delta,RefPoint->getCoordiate(i-1)+delta);
+			glp_set_col_bnds(feas,i,GLP_DB,pt->getCoordiate(i-1)-delta,pt->getCoordiate(i-1)+delta);
 		}
-		if(RefPoint->getDimension() == dimensions+1){
+		if(pt->getDimension() == dimensions+1){
 //			cout << " Not same dimensions -- " << PtL->getCoordiate(i) << " and " << PtU->getCoordiate(i) << endl;
 
-			glp_set_col_bnds(feas,i,GLP_DB,RefPoint->getCoordiate(i)-delta,RefPoint->getCoordiate(i)+delta);
+			glp_set_col_bnds(feas,i,GLP_DB,pt->getCoordiate(i)-delta,pt->getCoordiate(i)+delta);
 		}
 
 
@@ -237,53 +301,119 @@ int LinearSet::hasIntersection(class Point* RefPoint, double* deltaArray){
 }
 
 
-int LinearSet::hasIntersection(class Point* PtL, class Point* PtU){
+// int LinearSet::hasIntersection(class Point* PtL, class Point* PtU){
 
-	int dim, numEq;
-	dim = dimensions;
-	numEq = numberOfEquations;
+// 	int dim, numEq;
+// 	dim = dimensions;
+// 	numEq = numberOfEquations;
 
-	glp_prob* feas;
+// 	glp_prob* feas;
 
-	feas = glp_create_prob();
+// 	feas = glp_create_prob();
+
+// 	int* irow, *icol;
+// 	double* icoeffs;
+
+// 	irow = (int*)malloc((1+(numEq+1)*(dim+1))*sizeof(int));
+// 	icol = (int*)malloc((1+(numEq+1)*(dim+1))*sizeof(int));
+// 	icoeffs = (double*)malloc((1+(numEq+1)*(dim+1))*sizeof(double));
+
+// 	for(int h=0;h<(1+(numEq+1)*(dim+1));h++){
+// 			irow[h] =0;icol[h]=0;icoeffs[h]=0;
+// 	}
+
+// 	int status;
+
+// 	glp_set_prob_name(feas,"Feasibility checker");
+// 	glp_set_obj_dir(feas, GLP_MAX);
+// 	glp_add_rows(feas, numEq+1);
+// 	glp_add_cols(feas, dim+1);
+
+// 	int i,j,k;
+
+// 	for(i=1;i<=dim;i++){
+// 		if(PtL->getDimension() == dimensions){
+// 			cout << " Same dimensions -- " << PtL->getCoordiate(i-1) << " and " << PtU->getCoordiate(i-1) << endl;
+// 			glp_set_col_bnds(feas,i,GLP_DB,PtL->getCoordiate(i-1),PtU->getCoordiate(i-1));
+// 		}
+// 		if(PtL->getDimension() == dimensions+1){
+// //			cout << " Not same dimensions -- " << PtL->getCoordiate(i) << " and " << PtU->getCoordiate(i) << endl;
+// 			glp_set_col_bnds(feas,i,GLP_DB,PtL->getCoordiate(i),PtU->getCoordiate(i));
+// 		}
+// 	}
+// 	for(i=1;i<=numEq;i++){
+// 		glp_set_row_bnds(feas,i,GLP_UP,-10000,getBElement(i-1));
+// 	}
+
+// 	int count;
+// 	count = 0;
+
+// 	for(j=1;j<=numEq;j++){
+// 		for(i=1;i<=dim;i++){
+// 			irow[count+1] = j; icol[count+1] = i;
+// 			icoeffs[count+1] = getMatrixElement(j-1,i-1);
+// 			count++;
+// 		}
+// 	}
+
+// 	glp_load_matrix(feas,count,irow,icol,icoeffs);
+// 	glp_set_obj_coef(feas,1,1.0);
+// 	glp_set_obj_dir(feas, GLP_MAX);
+// 	glp_term_out(GLP_OFF);
+// 	glp_simplex(feas, NULL);
+// 	status = glp_get_status(feas);
+// 	if(status == GLP_INFEAS || status == GLP_NOFEAS || status == GLP_UNDEF){
+// 		glp_delete_prob(feas);
+// 		free(irow);free(icol);free(icoeffs);
+// 		return 0;
+// 	}
+// 	else{
+
+// 		double value = glp_get_obj_val(feas);
+// 		// cout << "The value of objective is " << value << endl;
+// 		glp_delete_prob(feas);
+// 		free(irow);free(icol);free(icoeffs);
+// 		return 1;
+// 	}
+
+// }
+
+
+int LinearSet::hasIntersection(class Point* ptLower, class Point* ptUpper){
+	glp_prob* feas = glp_create_prob();
 
 	int* irow, *icol;
 	double* icoeffs;
+	
+	int dim = dimensions;
+	int numEq = numberOfEquations;
 
-	irow = (int*)malloc((1+(numEq+1)*(dim+1))*sizeof(int));
-	icol = (int*)malloc((1+(numEq+1)*(dim+1))*sizeof(int));
-	icoeffs = (double*)malloc((1+(numEq+1)*(dim+1))*sizeof(double));
+	irow = (int*)malloc((1+(numEq)*(dim))*sizeof(int));
+	icol = (int*)malloc((1+(numEq)*(dim))*sizeof(int));
+	icoeffs = (double*)malloc((1+(numEq)*(dim))*sizeof(double));
 
-	for(int h=0;h<(1+(numEq+1)*(dim+1));h++){
-			irow[h] =0;icol[h]=0;icoeffs[h]=0;
+	for(int h=0; h<(1+(numEq)*(dim)); h++){
+		irow[h]=0; icol[h]=0; icoeffs[h]=0;
 	}
 
 	int status;
 
 	glp_set_prob_name(feas,"Feasibility checker");
 	glp_set_obj_dir(feas, GLP_MAX);
-	glp_add_rows(feas, numEq+1);
-	glp_add_cols(feas, dim+1);
+	glp_add_rows(feas, numEq);
+	glp_add_cols(feas, dim);
 
 	int i,j,k;
 
 	for(i=1;i<=dim;i++){
-		if(PtL->getDimension() == dimensions){
-			//cout << " Same dimensions -- " << PtL->getCoordiate(i-1) << " and " << PtU->getCoordiate(i-1) << endl;
-			glp_set_col_bnds(feas,i,GLP_DB,PtL->getCoordiate(i-1),PtU->getCoordiate(i-1));
-		}
-		if(PtL->getDimension() == dimensions+1){
-//			cout << " Not same dimensions -- " << PtL->getCoordiate(i) << " and " << PtU->getCoordiate(i) << endl;
-			glp_set_col_bnds(feas,i,GLP_DB,PtL->getCoordiate(i),PtU->getCoordiate(i));
-		}
+		glp_set_col_bnds(feas, i, GLP_DB, ptLower->getCoordiate(i), ptUpper->getCoordiate(i));
 	}
+
 	for(i=1;i<=numEq;i++){
-		glp_set_row_bnds(feas,i,GLP_UP,-10000,getBElement(i-1));
+		glp_set_row_bnds(feas, i, GLP_UP, 0, getBElement(i-1));
 	}
 
-	int count;
-	count = 0;
-
+	int count = 0;
 	for(j=1;j<=numEq;j++){
 		for(i=1;i<=dim;i++){
 			irow[count+1] = j; icol[count+1] = i;
@@ -304,14 +434,12 @@ int LinearSet::hasIntersection(class Point* PtL, class Point* PtU){
 		return 0;
 	}
 	else{
-
 		double value = glp_get_obj_val(feas);
 		// cout << "The value of objective is " << value << endl;
 		glp_delete_prob(feas);
 		free(irow);free(icol);free(icoeffs);
 		return 1;
 	}
-
 }
 
 

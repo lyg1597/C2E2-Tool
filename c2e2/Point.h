@@ -29,6 +29,8 @@ public:
 	double* getCoordinates();
 	double getCoordiate(int index);
 
+	void print();
+
 
 };
 

@@ -274,13 +274,12 @@ int Checker::check(class ReachTube* invariantTube, class LinearSet* unsafeSet){
 
 			// Check for 2^n possibilities!
 
-			int UBP, LBP;
-			UBP = 0; LBP = 0;
+			bool UBP, LBP;
 			UBP = unsafeSet->isInternal(PtU);
 			LBP = unsafeSet->isInternal(PtL);
-			//cout << "Whats the values of UBP and LBP " << UBP  << " and " << LBP << "respectively \n";
+			// cout << "Whats the values of UBP and LBP " << UBP  << " and " << LBP << "respectively \n";
 
-			if(UBP == 1 && LBP == 1){
+			if(UBP && LBP){
 				//std::cout << "Is this every being called?" << endl;
 				isSafe = -1;
 			}
@@ -294,6 +293,19 @@ int Checker::check(class ReachTube* invariantTube, class LinearSet* unsafeSet){
 	return isSafe;
 
 	// return 1;
+}
+
+int Checker::checkHybridSimulation(class ReachTube* simulation, class LinearSet* unsafeSet){
+	Point *ptUpper;
+
+	int size = simulation->getSize();
+	for(int i=0; i<size; i++){
+		ptUpper = simulation->getUpperBound(i);
+		if(unsafeSet->isInternal(ptUpper)){
+			return -1;
+		}
+	}
+	return 1;
 }
 
 int Checker::checkUnsafe(class Point* Pt1, class Point* Pt2, class Point* Pt3, class Point* Pt4, double valueDouble){

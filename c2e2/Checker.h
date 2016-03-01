@@ -29,6 +29,7 @@ public:
 	int check(class InitialSet* sequence, class Annotation* A, double delta, class Point* Pt3, class Point* Pt4);
 	int check(class InitialSet* sequence, class Annotation* A, double delta, class Point* Pt3, class Point* Pt4, int modeSimu);
 	int check(class ReachTube* invariantTube, class LinearSet* unsafeSet);
+	int checkHybridSimulation(class ReachTube* invariantTube, class LinearSet* unsafeSet);
 	void printChecker(class Point* Pt1, class Point* Pt2, double delta, double t1, double t2);
 	int checkGLPKSol(class Point* Pt1, class Point* Pt2, double delta, double t1, double t2);
 	int checkGLPKSol(class Point* Pt1, class Point* Pt2, double delta, double t1, double t2, class Point* Pt3, class Point* Pt4);

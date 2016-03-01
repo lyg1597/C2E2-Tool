@@ -201,8 +201,12 @@ class Main(gtk.Window):
 
     dupHybridRep = hybridRep
     verifLog.info('Model is \n' + hybridRep.convertToXML([]))
-    dupHybridRep.printGuardsResets()
-    dupHybridRep.printInvariants()
+    # dupHybridRep.printGuardsResets()
+    # dupHybridRep.printBloatedSimGuardsInvariants();
+    dupHybridRep.printHybridSimGuardsInvariants();
+    # dupHybridRep.printHybridSimulationGuardsResets()
+    # dupHybridRep.printHybridSimulationInvariants() 
+    # dupHybridRep.printInvariants()
     #dupHybridRep.convertToCAPD("simulator")
     #generate default Simulator
     st = 'constant'
@@ -217,7 +221,7 @@ class Main(gtk.Window):
         self.modelNotebook=ModelNotebook(parseTree,hybridRep,propList,vList,mList,None)
 
     #self.ModelNotebook.propertiesFrame.disableAllButtons()
-    arguments1 = ['mv', 'guardGen.cpp', 'Invcheck.cpp', 'simulator.cpp', '../wd/']
+    arguments1 = ['mv', 'guardGen.cpp', 'hybridSimGI.cpp', 'Invcheck.cpp', 'simulator.cpp', '../wd/']
     subp1 = subprocess.Popen(arguments1)
     subp1.wait()
 

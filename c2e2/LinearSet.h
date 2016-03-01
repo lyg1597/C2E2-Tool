@@ -38,9 +38,9 @@ public:
 	double getMatrixElement(int row, int col);
 	void setBElement(int index, double value);
 	double getBElement(int index);
-	int isInternal(class Point* RefPoint);
-	int hasIntersection(class Point* RefPoint, double *deltaArray);
-	int hasIntersection(class Point* PtL, class Point* PtU);
+	bool isInternal(class Point* pt);
+	int hasIntersection(class Point* pt, double *deltaArray);
+	int hasIntersection(class Point* ptLower, class Point* ptUpper);
 	double getMax(int dimID);
 	double getMin(int dimID);
 	class InitialSet* getCover(double* deltaArray);

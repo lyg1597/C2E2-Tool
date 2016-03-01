@@ -1000,4 +1000,8 @@ double ReachTube::getMaxTime(int curMode, class Point* currPoint, double* deltaA
 
 }
 
+void ReachTube::clear(int from){
+	upperBound.erase(upperBound.begin()+from, upperBound.end());
+	lowerBound.erase(lowerBound.begin()+from, lowerBound.end());
+}
 
