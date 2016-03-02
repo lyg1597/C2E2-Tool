@@ -6,9 +6,9 @@
  */
 
 #include "LinearSet.h"
-#include<iostream>
-#include<cstdlib>
-#include"Point.h"
+#include <iostream>
+#include <cstdlib>
+#include "Point.h"
 #include <glpk.h>
 using namespace std;
 #define DEBUG
@@ -107,15 +107,15 @@ double LinearSet::getBElement(int index){
 // 	for(i=1;i<=dim;i++){
 
 // 		if(RefPoint->getDimension() == dimensions){
-// 			// cout << " Same dimensions -- " << RefPoint->getCoordiate(i-1) << " and " << RefPoint->getCoordiate(i-1) << endl;
-// 			glp_set_col_bnds(feas,i,GLP_FX,RefPoint->getCoordiate(i-1),RefPoint->getCoordiate(i-1));
+// 			// cout << " Same dimensions -- " << RefPoint->getCoordinate(i-1) << " and " << RefPoint->getCoordinate(i-1) << endl;
+// 			glp_set_col_bnds(feas,i,GLP_FX,RefPoint->getCoordinate(i-1),RefPoint->getCoordinate(i-1));
 // 		}
 // 		if(RefPoint->getDimension() == dimensions+1){
-// 			// cout << " Not same dimensions -- " << RefPoint->getCoordiate(i) << " and " << RefPoint->getCoordiate(i) << endl;
-// 			glp_set_col_bnds(feas,i,GLP_FX,RefPoint->getCoordiate(i),RefPoint->getCoordiate(i));
+// 			// cout << " Not same dimensions -- " << RefPoint->getCoordinate(i) << " and " << RefPoint->getCoordinate(i) << endl;
+// 			glp_set_col_bnds(feas,i,GLP_FX,RefPoint->getCoordinate(i),RefPoint->getCoordinate(i));
 // 		}
 
-// 		// glp_set_col_bnds(feas,i,GLP_DB,RefPoint->getCoordiate(i-1),RefPoint->getCoordiate(i-1));
+// 		// glp_set_col_bnds(feas,i,GLP_DB,RefPoint->getCoordinate(i-1),RefPoint->getCoordinate(i-1));
 // 	}
 // 	for(i=1;i<=numEq;i++){
 // 		glp_set_row_bnds(feas,i,GLP_UP,-10000,getBElement(i-1));
@@ -178,7 +178,7 @@ bool LinearSet::isInternal(class Point* pt){
 	int i,j,k;
 
 	for(i=1;i<=dim;i++){
-		glp_set_col_bnds(feas, i, GLP_FX, pt->getCoordiate(i), pt->getCoordiate(i));
+		glp_set_col_bnds(feas, i, GLP_FX, pt->getCoordinate(i), pt->getCoordinate(i));
 	}
 
 	for(i=1;i<=numEq;i++){
@@ -250,14 +250,14 @@ int LinearSet::hasIntersection(class Point* pt, double* deltaArray){
 	for(i=1;i<=dim;i++){	
 		delta = deltaArray[i-1];
 		if(pt->getDimension() == dimensions){
-			//cout << " Same dimensions -- " << PtL->getCoordiate(i-1) << " and " << PtU->getCoordiate(i-1) << endl;
+			//cout << " Same dimensions -- " << PtL->getCoordinate(i-1) << " and " << PtU->getCoordinate(i-1) << endl;
 			
-			glp_set_col_bnds(feas,i,GLP_DB,pt->getCoordiate(i-1)-delta,pt->getCoordiate(i-1)+delta);
+			glp_set_col_bnds(feas,i,GLP_DB,pt->getCoordinate(i-1)-delta,pt->getCoordinate(i-1)+delta);
 		}
 		if(pt->getDimension() == dimensions+1){
-//			cout << " Not same dimensions -- " << PtL->getCoordiate(i) << " and " << PtU->getCoordiate(i) << endl;
+//			cout << " Not same dimensions -- " << PtL->getCoordinate(i) << " and " << PtU->getCoordinate(i) << endl;
 
-			glp_set_col_bnds(feas,i,GLP_DB,pt->getCoordiate(i)-delta,pt->getCoordiate(i)+delta);
+			glp_set_col_bnds(feas,i,GLP_DB,pt->getCoordinate(i)-delta,pt->getCoordinate(i)+delta);
 		}
 
 
@@ -333,12 +333,12 @@ int LinearSet::hasIntersection(class Point* pt, double* deltaArray){
 
 // 	for(i=1;i<=dim;i++){
 // 		if(PtL->getDimension() == dimensions){
-// 			cout << " Same dimensions -- " << PtL->getCoordiate(i-1) << " and " << PtU->getCoordiate(i-1) << endl;
-// 			glp_set_col_bnds(feas,i,GLP_DB,PtL->getCoordiate(i-1),PtU->getCoordiate(i-1));
+// 			cout << " Same dimensions -- " << PtL->getCoordinate(i-1) << " and " << PtU->getCoordinate(i-1) << endl;
+// 			glp_set_col_bnds(feas,i,GLP_DB,PtL->getCoordinate(i-1),PtU->getCoordinate(i-1));
 // 		}
 // 		if(PtL->getDimension() == dimensions+1){
-// //			cout << " Not same dimensions -- " << PtL->getCoordiate(i) << " and " << PtU->getCoordiate(i) << endl;
-// 			glp_set_col_bnds(feas,i,GLP_DB,PtL->getCoordiate(i),PtU->getCoordiate(i));
+// //			cout << " Not same dimensions -- " << PtL->getCoordinate(i) << " and " << PtU->getCoordinate(i) << endl;
+// 			glp_set_col_bnds(feas,i,GLP_DB,PtL->getCoordinate(i),PtU->getCoordinate(i));
 // 		}
 // 	}
 // 	for(i=1;i<=numEq;i++){
@@ -406,7 +406,7 @@ int LinearSet::hasIntersection(class Point* ptLower, class Point* ptUpper){
 	int i,j,k;
 
 	for(i=1;i<=dim;i++){
-		glp_set_col_bnds(feas, i, GLP_DB, ptLower->getCoordiate(i), ptUpper->getCoordiate(i));
+		glp_set_col_bnds(feas, i, GLP_DB, ptLower->getCoordinate(i), ptUpper->getCoordinate(i));
 	}
 
 	for(i=1;i<=numEq;i++){
@@ -636,7 +636,7 @@ class InitialSet* LinearSet::getCover(double* deltaArray){
 				partitionPoint = new Point(dimensions);
 
 				for(subDimIterator = 0; subDimIterator < dimIterator; subDimIterator++){
-					partitionPoint->setCoordinate(subDimIterator,referencePoint->getCoordiate(subDimIterator));
+					partitionPoint->setCoordinate(subDimIterator,referencePoint->getCoordinate(subDimIterator));
 				}
 
 				refVal = dimMinVal+delta;
@@ -649,7 +649,7 @@ class InitialSet* LinearSet::getCover(double* deltaArray){
 					
 					partitionPoint = new Point(dimensions);
 					for(subDimIterator = 0; subDimIterator < dimIterator; subDimIterator++){
-						partitionPoint->setCoordinate(subDimIterator,referencePoint->getCoordiate(subDimIterator));
+						partitionPoint->setCoordinate(subDimIterator,referencePoint->getCoordinate(subDimIterator));
 					}
 					partitionPoint->setCoordinate(dimIterator, refVal);
 					currDimIter->add(partitionPoint);
@@ -681,7 +681,7 @@ class InitialSet* LinearSet::getCover(double* deltaArray){
 			acceptorPoint = new Point(dimensions+1);
 			acceptorPoint->setCoordinate(0,0);
 			for(finalDimIterator = 1;finalDimIterator <= dimensions; finalDimIterator++){
-				acceptorPoint->setCoordinate(finalDimIterator,iteratorPoint->getCoordiate(finalDimIterator-1));
+				acceptorPoint->setCoordinate(finalDimIterator,iteratorPoint->getCoordinate(finalDimIterator-1));
 			}
 			finalInitSet->add(acceptorPoint);
 		//}

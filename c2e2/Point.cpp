@@ -96,7 +96,7 @@ double* Point::getCoordinates(){
 	return coordinates;
 }
 
-double Point::getCoordiate(int index){
+double Point::getCoordinate(int index){
 	return *(coordinates+index);
 }
 

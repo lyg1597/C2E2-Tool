@@ -194,7 +194,7 @@ void RepPoint::print(){
 
 		cout << "State [ ";
 		for(dim = 0; dim < State->getDimension(); dim++){
-			cout << State->getCoordiate(dim) << " ";
+			cout << State->getCoordinate(dim) << " ";
 		}
 		cout << " ]" << endl;
 		
@@ -207,7 +207,7 @@ void RepPoint::print(){
 		if (parentState != NULL){
 			cout << "ParentState [ ";
 			for(dim = 0; dim < parentState->getDimension(); dim++){
-				cout << parentState->getCoordiate(dim) << " ";
+				cout << parentState->getCoordinate(dim) << " ";
 			}
 			cout << " ]" << endl;
 		}

@@ -45,7 +45,7 @@ public:
 	int getSize();
 	class Point* getUpperBound(int index);
 	class Point* getLowerBound(int index);
-	void parseInvariantTube(char* filename);
+	void parseInvariantTube(char* filename, int hasMode);
 	class ReachTube* bloatReachTube(double bloatingFactor);
 	class ReachTube* bloatReachTube(double* deltaArray, class Annotation* currentAnnotation);
 	void parseGuardsTube(char* filename);
@@ -65,6 +65,7 @@ public:
 	double getMaxTime(int mode, class Point* currPoint, double* deltaArray);
 	int getNextSetStack(class CoverStack* ItrStack, class RepPoint* parentRepPoint);
 	void clear(int from);
+	void addGuards(double *ptLower, vector<pair<int, double *> > guards);
 
 };
 

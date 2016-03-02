@@ -118,7 +118,7 @@ void InitialSet::print(){
 		int dim;
 		cout << "[ ";
 		for(dim = 0; dim < State->getDimension(); dim++){
-			cout << State->getCoordiate(dim) << " ";
+			cout << State->getCoordinate(dim) << " ";
 		}
 		cout << " ]" << endl;
 		if(next != NULL){

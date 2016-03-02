@@ -73,8 +73,8 @@ void CoverStack::refine(class RepPoint *P, int dimindex){
 	}
 
 	for(int i=0; i<dim; i++){
-		max[i] = tempPoint->getCoordiate(i+1)+deltaArray[i];
-		min[i] = tempPoint->getCoordiate(i+1)-deltaArray[i];
+		max[i] = tempPoint->getCoordinate(i+1)+deltaArray[i];
+		min[i] = tempPoint->getCoordinate(i+1)-deltaArray[i];
 	}
 
 	deltaArray[dimindex] = deltaArray[dimindex]/2;

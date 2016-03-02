@@ -206,6 +206,7 @@ class Main(gtk.Window):
     # dupHybridRep.printGuardsResets()
     # dupHybridRep.printBloatedSimGuardsInvariants();
     dupHybridRep.printHybridSimGuardsInvariants();
+    dupHybridRep.printBloatedSimGuardsInvariants();
     # dupHybridRep.printHybridSimulationGuardsResets()
     # dupHybridRep.printHybridSimulationInvariants() 
     # dupHybridRep.printInvariants()
@@ -223,7 +224,7 @@ class Main(gtk.Window):
         self.modelNotebook=ModelNotebook(parseTree,hybridRep,propList,vList,mList,None)
 
     #self.ModelNotebook.propertiesFrame.disableAllButtons()
-    arguments1 = ['mv', 'guardGen.cpp', 'hybridSimGI.cpp', 'Invcheck.cpp', 'simulator.cpp', '../wd/']
+    arguments1 = ['mv', 'bloatedSimGI.cpp', 'hybridSimGI.cpp', 'simulator.cpp', '../wd/']
     subp1 = subprocess.Popen(arguments1)
     subp1.wait()
 

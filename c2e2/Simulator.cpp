@@ -76,7 +76,7 @@ void Simulator::Simulate(class Point* Ref){
 
 	int i;
 	for(i=0;i<Ref->getDimension();i++){
-		outputFile << Ref->getCoordiate(i) << "\n";
+		outputFile << Ref->getCoordinate(i) << "\n";
 	}
 
 	outputFile << absError << "\n";
@@ -105,7 +105,7 @@ void Simulator::Simulate(class Point* Ref, int mode){
 
 	int i;
 	for(i=0;i<Ref->getDimension();i++){
-		outputFile << Ref->getCoordiate(i) << "\n";
+		outputFile << Ref->getCoordinate(i) << "\n";
 	}
 
 	outputFile << absError << "\n";

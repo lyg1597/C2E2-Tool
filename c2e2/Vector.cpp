@@ -119,7 +119,7 @@ void Vector::addPoint(class Point* sourcePoint, class Point* resultPoint){
 		exit(1);
 	}
 	for(index=0;index<dimension;index++){
-		resultPoint->setCoordinate(index,this->getDirection(index) + sourcePoint->getCoordiate(index));
+		resultPoint->setCoordinate(index,this->getDirection(index) + sourcePoint->getCoordinate(index));
 	}
 }
 
@@ -232,7 +232,7 @@ class Vector* getVector(class Point* ptr1, class Point* ptr2){
 	}
 	class Vector* retVal = new Vector(ptr1->getDimension());
 	for(int index=0;index<ptr1->getDimension();index++){
-		retVal->setDirection(index,ptr2->getCoordiate(index)-ptr1->getCoordiate(index));
+		retVal->setDirection(index,ptr2->getCoordinate(index)-ptr1->getCoordinate(index));
 	}
 
 	return retVal;

@@ -81,9 +81,7 @@ class Point* ReachTube::getLowerBound(int index){
 	return lowerBound.at(index);
 }
 
-void ReachTube::parseInvariantTube(char* filename){
-
-
+void ReachTube::parseInvariantTube(char* filename, int hasMode){
 	FILE* tRFile;
 	tRFile = fopen(filename,"r");
 
@@ -91,50 +89,39 @@ void ReachTube::parseInvariantTube(char* filename){
 		cout << " Is this NULL ?" <<endl;
 	}
 
-	//cout << "Opening the file \n";
-
 	class Point* tracePoint;
-
 	int breakloop = 0;
-
 	double bufferReader;
-
 	int flag = 0;
-
-
 	int number=0;
+
+	if(hasMode==1){
+		int mode;
+		fscanf(tRFile, "%d", &mode);
+	}
 
 	while( fscanf(tRFile,"%lf",&bufferReader) != EOF && breakloop == 0){
 		number++;
 		tracePoint = new Point(dimensions+1);
 		tracePoint->setCoordinate(0,bufferReader);
-//			cout << bufferReader << " \n";
 		for(int j=0;j<dimensions;j++){
 			if(fscanf(tRFile,"%lf",&bufferReader) != EOF){
-//				cout << bufferReader << " , ";
 				tracePoint->setCoordinate(j+1,bufferReader);
 			}
 			else{
-//					cout << "break loop is one \n";
 				breakloop = 1;
 			}
 		}
 
-//		cout << endl;
-
 		if(breakloop == 0 && flag == 0){
-			//cout << " Pushing into lowerBound \n";
 			lowerBound.push_back(tracePoint);
 		}
 		if(breakloop == 0 && flag == 1){
-			//cout << " Pushing into upper bound \n";
 			upperBound.push_back(tracePoint);
 		}
-
 		flag = 1-flag;
 	}
 	fclose(tRFile);
-
 }
 
 class ReachTube* ReachTube::bloatReachTube(double bloatingFactor){
@@ -160,13 +147,13 @@ class ReachTube* ReachTube::bloatReachTube(double bloatingFactor){
 		class Point* addingPointL = new Point(tempPointL->getDimension());
 		class Point* addingPointU = new Point(tempPointU->getDimension());
 
-		addingPointL->setCoordinate(0,tempPointL->getCoordiate(0));
-		addingPointU->setCoordinate(0,tempPointU->getCoordiate(0));
+		addingPointL->setCoordinate(0,tempPointL->getCoordinate(0));
+		addingPointU->setCoordinate(0,tempPointU->getCoordinate(0));
 
 		for(j = 1; j < addingPointL->getDimension(); j++){
 
-			value1 = tempPointL->getCoordiate(j);
-			value2 = tempPointU->getCoordiate(j);
+			value1 = tempPointL->getCoordinate(j);
+			value2 = tempPointU->getCoordinate(j);
 
 			if(value1 >= value2){
 				tempvalue = value2;
@@ -218,13 +205,13 @@ class ReachTube* ReachTube::bloatReachTube(double* deltaArray, class Annotation*
 		class Point* addingPointL = new Point(tempPointL->getDimension());
 		class Point* addingPointU = new Point(tempPointU->getDimension());
 
-		addingPointL->setCoordinate(0,tempPointL->getCoordiate(0));
-		addingPointU->setCoordinate(0,tempPointU->getCoordiate(0));
+		addingPointL->setCoordinate(0,tempPointL->getCoordinate(0));
+		addingPointU->setCoordinate(0,tempPointU->getCoordinate(0));
 
 //		cout << " First and last " << tmin << " and " << tmax <<endl;
 
-		tmin = tempPointL->getCoordiate(0);
-		tmax = tempPointU->getCoordiate(0);
+		tmin = tempPointL->getCoordinate(0);
+		tmax = tempPointU->getCoordinate(0);
 
 		
 
@@ -234,8 +221,8 @@ class ReachTube* ReachTube::bloatReachTube(double* deltaArray, class Annotation*
 			epsilon = currentAnnotation->getED(delta,tmin,tmax,reachTubeMode);
 			//cout<<"at dimensions "<<j<< " the epsilon is "<<epsilon<<endl;
 
-			value1 = tempPointL->getCoordiate(j);
-			value2 = tempPointU->getCoordiate(j);
+			value1 = tempPointL->getCoordinate(j);
+			value2 = tempPointU->getCoordinate(j);
 
 			if(value1 >= value2){
 				tempvalue = value2;
@@ -323,6 +310,19 @@ void ReachTube::parseGuardsTube(char* filename){
 
 }
 
+void ReachTube::addGuards(double *ptLower, vector<pair<int, double *> > guards){
+	isReachTube = 0;
+	reachTubeMode = -1;
+
+	int tempMode;
+	double *ptUpper;
+	for(int i=0; i<guards.size(); i++){
+		mode.push_back(guards[i].first);
+		upperBound.push_back(new Point(dimensions+1, guards[i].second));
+		lowerBound.push_back(new Point(dimensions+1, ptLower));
+	}
+}
+
 void ReachTube::printReachTube(char* filename, int flag){
 
 	ofstream invFile;
@@ -354,13 +354,13 @@ void ReachTube::printReachTube(char* filename, int flag){
 	for(iterator = 0; iterator < lowerBound.size(); iterator++){
 		tempPoint = lowerBound.at(iterator);
 		for(i=0;i<tempPoint->getDimension();i++){
-			invFile << " " << tempPoint->getCoordiate(i);
+			invFile << " " << tempPoint->getCoordinate(i);
 		}
 		invFile << endl;
 
 		tempPoint = upperBound.at(iterator);
 		for(i=0;i<tempPoint->getDimension();i++){
-			invFile << " " << tempPoint->getCoordiate(i);
+			invFile << " " << tempPoint->getCoordinate(i);
 		}
 		invFile << endl;
 
@@ -414,11 +414,11 @@ void ReachTube::compressGuardSet(){
 				// Code for collapsing the dimensions;
 				for(dimIndex = 0; dimIndex < refLower->getDimension(); dimIndex++){
 					// merging the coordinates, lower is the lowest of them, higher is the largest of them.
-					if(tempPointLower->getCoordiate(dimIndex) <= refLower->getCoordiate(dimIndex)){
-						refLower->setCoordinate(dimIndex,tempPointLower->getCoordiate(dimIndex));
+					if(tempPointLower->getCoordinate(dimIndex) <= refLower->getCoordinate(dimIndex)){
+						refLower->setCoordinate(dimIndex,tempPointLower->getCoordinate(dimIndex));
 					}
-					if(tempPointUpper->getCoordiate(dimIndex) >= refUpper->getCoordiate(dimIndex)){
-						refUpper->setCoordinate(dimIndex,tempPointUpper->getCoordiate(dimIndex));
+					if(tempPointUpper->getCoordinate(dimIndex) >= refUpper->getCoordinate(dimIndex)){
+						refUpper->setCoordinate(dimIndex,tempPointUpper->getCoordinate(dimIndex));
 					}
 				}
 
@@ -466,8 +466,8 @@ double ReachTube::getMaxCoordinate(int dimension, int curMode){
 	for(pointIndex = upperBound.size()-1; pointIndex>=0; pointIndex--){
 		if(mode.at(pointIndex) == curMode){
 			tempPoint = upperBound.at(pointIndex);
-			if(maxValue <= tempPoint->getCoordiate(dimension)){
-				maxValue = tempPoint->getCoordiate(dimension);
+			if(maxValue <= tempPoint->getCoordinate(dimension)){
+				maxValue = tempPoint->getCoordinate(dimension);
 			}
 		}
 	}
@@ -482,10 +482,10 @@ vector<double> ReachTube::MaxCoordinate(int dimension){
 	class Point* pairPoint;
 	for (pointIndex = upperBound.size()-1; pointIndex>=0; pointIndex--){
 		maxPoint = upperBound.at(pointIndex);
-		if (maxValue<=maxPoint->getCoordiate(dimension)){
-			maxValue = maxPoint->getCoordiate(dimension);
+		if (maxValue<=maxPoint->getCoordinate(dimension)){
+			maxValue = maxPoint->getCoordinate(dimension);
 			pairPoint = lowerBound.at(pointIndex);
-			pairValue = pairPoint->getCoordiate(dimension);
+			pairValue = pairPoint->getCoordinate(dimension);
 		}
 	}
 	std::vector<double> retval;
@@ -502,8 +502,8 @@ double ReachTube::getMinCoordinate(int dimension, int curMode){
 	for(pointIndex = lowerBound.size()-1; pointIndex>=0; pointIndex--){
 		if(mode.at(pointIndex) == curMode){
 			tempPoint = lowerBound.at(pointIndex);
-			if(minValue >= tempPoint->getCoordiate(dimension)){
-				minValue = tempPoint->getCoordiate(dimension);
+			if(minValue >= tempPoint->getCoordinate(dimension)){
+				minValue = tempPoint->getCoordinate(dimension);
 			}
 		}
 	}
@@ -518,10 +518,10 @@ vector<double> ReachTube::MinCoordinate(int dimension){
 	class Point* pairPoint;
 	for (pointIndex = lowerBound.size()-1; pointIndex>=0; pointIndex--){
 		minPoint = lowerBound.at(pointIndex);
-		if(minValue >= minPoint->getCoordiate(dimension)){
-			minValue = minPoint->getCoordiate(dimension);
+		if(minValue >= minPoint->getCoordinate(dimension)){
+			minValue = minPoint->getCoordinate(dimension);
 			pairPoint = upperBound.at(pointIndex);
-			pairValue = pairPoint->getCoordiate(dimension);
+			pairValue = pairPoint->getCoordinate(dimension);
 		}
 	}
 	std::vector<double> retval;
@@ -547,8 +547,8 @@ int ReachTube::checkunsafe_rest(double* forM, double* forB, int numofeq, int ind
 		lowerPoint = lowerBound.at(index);
 		upperPoint = upperBound.at(index);
 		for(i=0;i<dimensions;i++){
-			uppersum+=forM[dimensions*equ+i]*upperPoint->getCoordiate(i+1);
-			lowersum+=forM[dimensions*equ+i]*lowerPoint->getCoordiate(i+1);
+			uppersum+=forM[dimensions*equ+i]*upperPoint->getCoordinate(i+1);
+			lowersum+=forM[dimensions*equ+i]*lowerPoint->getCoordinate(i+1);
 		}
 		if (uppersum<forB[equ]){
 			if(lowersum<forB[equ]){
@@ -583,8 +583,8 @@ int ReachTube::checkunsafe(double* forM, double* forB, int numofeq){
 		lowerPoint = lowerBound.at(pointIndex);
 		upperPoint = upperBound.at(pointIndex);
 		for(i=0;i<dimensions;i++){
-			uppersum+=forM[i]*upperPoint->getCoordiate(i+1);
-			lowersum+=forM[i]*lowerPoint->getCoordiate(i+1);
+			uppersum+=forM[i]*upperPoint->getCoordinate(i+1);
+			lowersum+=forM[i]*lowerPoint->getCoordinate(i+1);
 		}
 		if (uppersum<forB[0]){
 			if (numofeq>1){
@@ -907,10 +907,10 @@ int ReachTube::checkIntersection(int curMode, class Point* currPoint, double* de
 			lowerBoundPoint = lowerBound.at(index);
 			for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
 				delta = deltaArray[dimIndex-1];
-				maxDim = upperBoundPoint->getCoordiate(dimIndex);
-				minDim = lowerBoundPoint->getCoordiate(dimIndex);
-				maxPointDim = currPoint->getCoordiate(dimIndex)+delta;
-				minPointDim = currPoint->getCoordiate(dimIndex)-delta;
+				maxDim = upperBoundPoint->getCoordinate(dimIndex);
+				minDim = lowerBoundPoint->getCoordinate(dimIndex);
+				maxPointDim = currPoint->getCoordinate(dimIndex)+delta;
+				minPointDim = currPoint->getCoordinate(dimIndex)-delta;
 				if(minDim > maxPointDim || maxDim < minPointDim){
 					hasIntersection = 0;
 				}
@@ -942,17 +942,17 @@ double ReachTube::getMinTime(int curMode, class Point* currPoint, double* deltaA
 			lowerBoundPoint = lowerBound.at(index);
 			for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
 				delta = deltaArray[dimIndex-1];
-				maxDim = upperBoundPoint->getCoordiate(dimIndex);
-				minDim = lowerBoundPoint->getCoordiate(dimIndex);
-				maxPointDim = currPoint->getCoordiate(dimIndex)+delta;
-				minPointDim = currPoint->getCoordiate(dimIndex)-delta;
+				maxDim = upperBoundPoint->getCoordinate(dimIndex);
+				minDim = lowerBoundPoint->getCoordinate(dimIndex);
+				maxPointDim = currPoint->getCoordinate(dimIndex)+delta;
+				minPointDim = currPoint->getCoordinate(dimIndex)-delta;
 				if(minDim > maxPointDim || maxDim < minPointDim){
 					hasIntersection = 0;
 				}
 			}
 			if(hasIntersection == 1){
-				if(minTime > lowerBoundPoint->getCoordiate(0)){
-					minTime = lowerBoundPoint->getCoordiate(0);
+				if(minTime > lowerBoundPoint->getCoordinate(0)){
+					minTime = lowerBoundPoint->getCoordinate(0);
 				}
 			}
 		}
@@ -980,17 +980,17 @@ double ReachTube::getMaxTime(int curMode, class Point* currPoint, double* deltaA
 			lowerBoundPoint = lowerBound.at(index);
 			for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
 				delta = deltaArray[dimIndex-1];
-				maxDim = upperBoundPoint->getCoordiate(dimIndex);
-				minDim = lowerBoundPoint->getCoordiate(dimIndex);
-				maxPointDim = currPoint->getCoordiate(dimIndex)+delta;
-				minPointDim = currPoint->getCoordiate(dimIndex)-delta;
+				maxDim = upperBoundPoint->getCoordinate(dimIndex);
+				minDim = lowerBoundPoint->getCoordinate(dimIndex);
+				maxPointDim = currPoint->getCoordinate(dimIndex)+delta;
+				minPointDim = currPoint->getCoordinate(dimIndex)-delta;
 				if(minDim > maxPointDim || maxDim < minPointDim){
 					hasIntersection = 0;
 				}
 			}
 			if(hasIntersection == 1){
-				if(maxTime < upperBoundPoint->getCoordiate(0)){
-					maxTime = upperBoundPoint->getCoordiate(0);
+				if(maxTime < upperBoundPoint->getCoordinate(0)){
+					maxTime = upperBoundPoint->getCoordinate(0);
 				}
 			}
 		}

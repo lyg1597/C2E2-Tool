@@ -119,15 +119,29 @@ class HyIR:
         return swindow,varList,modeList
 
     def printHybridSimGuardsInvariants(self):
-        hybridSimFile = open("hybridSimGI.cpp","w")
+        file_name = "hybridSimGI.cpp"
+        hybridSimFile = open(file_name,"w")
         declarationsReqd = '''#include <iostream> \n#include <stdio.h> \n#include <vector> \n#include <utility> \nusing namespace std; \n\n'''
         hybridSimFile.write(declarationsReqd)
         hybridSimFile.close()
 
-        self.printHybridSimulationInvariants();
-        self.printHybridSimulationGuardsResets();
+        self.printHybridSimInvariants(file_name);
+        self.printHybridSimGuardsResets(file_name);
     
-    def printInvariants(self):
+    def printBloatedSimGuardsInvariants(self):
+        file_name = "bloatedSimGI.cpp"
+        bloatedSimFile = open(file_name,"w")
+        declarationsReqd = '''#include <iostream> \n#include <stdio.h> \n#include <vector> \n#include <utility> \nusing namespace std; \n\n'''
+        bloatedSimFile.write(declarationsReqd)
+        bloatedSimFile.close()
+
+        self.printBloatedSimInvariants(file_name);
+        self.printBloatedSimGuardsResets(file_name);
+
+    def printBloatedSimInvariants(self, file_name):
+        self.printHybridSimInvariants(file_name);
+        
+    def printHybridSimInvariants(self, file_name):
         
         # Implements the function that generates the C++ file that
         # checks for Invariants for a given hyper-rectangle. 
@@ -143,141 +157,7 @@ class HyIR:
             if not j.scope == "OUTPUT_DATA":
                 numVars = numVars+1
         
-        invariantFile = open("Invcheck.cpp","w")
-        invFileString = "/* CAPD file which determines invariant satisfaction for the rectangles */\n"
-        
-        invariantFile.write(invFileString)
-        declarationsReqd = ''' #include <iostream> \n #include <stdio.h> \n using namespace std; \n '''
-        invariantFile.write(declarationsReqd)
-        
-        declaration = '''main(int argc, char* argv[]){ \n'''
-        invariantFile.write(declaration)
-        
-        # Scan the values from the input, then compare then with the expression computed
-        
-        codeString = "  int curMode;\n"
-        codeString+= "  double bufferReader;\n"
-        codeString+= "  double scanLB["+str(numVars+1)+"];\n"
-        codeString+= "  double scanUB["+str(numVars+1)+"];\n"
-        #codeString+= "  IVector x("+str(numVars+1)+");\n"
-        #codeString+= "  IVector Range("+str(numVars+1)+");\n\n"
-        
-        codeString+= "  FILE* reader;\n"
-        codeString+= "  reader = fopen(\"reachtube.dat\",\"r\");\n\n"
-        
-        codeString+= "  FILE* writer;\n"
-        codeString+= "  writer = fopen(\"invariant.dat\",\"w\");\n\n"
-        
-        codeString+= "  fscanf(reader,\"%d\",&curMode);\n\n"
-        #codeString+= "  fprintf(writer,\"%d\\n\",curMode);\n"
-        
-        codeString+= "  while( fscanf(reader,\"%lf\",&bufferReader) != EOF){\n\n"
-        codeString+= "    scanLB[0] = bufferReader;\n"
-        codeString+= "    for(int j=0; j<"+str(numVars)+"; j++){\n"
-        codeString+= "      fscanf(reader,\"%lf\",&bufferReader);\n"
-        codeString+= "      scanLB[j+1] = bufferReader;\n"
-        codeString+= "    }\n\n"
-        codeString+= "    for(int j=0; j<"+str(numVars+1)+"; j++){\n"
-        codeString+= "      fscanf(reader,\"%lf\",&bufferReader);\n"
-        codeString+= "      scanUB[j] = bufferReader;\n"
-        codeString+= "    }\n\n"
-        #codeString+= "    for(int j=0; j<"+str(numVars+1)+"; j++){\n"
-        #codeString+= "      Range[j].setLeftBound(scanLB[j]);\n"
-        #codeString+= "      Range[j].setRightBound(scanUB[j]);\n"
-        #codeString+= "    }\n\n"
-        #codeString+= "    x = Range;\n\n"
-
-        invariantFile.write(codeString)
-        
-        currentMode = 0;
-        for mode in self.automata[0].modes:
-            
-#            for j in mode.invs:
-#                print j.raw
-#                print self.generateCAPDInvCode(j.parsed, 2)        
-
-            currentMode += 1;
-            numAnds = 0
-            numOrs = 0
-            numMaxOrs = -1;
-            for j in mode.invs:
-                numAnds = numAnds + 1
-                numOrs = numberOfLogicalOper(j.parsed)
-                if numMaxOrs < numOrs:
-                    numMaxOrs = numOrs
-                    
-            
-            codeString = "    if(curMode == "+str(currentMode)+"){\n"
-            
-            '''Here, add the folowing things, the number of stuff you define is max of number of ors in
-            each of the logical operations '''
-            
-            for j in range(1,numMaxOrs+1):
-                codeString+= "      double RHSGE"+str(j)+";\n"
-                codeString+= "      double LHSGE"+str(j)+";\n"
-                codeString+= "      double evalE"+str(j)+";\n"
-                codeString+= "      bool SATE"+str(j)+";\n"
-            
-            for j in range(1,numAnds+1):
-                codeString+= "      bool SATEAND"+str(j)+";\n"
-                
-            currIndex = 0;
-            numberOfOrs = 0;
-            for j in mode.invs:
-                numberOfOrs = numberOfLogicalOper(j.parsed)
-                currIndex+= 1
-                codeString+= self.generateCAPDInvCode(j.parsed, numberOfOrs)
-                codeString+= "      SATEAND"+str(currIndex)+" = "
-                for j in range(1,numberOfOrs+1):
-                    codeString+= "SATE"+str(j)+" || "
-                codeString+= "false;\n"
-
-            codeString+= "      if("            
-            for j in range(1,numAnds+1):
-                codeString+= " SATEAND"+str(j)+" &&"
-            codeString+= " true){\n"            
-            codeString+= "        for(int k=0; k<"+str(numVars+1)+";k++){\n"
-            codeString+= "          fprintf(writer,\" %lf\",scanLB[k]);\n"
-            codeString+= "        }\n"
-            codeString+= "        fprintf(writer,\" \\n\");\n"
-            codeString+= "        for(int k=0; k<"+str(numVars+1)+";k++){\n"
-            codeString+= "          fprintf(writer,\" %lf\",scanUB[k]);\n"
-            codeString+= "        }\n"
-            codeString+= "        fprintf(writer,\" \\n\");\n"
-            codeString+= "      }\n"
-            codeString+= "      else{\n"
-            codeString+= "        break;\n"    
-            codeString+= "      }\n"        
-            codeString+= "    }\n"
-            invariantFile.write(codeString)
-            
-        codeString = "  }\n"
-        invariantFile.write(codeString)
-        
-        codeString = "  fclose(reader);\n  fclose(writer);\n"
-        invariantFile.write(codeString)
-
-        endmain = ''' }\n'''
-        invariantFile.write(endmain)
-        invariantFile.close()
-        
-    def printHybridSimulationInvariants(self):
-        
-        # Implements the function that generates the C++ file that
-        # checks for Invariants for a given hyper-rectangle. 
-        # The first thing it parses is the current mode and then 
-        # checks for the invariant condition for each of the rectangles
-        # for the current mode
-        # If invariant is satisfied, then the rectangle is printed into 
-        # invariant.dat file
-        
-        
-        numVars=0;
-        for j in self.vars:
-            if not j.scope == "OUTPUT_DATA":
-                numVars = numVars+1
-        
-        invariantFile = open("hybridSimGI.cpp","a")
+        invariantFile = open(file_name,"a")
 
         # declarationsReqd = '''#include <iostream> \n#include <stdio.h> \nusing namespace std; \n'''
         # invariantFile.write(declarationsReqd)
@@ -340,162 +220,18 @@ class HyIR:
             codeString+= "  }\n"
             invariantFile.write(codeString)
 
+        codeString+= "  return false;\n"
+        invariantFile.write(codeString)
+        
         endmain = '''}\n\n'''
         invariantFile.write(endmain)
         invariantFile.close()
 
 
-    def printGuardsResets(self):
+    def printBloatedSimGuardsResets(self, file_name):
+        self.printHybridSimGuardsResets(file_name);
         
-        # Implementation of translation from guards in parsed format
-        # to C++ CAPD file.
-        # Design decisions: expressions > and < are considered as invariants
-        # whereas expressions >= and <= are considered as urgent
-        # i.e. if the expression is x + y >= 5, then the guard will be only
-        # be enabled when the expression x + y for the reachable set has non
-        # empty intersection with 5, rest all cases, its not enabled
-        # The cases == and != are also implemented as urgent.
-        
-        
-        numVars=0;
-        for j in self.vars:
-            if not j.scope == "OUTPUT_DATA":
-                numVars = numVars+1
-        
-        guardFile = open("guardGen.cpp","w")
-        guardFileString = "/* CAPD file which determines intersection with any of the guard sets */\n"
-        
-        guardFile.write(guardFileString)
-        declarationsReqd = ''' #include <iostream> \n #include <stdio.h> \n using namespace std; \n '''
-        guardFile.write(declarationsReqd)
-        
-        declaration = '''main(int argc, char* argv[]){ \n'''
-        guardFile.write(declaration)
-        
-        # Scan the values from the input, then compare then with the expression computed
-        
-        codeString = "  int curMode;\n"
-        codeString+= "  double bufferReader;\n"
-        codeString+= "  double scanLB["+str(numVars+1)+"];\n"
-        codeString+= "  double scanUB["+str(numVars+1)+"];\n"
-        #codeString+= "  IVector x("+str(numVars+1)+");\n"
-        #codeString+= "  IVector Range("+str(numVars+1)+");\n\n"
-        
-        codeString+= "  FILE* reader;\n"
-        codeString+= "  reader = fopen(\"reachtube.dat\",\"r\");\n\n"
-        
-        codeString+= "  FILE* writer;\n"
-        codeString+= "  writer = fopen(\"guard.dat\",\"w\");\n\n"
-        
-        codeString+= "  FILE* writer1;\n"
-        codeString+= "  writer1 = fopen(\"hybrid_simulation.dat\",\"w\");\n\n"
-        
-        codeString+= "  fscanf(reader,\"%d\",&curMode);\n\n"
-        
-        codeString+= "  while( fscanf(reader,\"%lf\",&bufferReader) != EOF){\n\n"
-        codeString+= "    scanLB[0] = bufferReader;\n"
-        codeString+= "    for(int j=0; j<"+str(numVars)+"; j++){\n"
-        codeString+= "      fscanf(reader,\"%lf\",&bufferReader);\n"
-        codeString+= "      scanLB[j+1] = bufferReader;\n"
-        codeString+= "    }\n\n"
-        codeString+= "    for(int j=0; j<"+str(numVars+1)+"; j++){\n"
-        codeString+= "      fscanf(reader,\"%lf\",&bufferReader);\n"
-        codeString+= "      scanUB[j] = bufferReader;\n"
-        codeString+= "    }\n\n"
-        #codeString+= "    for(int j=0; j<"+str(numVars+1)+"; j++){\n"
-        #codeString+= "      Range[j].setLeftBound(scanLB[j]);\n"
-        #codeString+= "      Range[j].setRightBound(scanUB[j]);\n"
-        #codeString+= "    }\n\n"
-        #codeString+= "    x = Range;\n\n"
-        codeString+= "    bool guard = false;\n"
-
-        guardFile.write(codeString)
-
-        for i in self.automata[0].trans:
-            guardNode = i.guard.parsed
-            #guardNode[1].prints()
-            numAnds = numberOfLogicalOper(guardNode)
-            
-            codeString = "    if(curMode == "+str(i.src+1)+"){\n"
-            for j in range(1,numAnds+1):
-                codeString+= "      double RHSGE"+str(j)+";\n"
-                codeString+= "      double LHSGE"+str(j)+";\n"
-                codeString+= "      double evalE"+str(j)+";\n"
-                codeString+= "      bool SATE"+str(j)+";\n"
-            
-            codeString+= self.generateCAPDExpCode(guardNode,numAnds)
-            codeString+= "      if("
-            for j in range(1,numAnds+1):
-                codeString+= " SATE"+str(j)+" &&"
-            codeString+= " true){\n"
-            
-            #Code for printing resets in this part
-            
-            resetNode = i.actions
-            for listResetElem in resetNode :
-                parsedVal = listResetElem.parsed
-                #parsedVal = parsedVal[0]
-                #parsedVal[0].prints()
-                
-                #print "reset node "
-                l = 1
-                for j in self.vars :
-                    if not j.scope=="OUTPUT_DATA":
-#                         if j.name+"'" == parsedVal.children[0].value :
-#                             resetString = "        Range["+str(l)+"] = "
-                        if j.name == parsedVal.children[0].value :
-                            resetString = "        scanUB["+str(l)+"] = "
-                        l = l+1
-
-                #parsedVal.children[0].prints()
-                #parsedVal.children[1].prints()
-                resetString+=self.generateCAPDExpCode(parsedVal.children[1], 0)
-                resetString+=";\n"
-                #print resetString
-                codeString+= resetString
-            
-            
-            codeString+= "        guard = true;\n"
-            codeString+= "        for(int k=0; k<"+str(numVars+1)+";k++){\n"
-            codeString+= "          fprintf(writer,\" %lf\",scanLB[k]);\n"
-            codeString+= "        }\n"
-            codeString+= "        fprintf(writer,\" \\n\");\n"
-            codeString+= "        for(int k=0; k<"+str(numVars+1)+";k++){\n"
-            codeString+= "          fprintf(writer,\" %lf\",scanUB[k]);\n"
-            codeString+= "        }\n"
-            codeString+= "        fprintf(writer,\" \\n "+str(i.dest+1)+" \\n\");\n"
-            codeString+= "      }\n"
-            codeString+= "    }\n"
-            guardFile.write(codeString)
-        
-        codeString = "    if(guard){\n" 
-        codeString+= "      break;\n"
-        codeString+= "    }\n"
-        codeString+= "    else{\n" 
-        codeString+= "      for(int k=0; k<"+str(numVars+1)+";k++){\n"
-        codeString+= "        fprintf(writer1,\" %lf\",scanLB[k]);\n"
-        codeString+= "      }\n"
-        codeString+= "      fprintf(writer1,\" \\n\");\n"
-        codeString+= "      for(int k=0; k<"+str(numVars+1)+";k++){\n"
-        codeString+= "        fprintf(writer1,\" %lf\",scanUB[k]);\n"
-        codeString+= "      }\n"
-        codeString+= "      fprintf(writer1,\" \\n\");\n"
-        codeString+= "    }\n"
-        guardFile.write(codeString)
-        
-        codeString = "  }\n"
-        guardFile.write(codeString)
-        
-            
-        codeString = "  fclose(reader);\n  fclose(writer);\n"
-        guardFile.write(codeString)
-        
-        endmain = ''' }\n'''
-        guardFile.write(endmain)
-        
-        guardFile.close()
-        
-    def printHybridSimulationGuardsResets(self):
+    def printHybridSimGuardsResets(self, file_name):
         
         # Implementation of translation from guards in parsed format
         # to C++ CAPD file.
@@ -511,7 +247,7 @@ class HyIR:
             if not j.scope == "OUTPUT_DATA":
                 numVars = numVars+1
         
-        guardFile = open("hybridSimGI.cpp","a")
+        guardFile = open(file_name,"a")
         
         # declarationsReqd = '''#include <iostream> \n#include <stdio.h> \n#include <vector> \n#include <utility> \nusing namespace std; \n'''
         # guardFile.write(declarationsReqd)

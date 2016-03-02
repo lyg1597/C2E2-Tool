@@ -98,20 +98,20 @@ void Visualizer::plotUnsafe(class Point* UnsafePoint1, class Point* UnsafePoint2
 
 		cout << " Coming to a place where its not supposed to come  \n";
 
-		UnsafeFile << 0 << " " << UnsafePoint1->getCoordiate(dim1-1) << "\n";
-		UnsafeFile << GT << " " << UnsafePoint1->getCoordiate(dim1-1) << "\n";
-		UnsafeFile << GT << " " << UnsafePoint2->getCoordiate(dim1-1) << "\n";
-		UnsafeFile << 0 << " " << UnsafePoint2->getCoordiate(dim1-1) << "\n";
-		UnsafeFile << 0 << " " << UnsafePoint1->getCoordiate(dim1-1) << "\n";
+		UnsafeFile << 0 << " " << UnsafePoint1->getCoordinate(dim1-1) << "\n";
+		UnsafeFile << GT << " " << UnsafePoint1->getCoordinate(dim1-1) << "\n";
+		UnsafeFile << GT << " " << UnsafePoint2->getCoordinate(dim1-1) << "\n";
+		UnsafeFile << 0 << " " << UnsafePoint2->getCoordinate(dim1-1) << "\n";
+		UnsafeFile << 0 << " " << UnsafePoint1->getCoordinate(dim1-1) << "\n";
 
 	}
 	else{
 
-		UnsafeFile << UnsafePoint1->getCoordiate(dim2-1) << " " << UnsafePoint1->getCoordiate(dim1-1) << "\n";
-		UnsafeFile << UnsafePoint1->getCoordiate(dim2-1) << " " << UnsafePoint2->getCoordiate(dim1-1) << "\n";
-		UnsafeFile << UnsafePoint2->getCoordiate(dim2-1) << " " << UnsafePoint2->getCoordiate(dim1-1) << "\n";
-		UnsafeFile << UnsafePoint2->getCoordiate(dim2-1) << " " << UnsafePoint1->getCoordiate(dim1-1) << "\n";
-		UnsafeFile << UnsafePoint1->getCoordiate(dim2-1) << " " << UnsafePoint1->getCoordiate(dim1-1) << "\n";
+		UnsafeFile << UnsafePoint1->getCoordinate(dim2-1) << " " << UnsafePoint1->getCoordinate(dim1-1) << "\n";
+		UnsafeFile << UnsafePoint1->getCoordinate(dim2-1) << " " << UnsafePoint2->getCoordinate(dim1-1) << "\n";
+		UnsafeFile << UnsafePoint2->getCoordinate(dim2-1) << " " << UnsafePoint2->getCoordinate(dim1-1) << "\n";
+		UnsafeFile << UnsafePoint2->getCoordinate(dim2-1) << " " << UnsafePoint1->getCoordinate(dim1-1) << "\n";
+		UnsafeFile << UnsafePoint1->getCoordinate(dim2-1) << " " << UnsafePoint1->getCoordinate(dim1-1) << "\n";
 
 	}
 
@@ -136,11 +136,11 @@ void Visualizer::Plot(){
 		else{
 			if(PlotterSet->getDelta() == 0){
 				VisualizeFile << " \n \n \n";
-				VisualizeFile << PlotterSet->getState()->getCoordiate(0) << "  " << PlotterSet->getState()->getCoordiate(1) << " \n";
+				VisualizeFile << PlotterSet->getState()->getCoordinate(0) << "  " << PlotterSet->getState()->getCoordinate(1) << " \n";
 				PlotterSet = PlotterSet->getNext();
 			}
 			else{
-				VisualizeFile << PlotterSet->getState()->getCoordiate(0) << "  " << PlotterSet->getState()->getCoordiate(1) << " \n";
+				VisualizeFile << PlotterSet->getState()->getCoordinate(0) << "  " << PlotterSet->getState()->getCoordinate(1) << " \n";
 				PlotterSet = PlotterSet->getNext();
 			}
 		}

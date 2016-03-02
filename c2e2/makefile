@@ -71,7 +71,7 @@ all: C2E2
 C2E2: $(OBJS) $(USER_OBJS) $(MISC)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	$(CXX)  -o"C2E2" $(OBJS) $(USER_OBJS) $(LIBS) -I/usr/include/python2.7/ -lpython2.7 -lstdc++ -ldl
+	$(CXX) -o"C2E2" $(OBJS) $(USER_OBJS) $(LIBS) -I/usr/include/python2.7/ -lpython2.7 -lstdc++ -ldl
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -8,6 +8,8 @@
 #ifndef POINT_H_
 #define POINT_H_
 
+using namespace std;
+
 class Point {
 private:
 	int dimension;
@@ -27,7 +29,7 @@ public:
 
 	int getDimension();
 	double* getCoordinates();
-	double getCoordiate(int index);
+	double getCoordinate(int index);
 
 	void print();
 
