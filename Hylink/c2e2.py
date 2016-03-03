@@ -235,19 +235,6 @@ class Main(gtk.Window):
     
 
     
-#    arguments1 = ['mv', 'guardGen.cpp', 'Invcheck.cpp', 'simulator.cpp', '../wd/']
-#    subp1 = subprocess.Popen(arguments1); 
-#    
-#    arguments = ['sh', './compileAndExecute']
-#    subp = subprocess.Popen(arguments,cwd="../wd/")
-#
-#
-#
-#    
-#    while subp.poll() == None:
-#      if not subp.poll()==None:
-#        break
-    
 
   """
     openFileCallback
@@ -946,9 +933,11 @@ class PropertiesFrame(gtk.Frame):
             unsafeSet=prop.unsafeSetParsed
             reachSetPath=prop.reachSetPath
             #print prop.simulator
-            if prop.simulator==1 or prop.simulation == 1:
+            if prop.simulator==1:
               ploterversion = 2 
               #print ploterversion
+            elif prop.simulation == 1:
+              ploterversion = 3
             else:
               ploterversion = 1
               #print ploterversion
@@ -1340,12 +1329,12 @@ class PropertiesFrame(gtk.Frame):
           
           filenamestring = "ReachSet"+prop.name
           os.system("rm ../wd/"+filenamestring)
-          writer = open("Configuration-C2E2","w")
+          writer = open("../wd/Configuration-C2E2","w")
           writer.write(c2e2String)
           writer.close()
           
-          arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
-          subp1 = subprocess.Popen(arguments1); 
+          # arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
+          # subp1 = subprocess.Popen(arguments1); 
     
           arguments = ['sh', './ExecuteC2E2']
           self.subp = subprocess.Popen(arguments,cwd="../wd/",preexec_fn=os.setsid)
@@ -1658,12 +1647,12 @@ class PropertiesFrame(gtk.Frame):
           
           filenamestring = "ReachSet"+prop.name
           os.system("rm ../wd/"+filenamestring)
-          writer = open("Configuration-C2E2","w")
+          writer = open("../wd/Configuration-C2E2","w")
           writer.write(c2e2String)
           writer.close()
           
-          arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
-          subp1 = subprocess.Popen(arguments1); 
+          # arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
+          # subp1 = subprocess.Popen(arguments1); 
     
           arguments = ['sh', './ExecuteC2E2']
           self.subp = subprocess.Popen(arguments,cwd="../wd/",preexec_fn=os.setsid)

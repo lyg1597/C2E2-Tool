@@ -28,7 +28,18 @@ from math import floor as floor
 def plotGraph(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,dispMode,
               timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist,plotterversion):
 
-  
+  # print (reachSetPath)
+  # print (unsafeSet)
+  # print (varList)
+  # print (modeList)
+  # print (varPlotTuple)
+  # print (timeStep)
+  # print (timeHoriz)
+  # print (plotStatus)
+  # print (title)
+  # print (filename)
+  # print (xindex)
+  # print (yindexlist)
   if plotterversion == 1:
     if len(varPlotTuple)>2:
       return plotMultipleVars(threadEvent,reachSetPath,varList,modeList,varPlotTuple,dispMode,timeStep,timeHoriz,
@@ -44,6 +55,16 @@ def plotGraph(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,d
     else:
       return plotMultipleModesV2(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,dispMode,
                                timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist)
+
+  if plotterversion == 3:
+    if len(varPlotTuple)>2:
+      return plotMultipleVarsV2(threadEvent,reachSetPath,varList,modeList,varPlotTuple,dispMode,timeStep,timeHoriz,
+                              plotStatus,title,filename,xindex,yindexlist)
+    else:
+      return plotMultipleModesV3(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,dispMode,
+                               timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist)
+
+
   
 
 
@@ -799,4 +820,223 @@ def plotMultipleVarsV2(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,di
   g('load "form.gp"')
 
   plotStatus.set_label("Status: Ready")
+  return filename
+
+
+def plotMultipleModesV3(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlotTuple,dispMode,
+      timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist):
+  colors=('blue','green','red','yellow','brown','orange','cyan','pink','magenta')
+  reachData=open(reachSetPath,'r')
+ 
+  listofsafetube=[]
+  listofunsafetube = []
+  tubeorder = []
+
+  mode=0
+  dataLen=len(varlist)
+  linecounter=0
+
+  #check if this excution is unsafe
+  unsafeflag = 0
+  
+  xmin = float("Inf")
+  ymin = float("Inf")
+  xmax = -float("Inf")
+  ymax = -float("Inf")
+  
+  #print lowerbound
+  trace = []
+
+  for line in reachData:
+    if line.rstrip():
+      dataLine=line.rstrip().split()
+      if dataLine[0]=="%":
+        if len(trace)>0 and unsafeflag==1:
+          listofunsafetube.append(trace)
+        elif len(trace)>0:
+          listofsafetube.append(trace)
+        trace = []
+        mode=int(dataLine[2])-1
+        tubeorder.append(mode)
+        linecounter=0
+        if len(dataLine)==4:
+          unsafeflag=1
+          del tubeorder[-1]
+      else:
+        if linecounter%2 == 0:
+          point = []
+          for i in xrange (dataLen):
+            point.append(dataLine[i])
+          trace.append(point)
+        linecounter+=1
+  if unsafeflag==1:
+    listofunsafetube.append(trace)
+  else:
+    listofsafetube.append(trace)
+  
+  #print tubeorder
+  reachData.close()
+
+ #set the boundary for unsafe set
+  unsafe_x_bot_bound = "graph 0"
+  unsafe_y_bot_bound = "graph 0"
+  unsafe_x_top_bound = "graph 1"
+  unsafe_y_top_bound = "graph 1"
+  numofunsafevar = len(varlist)-1
+  for i in range (len(unsafeset[0])):
+    #continue
+    pos = -1
+    for j in range (numofunsafevar):
+      if unsafeset[0][i][j] >0:
+        pos = j
+    #print pos
+    dif = 1/unsafeset[0][i][pos]
+    right = dif*unsafeset[1][i][0]
+    #print right
+    symbol = unsafeset[2][i][0]
+    varnum = pos+1
+    print varnum
+    exist = 0
+    x_or_y = -1
+    for j in range (2):
+      if varPlotTuple[j] == varnum:
+        exist = 1
+        x_or_y = j
+    #print x_or_y
+
+    if exist == 0:
+      print("will not draw unsafe")
+      continue
+    if exist == 1:
+      if symbol==">" or symbol==">=":
+        if x_or_y == 0:
+          unsafe_x_bot_bound = "first " + str(right)
+        if x_or_y == 1:
+          unsafe_y_bot_bound = "first " + str(right)
+      if symbol=="<" or symbol=="<=":
+        if x_or_y == 0:
+          unsafe_x_top_bound = "first " + str(right)
+        if x_or_y == 1:
+          unsafe_y_top_bound = "first " + str(right)
+
+  unsafestring = "set object rectangle from "+unsafe_x_bot_bound+', '+unsafe_y_bot_bound+" to "+unsafe_x_top_bound+', '+unsafe_y_top_bound+" fillcolor rgb 'pink'\n"
+  
+  #generate plot string, and store string into configuration file
+  g=Gnuplot.Gnuplot()
+  plotstring =""
+  plotstring += 'set term png transparent truecolor size 600,480  enhanced font "Helvetica,15"'
+  plotstring += "\n"
+  plotstring += 'set output "./../wd/plotresult/'
+  plotstring += filename
+  plotstring += '.png"'
+  plotstring += "\n"
+  plotstring += "set xlabel "
+  plotstring += '"'
+  plotstring += xindex
+  plotstring += '"'
+  plotstring += "\n"
+  plotstring += "set ylabel "
+  plotstring += '"'
+  plotstring += yindexlist[0]
+  plotstring += '"'
+  plotstring += '\n'
+  #print(plotstring)
+  plotstring += 'set grid'
+  plotstring += '\n'
+  plotstring += 'set title '
+  plotstring += '"'
+  plotstring += title
+  plotstring += '"'
+  plotstring += "\n"
+  plotstring += "set style rect fill  transparent solid 0.50 noborder\n"
+  
+  for i in range(len(listofsafetube)):
+    for j in range (len(listofsafetube[i])):
+      if float(listofsafetube[i][j][varPlotTuple[0]])<float(xmin):
+        xmin = listofsafetube[i][j][varPlotTuple[0]]
+      if float(listofsafetube[i][j][varPlotTuple[1]])<float(ymin):
+        ymin = listofsafetube[i][j][varPlotTuple[1]]
+      if float(listofsafetube[i][j][varPlotTuple[0]])>float(xmax):
+        xmax = listofsafetube[i][j][varPlotTuple[0]]
+      if float(listofsafetube[i][j][varPlotTuple[1]])>float(ymax):
+        ymax = listofsafetube[i][j][varPlotTuple[1]]
+ 
+  for i in range(len(listofunsafetube)):
+    for j in range (len(listofunsafetube[i])):
+      if float(listofunsafetube[i][j][varPlotTuple[0]])<float(xmin):
+        xmin = listofunsafetube[i][j][varPlotTuple[0]]
+      if float(listofunsafetube[i][j][varPlotTuple[1]])<float(ymin):
+        ymin = listofunsafetube[i][j][varPlotTuple[1]]
+      if float(listofunsafetube[i][j][varPlotTuple[0]])>float(xmax):
+        xmax = listofunsafetube[i][j][varPlotTuple[0]]
+      if float(listofunsafetube[i][j][varPlotTuple[1]])>float(ymax):
+        ymax = listofunsafetube[i][j][varPlotTuple[1]] 
+
+  if unsafe_y_bot_bound != "graph 0" or unsafe_y_bot_bound != "graph 0" or unsafe_x_top_bound != "graph 1" or unsafe_y_top_bound!="graph 1":
+    plotstring+= unsafestring
+    plotstring+= "set key center bottom Left title '"
+    for i in range (len(modelist)):
+      plotstring+= modelist[i]+':'+colors[i]+' '
+      plotstring+='Unsafe:pink'
+    plotstring+="' font 'Helvetica, 10'"
+    plotstring+="\n"
+
+  else:
+    plotstring+= "set key center bottom Left title '"
+    for i in range (len(modelist)):
+      plotstring+= modelist[i]+':'+colors[i]+' '
+    plotstring+="'\n"
+  
+  for i in range (len(tubeorder)):
+    if i == 0:
+      plotstring+= 'plot "-" u '
+    else:
+      plotstring+=' "" u '
+
+    plotstring+=str(varPlotTuple[0]+1)
+    plotstring+=':'
+    plotstring+=str(varPlotTuple[1]+1)
+
+    plotstring+=" notitle smooth bezier lc rgb "
+    plotstring+='"'
+    plotstring+=colors[tubeorder[i]]
+    plotstring+='"'
+
+    if i!=len(tubeorder)-1:
+      plotstring+=','
+
+  if len(listofunsafetube)==0:
+    plotstring+='\n'
+  else:
+    plotstring+=',"" u '
+    plotstring+=str(varPlotTuple[0]+1)
+    plotstring+=':'
+    plotstring+=str(varPlotTuple[1]+1)
+    plotstring+=' smooth bezier lc rgb "black"\n'
+
+  for i in range(len(listofsafetube)):
+    for j in range (len(listofsafetube[i])):
+      for k in range (len(varlist)):
+        plotstring+=str(listofsafetube[i][j][k])
+        plotstring+=" "
+
+      plotstring+='\n'
+
+    plotstring+='e'
+    plotstring+='\n'
+  
+  for i in range(len(listofunsafetube)):
+    for j in range (len(listofunsafetube[i])):
+      for k in range (len(varlist)):
+        plotstring+=str(listofunsafetube[i][j][k])
+        plotstring+=" "
+
+      plotstring+='\n'
+    plotstring+='e\n'
+
+  saveFile = open('form1.gp','w')
+  saveFile.write(plotstring)
+  saveFile.close()
+
+  g('load "form1.gp"')
   return filename
