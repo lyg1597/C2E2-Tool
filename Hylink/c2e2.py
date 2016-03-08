@@ -240,19 +240,6 @@ class Main(gtk.Window):
     
 
     
-#    arguments1 = ['mv', 'guardGen.cpp', 'Invcheck.cpp', 'simulator.cpp', '../wd/']
-#    subp1 = subprocess.Popen(arguments1); 
-#    
-#    arguments = ['sh', './compileAndExecute']
-#    subp = subprocess.Popen(arguments,cwd="../wd/")
-#
-#
-#
-#    
-#    while subp.poll() == None:
-#      if not subp.poll()==None:
-#        break
-    
 
   """
     openFileCallback
@@ -951,9 +938,11 @@ class PropertiesFrame(gtk.Frame):
             unsafeSet=prop.unsafeSetParsed
             reachSetPath=prop.reachSetPath
             #print prop.simulator
-            if prop.simulator==1 or prop.simulation == 1:
+            if prop.simulator==1:
               ploterversion = 2 
               #print ploterversion
+            elif prop.simulation == 1:
+              ploterversion = 3
             else:
               ploterversion = 1
               #print ploterversion
