@@ -315,11 +315,39 @@ void ReachTube::addGuards(double *ptLower, vector<pair<int, double *> > guards){
 	reachTubeMode = -1;
 
 	int tempMode;
-	double *ptUpper;
+	// bool exists;
+	Point *ptUpper, *ptL;
 	for(int i=0; i<guards.size(); i++){
-		mode.push_back(guards[i].first);
-		upperBound.push_back(new Point(dimensions+1, guards[i].second));
-		lowerBound.push_back(new Point(dimensions+1, ptLower));
+		// exists = false;
+		tempMode = guards[i].first;
+		ptL = new Point(dimensions+1, ptLower);
+		ptUpper = new Point(dimensions+1, guards[i].second);
+		// cout << "double * arr: ";
+		// for(int j=0; j<dimensions+1; j++){
+		// 	cout << j << ": " << guards[i].second[j] << ", ";
+		// }
+		// cout << endl;
+		// for(int j=0; j<mode.size(); j++){
+		// 	if(mode[j]==tempMode && lowerBound[j]==ptL && upperBound[j]==ptUpper){
+		// 		exists = true;
+		// 	}
+		// }
+		// if(!exists){
+		// cout << "ptUpper: "; ptUpper->print();
+			mode.push_back(tempMode);
+			upperBound.push_back(ptUpper);
+			lowerBound.push_back(ptL);
+		// }
+	}
+	// cout << "Guard Length: " << mode.size() << endl;
+}
+
+void ReachTube::printGuards(){
+	for(int i=0; i<mode.size(); i++){
+		cout << "Mode: " << mode[i] << endl;
+		cout << "LB: "; lowerBound[i]->print();
+		cout << "UB: "; upperBound[i]->print();
+		// cout << endl;
 	}
 }
 

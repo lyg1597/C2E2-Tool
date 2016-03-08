@@ -229,7 +229,93 @@ class HyIR:
 
 
     def printBloatedSimGuardsResets(self, file_name):
+        # pass
         self.printHybridSimGuardsResets(file_name);
+
+        # Implementation of translation from guards in parsed format
+        # to C++ CAPD file.
+        # Design decisions: expressions > and < are considered as invariants
+        # whereas expressions >= and <= are considered as urgent
+        # i.e. if the expression is x + y >= 5, then the guard will be only
+        # be enabled when the expression x + y for the reachable set has non
+        # empty intersection with 5, rest all cases, its not enabled
+        # The cases == and != are also implemented as urgent.
+        
+#         numVars=0;
+#         for j in self.vars:
+#             if not j.scope == "OUTPUT_DATA":
+#                 numVars = numVars+1
+        
+#         guardFile = open(file_name,"a")
+        
+#         # declarationsReqd = '''#include <iostream> \n#include <stdio.h> \n#include <vector> \n#include <utility> \nusing namespace std; \n'''
+#         # guardFile.write(declarationsReqd)
+        
+#         declaration = '''extern \"C\" vector<pair<int, vector<pair<int, double> > > > hitsGuard(int curMode, double *ptLower, double *ptUpper){ \n'''
+#         guardFile.write(declaration)
+        
+#         codeString = "  vector<pair<int, vector<pair<int, double> > > > toRet;\n"
+
+#         guardFile.write(codeString)
+
+#         for i in self.automata[0].trans:
+#             guardNode = i.guard.parsed
+#             #guardNode[1].prints()
+#             numAnds = numberOfLogicalOper(guardNode)
+            
+#             codeString = "  if(curMode == "+str(i.src+1)+"){\n"
+#             for j in range(1,numAnds+1):
+#                 codeString+= "    double RHSGE"+str(j)+";\n"
+#                 codeString+= "    double LHSGE"+str(j)+";\n"
+#                 codeString+= "    double evalE"+str(j)+";\n"
+#                 codeString+= "    bool SATE"+str(j)+";\n"
+            
+#             codeString+= self.generateCAPDExpCode(guardNode,numAnds)
+#             codeString+= "    if("
+#             for j in range(1,numAnds+1):
+#                 codeString+= " SATE"+str(j)+" &&"
+#             codeString+= " true){\n"
+            
+#             #Code for printing resets in this part
+            
+#             codeString+= "      vector<pair<int, double> > resets;\n"
+
+#             resetNode = i.actions
+#             for listResetElem in resetNode :
+#                 parsedVal = listResetElem.parsed
+#                 #parsedVal = parsedVal[0]
+#                 #parsedVal[0].prints()
+                
+#                 #print "reset node "
+#                 l = 1
+#                 for j in self.vars :
+#                     if not j.scope=="OUTPUT_DATA":
+# #                         if j.name+"'" == parsedVal.children[0].value :
+# #                             resetString = "        Range["+str(l)+"] = "
+#                         if j.name == parsedVal.children[0].value :
+#                             resetString = "      resets.push_back(make_pair("+str(l)+","
+#                         l = l+1
+
+#                 #parsedVal.children[0].prints()
+#                 #parsedVal.children[1].prints()
+#                 resetString+=self.generateCAPDExpCode(parsedVal.children[1], 0)
+#                 resetString+="));\n"
+#                 #print resetString
+#                 codeString+= resetString
+            
+            
+#             codeString+= "      toRet.push_back(make_pair(" + str(i.dest+1) + ", resets));\n"
+#             codeString+= "    }\n"
+#             codeString+= "  }\n"
+#             guardFile.write(codeString)
+        
+#         codeString = "  return toRet;\n"
+#         guardFile.write(codeString)
+        
+#         codeString = "}\n\n"
+#         guardFile.write(codeString)
+        
+#         guardFile.close()
         
     def printHybridSimGuardsResets(self, file_name):
         

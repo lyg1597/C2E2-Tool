@@ -48,7 +48,7 @@ using namespace std;
 vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, int dimensions){
 	int thick_dims = 0;
 	bool has_width;
-	for(int i=0; i<dimensions; i++){
+	for(int i=1; i<=dimensions; i++){
 		has_width = ptLower->getCoordinate(i)!=ptUpper->getCoordinate(i);
 		if(has_width){
 			thick_dims++;
@@ -63,22 +63,22 @@ vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, in
 	
 	int block_size;
 	double val, start, step_size;
-	for(int i=0; i<dimensions; i++){
+	for(int i=1; i<=dimensions; i++){
 		has_width = ptLower->getCoordinate(i)!=ptUpper->getCoordinate(i);
 		if(!has_width){
 			val = ptLower->getCoordinate(i);
 			for(int j=0; j<num_pts; j++){
-				pts[j]->setCoordinate(i+1, val);
+				pts[j]->setCoordinate(i, val);
 			}
 		}
 		else{
 			start = ptLower->getCoordinate(i);
 			step_size = (ptUpper->getCoordinate(i)-ptLower->getCoordinate(i))/(n-1);
-			block_size = (int) pow(n, i);
+			block_size = (int) pow(n, i-1);
 			for(int j=0, pt_i=0; j<num_pts; pt_i++){
 				val = start + (pt_i%n)*step_size;
 				for(int k=0; k<block_size; k++, j++){
-					pts[j]->setCoordinate(i+1, val);
+					pts[j]->setCoordinate(i, val);
 				}
 			}
 		}
@@ -161,6 +161,40 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
     }
 	dlclose ( lib );
 	return isSafe;
+}
+
+int hybridSimulationCover(Simulator *simulator, Checker *checker, LinearSet *unsafeSet, LinearSet *initialSet, int dimensions, int mode, char *file){
+	cout << "HYBRID SIMULATION" << endl;
+	Point *ptLower = new Point(dimensions+1);
+	Point *ptUpper = new Point(dimensions+1);
+	for(int i=0; i<dimensions; i++){
+		ptLower->setCoordinate(i+1, initialSet->getMin(i));
+		ptUpper->setCoordinate(i+1, initialSet->getMax(i));
+	}
+
+	int isSafe = 1;
+	vector<Point *> pts = getRepresentativeCover(ptLower, ptUpper, 3, dimensions);
+	for(int i=0; i<pts.size(); i++){
+		cout << "Hybrid Simulation " << i+1 << " -> ";
+		pts[i]->print();
+		isSafe = hybridSimulation(simulator, checker, unsafeSet, dimensions, pts[i], mode, file);
+		if(isSafe==-1){
+			cout << "Hybrid Simulation " << i+1 << " unsafe.\n" << endl;
+			break;
+		}
+		else if(isSafe==1){
+			cout << "Hybrid Simulation " << i+1 << " safe.\n" << endl;
+		}
+	}
+	
+	return isSafe;
+
+ 	ofstream resultStream;
+	resultStream.open("Result.dat");
+	resultStream << isSafe << endl;
+	resultStream.close();
+
+	exit(1);	
 }
 
 int main(int argc, char* argv[]) {
@@ -346,76 +380,9 @@ int main(int argc, char* argv[]) {
 	int indexitr = 0;
 
 	//SUKET CODE
-	
-	if(simulation_flag){
-		cout << "HYBRID SIMULATION" << endl;
-		Point *ptLower = new Point(dimensions+1);
-		Point *ptUpper = new Point(dimensions+1);
-		for(int i=0; i<dimensions; i++){
-			ptLower->setCoordinate(i, initialSet->getMin(i));
-			ptUpper->setCoordinate(i, initialSet->getMax(i));
-		}
-		// int thick_dims = 0;
-		// for(int i=0; i<dimensions; i++){
-		// 	bool has_width = initialSet->getMin(i)!=initialSet->getMax(i);
-		// 	if(has_width){
-		// 		thick_dims++;
-		// 	}
-		// }
-		// cout << thick_dims << endl;
-		
-		// int num_pts = (int) pow(3, thick_dims);
-		// vector<Point *> pts(num_pts);
-		// for(int i=0; i<num_pts; i++){
-		// 	pts[i] = new Point(dimensions+1);
-		// }
-		
-		// for(int i=0; i<dimensions; i++){
-		// 	bool has_width = initialSet->getMin(i)!=initialSet->getMax(i);
-		// 	double val = initialSet->getMin(i);
-		// 	if(!has_width){
-		// 		for(int j=0; j<num_pts; j++){
-		// 			pts[j]->setCoordinate(i+1, val);
-		// 		}
-		// 	}
-		// 	else{
-		// 		for(int j=0, pt_i=0; j<num_pts; pt_i++){
-		// 			double val;
-		// 			if(pt_i%3==0)
-		// 				val = initialSet->getMin(i);
-		// 			else if(pt_i%3==1)
-		// 				val = (initialSet->getMax(i)+initialSet->getMin(i))/2;
-		// 			else if(pt_i%3==2)
-		// 				val = initialSet->getMax(i);
-
-		// 			int block_size = (int) pow(3, i);
-		// 			for(int k=0; k<block_size; k++, j++){
-		// 				pts[j]->setCoordinate(i+1, val);
-		// 			}
-		// 		}
-		// 	}
-		// }
-
-		int isSafe = 1;
-		vector<Point *> pts = getRepresentativeCover(ptLower, ptUpper, 3, dimensions);
-		for(int i=0; i<pts.size(); i++){
-			cout << "Hybrid Simulation " << i+1 << " -> ";
-			pts[i]->print();
-			// ItrStack->top()->print();
-			// Point *origin = ItrStack->top()->getState();
-			// int mode = ItrStack->top()->getMode();
-			isSafe = hybridSimulation(simVerify, checkVerify, unsafeSet, dimensions, pts[i], initMode, visuFileName);
-			if(isSafe==-1){
-				cout << "Hybrid Simulation " << i+1 << " unsafe." << endl;
-				break;
-			}
-			else if(isSafe==1){
-				cout << "Hybrid Simulation " << i+1 << " safe.\n" << endl;
-			}
-			// ItrStack->pop();
-		}
-		
-     	ofstream resultStream;
+	int isSafe = hybridSimulationCover(simVerify, checkVerify, unsafeSet, initialSet, dimensions, initMode, visuFileName);
+	if(simulation_flag || isSafe==-1){
+		ofstream resultStream;
 		resultStream.open("Result.dat");
 		resultStream << isSafe << endl;
 		resultStream.close();
@@ -423,13 +390,53 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
+	ofstream tmp;
+	tmp.open(visuFileName);
+	tmp.close();
+
+	// if(simulation_flag){
+	// 	int isSafe = hybridSimulationCover(simVerify, checkVerify, unsafeSet, initialSet, dimensions, initMode, visuFileName);
+
+	// 	// cout << "HYBRID SIMULATION" << endl;
+	// 	// Point *ptLower = new Point(dimensions+1);
+	// 	// Point *ptUpper = new Point(dimensions+1);
+	// 	// for(int i=0; i<dimensions; i++){
+	// 	// 	ptLower->setCoordinate(i+1, initialSet->getMin(i));
+	// 	// 	ptUpper->setCoordinate(i+1, initialSet->getMax(i));
+	// 	// }
+
+	// 	// int isSafe = 1;
+	// 	// vector<Point *> pts = getRepresentativeCover(ptLower, ptUpper, 3, dimensions);
+	// 	// for(int i=0; i<pts.size(); i++){
+	// 	// 	cout << "Hybrid Simulation " << i+1 << " -> ";
+	// 	// 	pts[i]->print();
+	// 	// 	isSafe = hybridSimulation(simVerify, checkVerify, unsafeSet, dimensions, pts[i], initMode, visuFileName);
+	// 	// 	if(isSafe==-1){
+	// 	// 		cout << "Hybrid Simulation " << i+1 << " unsafe." << endl;
+	// 	// 		break;
+	// 	// 	}
+	// 	// 	else if(isSafe==1){
+	// 	// 		cout << "Hybrid Simulation " << i+1 << " safe.\n" << endl;
+	// 	// 	}
+	// 	// }
+		
+ //     	ofstream resultStream;
+	// 	resultStream.open("Result.dat");
+	// 	resultStream << isSafe << endl;
+	// 	resultStream.close();
+
+	// 	exit(1);
+	// }
+
+
+
 	typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
 	typedef bool (*inv_fn)(int, double *, double *);
 	
 	guard_fn guards;
 	inv_fn invs;
 
-    void *lib = dlopen("./libbloatedsim.so", RTLD_LAZY);
+    void *lib = dlopen("./libhybridsim.so", RTLD_LAZY);
     if(!lib){
     	cerr << "Cannot open library: " << dlerror() << '\n';
     }
@@ -536,26 +543,79 @@ int main(int argc, char* argv[]) {
 		guardSet->setDimensions(dimensions);
 
 		int size = simulationTube->getSize();
-		double *ptLower, *ptUpper;
-		vector< pair<int, double*> > guards_hit;
-		bool hitGuard = false;
-		for(int i=0; i<size; i++){
-			ptLower = simulationTube->getLowerBound(i)->getCoordinates();
-			ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
-			guards_hit = guards(modeSimulated, ptLower, ptUpper);
-			if(!guards_hit.empty()){
-				guardSet->addGuards(ptLower, guards_hit);
-				hitGuard = true;
-			}
-			else if(hitGuard==true){
-				simulationTube->clear(i);
-				break;
-			}
-			if(!invs(modeSimulated, ptLower, ptUpper)){
-				simulationTube->clear(i);
-				break;
-			}
-		}
+        double *ptLower, *ptUpper;
+        vector< pair<int, double*> > guards_hit;
+        bool hitGuard = false;
+        for(int i=0; i<size; i++){
+                ptLower = simulationTube->getLowerBound(i)->getCoordinates();
+                ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
+                guards_hit = guards(modeSimulated, ptLower, ptUpper);
+                if(!guards_hit.empty()){
+                        guardSet->addGuards(ptLower, guards_hit);
+                        hitGuard = true;
+                }
+                else if(hitGuard==true){
+                	cout << "GUARD: " << i << endl;
+                        simulationTube->clear(i);
+                        break;
+                }
+                if(!invs(modeSimulated, ptLower, ptUpper)){
+                	cout << "INV: " << i << endl;
+                        simulationTube->clear(i);
+                        break;
+                }
+        }
+
+
+		// int size = simulationTube->getSize();
+		// double *ptLower, *ptUpper;
+		// Point *ptL, *ptU;
+		// vector< pair<int, double*> > guards_hit;
+		// bool hitGuard = false;
+		// bool invTrue, cornerHitGuard;
+		// for(int i=0; i<size; i++){
+		// 	cornerHitGuard = false;
+		// 	invTrue = false;
+		// 	ptL = simulationTube->getLowerBound(i);
+		// 	ptU = simulationTube->getUpperBound(i);
+		// 	vector<Point *> corners = getRepresentativeCover(ptL, ptU, 2, dimensions);
+		// 	// cout << "corners size: " << corners.size() << endl;
+		// 	for(int j=corners.size()-1; j>=0; j--){
+		// 		corners[j]->setCoordinate(0, ptU->getCoordinate(0));
+		// 		// cout << "Corner " << j << ": "; corners[j]->print();
+		// 		ptLower = ptL->getCoordinates();
+		// 		ptUpper = corners[j]->getCoordinates();
+		// 		guards_hit = guards(modeSimulated, ptLower, ptUpper);
+		// 		if(!guards_hit.empty() && !cornerHitGuard){
+		// 			cout << "i: " << i << " j: " << j << endl;
+		// 			// corners[j]->print();
+		// 			guardSet->addGuards(ptLower, guards_hit);
+		// 			hitGuard = true;
+		// 			cornerHitGuard = true;
+		// 		}
+		// 		// else if(hitGuard==true){
+		// 		// 	simulationTube->clear(i);
+		// 		// 	break;
+		// 		// }
+		// 		invTrue = invTrue || invs(modeSimulated, ptLower, ptUpper);
+		// 		// if(!invs(modeSimulated, ptLower, ptUpper)){
+		// 		// 	simulationTube->clear(i);
+		// 		// 	break;
+		// 		// }
+		// 	}
+		// 	if(!cornerHitGuard && hitGuard){
+		// 		cout << "GUARD: " << i << endl;
+		// 		simulationTube->clear(i);
+		// 		break;	
+		// 	}
+		// 	if(!invTrue){
+		// 		cout << "INV: " << i << endl;
+		// 		simulationTube->clear(i);
+		// 		break;
+		// 	}
+		// }
+
+		// guardSet->printGuards();
 
 		// system("./invariants");
 		// system("./guards");
@@ -614,7 +674,6 @@ int main(int argc, char* argv[]) {
 		if(traceSafeFlag == 1){
 			int ifnextSet=0;
 			cout<< "Tube Safe! Check if there is transition for next mode\n";
-			cout << "Length: " << simulationTube->getSize() << endl;
 			TraceTube.push_back(simulationTube);
 			// guardSet->parseGuardsTube("guard.dat");
 

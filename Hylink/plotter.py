@@ -1,15 +1,15 @@
-import matplotlib,gobject
-matplotlib.use("AGG")
-import pylab as py
+# import matplotlib,gobject
+# matplotlib.use("AGG")
+# import pylab as py
 import time,subprocess 
 from math import floor as floor
-from matplotlib.collections import PatchCollection
+# from matplotlib.collections import PatchCollection
 from itertools import combinations,izip_longest
 
 import Gnuplot
 from numpy import *
-import pylab as py
-from matplotlib.collections import PatchCollection
+# import pylab as py
+# from matplotlib.collections import PatchCollection
 import numpy as np
 import time
 from math import floor as floor

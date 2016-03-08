@@ -142,7 +142,7 @@ def jacobian(difvar,diffun,loop):
         ComputeLDFstring += "from math import *\n"
         ComputeLDFstring += "import numpy as np\n"
         ComputeLDFstring += "import numpy.linalg as la\n"
-        ComputeLDFstring += "import matplotlib.pyplot as plt\n"
+        #ComputeLDFstring += "import matplotlib.pyplot as plt\n"
         ComputeLDFstring += "import sys\n"
         ComputeLDFstring += "import timeit\n"
         ComputeLDFstring += "def jcalc(listvalue,curstate):\n"

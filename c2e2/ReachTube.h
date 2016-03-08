@@ -66,6 +66,7 @@ public:
 	int getNextSetStack(class CoverStack* ItrStack, class RepPoint* parentRepPoint);
 	void clear(int from);
 	void addGuards(double *ptLower, vector<pair<int, double *> > guards);
+	void printGuards();
 
 };
 

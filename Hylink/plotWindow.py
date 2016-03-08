@@ -4,8 +4,8 @@ import gtk,gobject,os,time,Queue,threading
 import multiprocessing
 from plotDialog import PlotDialog,PlotDatum
 from plotter import plotGraph
-from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
-from matplotlib.backends.backend_gtkagg import NavigationToolbar2GTKAgg as NavigationToolbar
+# from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
+# from matplotlib.backends.backend_gtkagg import NavigationToolbar2GTKAgg as NavigationToolbar
 
 import logging
 

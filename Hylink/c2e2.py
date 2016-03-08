@@ -1345,12 +1345,12 @@ class PropertiesFrame(gtk.Frame):
           
           filenamestring = "ReachSet"+prop.name
           os.system("rm ../wd/"+filenamestring)
-          writer = open("Configuration-C2E2","w")
+          writer = open("../wd/Configuration-C2E2","w")
           writer.write(c2e2String)
           writer.close()
           
-          arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
-          subp1 = subprocess.Popen(arguments1); 
+          # arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
+          # subp1 = subprocess.Popen(arguments1); 
     
           arguments = ['sh', './ExecuteC2E2']
           self.subp = subprocess.Popen(arguments,cwd="../wd/",preexec_fn=os.setsid)
@@ -1663,12 +1663,12 @@ class PropertiesFrame(gtk.Frame):
           
           filenamestring = "ReachSet"+prop.name
           os.system("rm ../wd/"+filenamestring)
-          writer = open("Configuration-C2E2","w")
+          writer = open("../wd/Configuration-C2E2","w")
           writer.write(c2e2String)
           writer.close()
           
-          arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
-          subp1 = subprocess.Popen(arguments1); 
+          # arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
+          # subp1 = subprocess.Popen(arguments1); 
     
           arguments = ['sh', './ExecuteC2E2']
           self.subp = subprocess.Popen(arguments,cwd="../wd/",preexec_fn=os.setsid)

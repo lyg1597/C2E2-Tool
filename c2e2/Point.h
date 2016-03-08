@@ -20,8 +20,10 @@ public:
 	Point(int dim);
 	Point(int dim, double* coArray);
 	Point(const class Point &obj);
-	Point & operator= (const class Point & other);
 	~Point();
+
+	Point & operator= (const class Point & other);
+	// bool operator==(Point& lhs);
 
 	void setDimension(int dim);
 	void setCoordinates(double* coArray);

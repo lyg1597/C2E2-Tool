@@ -53,10 +53,21 @@ Point & Point :: operator= (const class Point & other){
 			*(coordinates+i) = *(other.coordinates+i);
 		}
 	}
-       
-
-       return *this;
+    return *this;
 }
+
+// bool Point::operator==(Point& lhs){
+// 	if(lhs.dimension!=this->dimension){
+// 		return false;
+// 	}
+// 	int dim = lhs.dimension;
+// 	for(int i=0; i<dim; i++){
+// 		if(lhs.getCoordinate(i)!=this->getCoordinate(i)){
+// 			return false;
+// 		}
+// 	}
+// 	return true;
+// }
 
 Point::Point(int dim, double* coArray){
 	dimension = dim;
