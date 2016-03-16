@@ -14,6 +14,8 @@
 #include <vector>
 #include <cstdlib>
 #include <cmath>
+#include <cfloat>
+#include <ppl.hh>
 
 using namespace std;
 
@@ -308,6 +310,73 @@ void ReachTube::parseGuardsTube(char* filename){
 	fclose(tRFile);
 
 
+}
+
+void ReachTube::addGuards(vector<pair<NNC_Polyhedron,int> > guards){
+	isReachTube = 0;
+	reachTubeMode = -1;
+
+	int tempMode;
+	NNC_Polyhedron poly;
+	Point *ptU, *ptL;
+	for(int i=0; i<guards.size(); i++){
+		poly = guards[i].first;
+		tempMode = guards[i].second;
+
+		// Generator_System gs=box.minimized_generators();
+		// Generator_System::const_iterator i;
+
+		// double divisor, dividend;
+		// int dim;
+		// cout << "BOX: " << endl;
+		// for(i=gs.begin();i!=gs.end();++i)
+		// {
+		// 	if((*i).is_point())
+		// 	{
+		// 	  divisor=mpz_get_d((*i).divisor().get_mpz_t());
+		// 	  dim=int((*i).space_dimension());
+		// 	  cout << "POINT: ";
+		// 	  for(int j=0;j<dim;j++)
+		// 	  {
+		// 	    dividend=mpz_get_d((*i).coefficient(Variable(j)).get_mpz_t());
+		// 	    cout<<dividend/divisor<<" ";
+		// 	  }
+		// 	  cout<<endl;
+		// 	}
+		// }
+		// cout << endl;
+
+		ptL = new Point(dimensions+1);
+		ptU = new Point(dimensions+1);
+		
+		for(int j=0; j<dimensions+1; j++){
+			ptL->setCoordinate(j, DBL_MAX);
+			ptU->setCoordinate(j, -DBL_MAX);
+		}
+
+		Generator_System gs=poly.minimized_generators();
+		Generator_System::const_iterator k;
+		for(k=gs.begin();k!=gs.end();++k)
+		{
+			if(k->is_point())
+			{
+			 	double divisor=mpz_get_d(k->divisor().get_mpz_t());
+			  	int dim=int(k->space_dimension());
+			  	for(int j=0;j<dim;j++)
+			  	{
+			    	double dividend=mpz_get_d(k->coefficient(Variable(j)).get_mpz_t());
+			    	double num = dividend/divisor;
+			    	if(num < ptL->getCoordinate(j))
+			    		ptL->setCoordinate(j, num);
+			    	if(num > ptU->getCoordinate(j))
+			    		ptU->setCoordinate(j, num);
+			  	}
+			}
+		}
+		mode.push_back(tempMode);
+		upperBound.push_back(ptU);
+		lowerBound.push_back(ptL);
+	}
 }
 
 void ReachTube::addGuards(double *ptLower, vector<pair<int, double *> > guards){

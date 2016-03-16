@@ -40,6 +40,16 @@ def plotGraph(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,d
   # print (filename)
   # print (xindex)
   # print (yindexlist)
+
+  type_simulation = open(reachSetPath,'r').readline().rstrip()
+  if type_simulation=="hybrid simulation" or plotterversion==3:
+    if len(varPlotTuple)>2:
+      return plotMultipleVarsV2(threadEvent,reachSetPath,varList,modeList,varPlotTuple,dispMode,timeStep,timeHoriz,
+                              plotStatus,title,filename,xindex,yindexlist)
+    else:
+      return plotMultipleModesV3(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,dispMode,
+                               timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist)    
+
   if plotterversion == 1:
     if len(varPlotTuple)>2:
       return plotMultipleVars(threadEvent,reachSetPath,varList,modeList,varPlotTuple,dispMode,timeStep,timeHoriz,
@@ -56,13 +66,13 @@ def plotGraph(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,d
       return plotMultipleModesV2(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,dispMode,
                                timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist)
 
-  if plotterversion == 3:
-    if len(varPlotTuple)>2:
-      return plotMultipleVarsV2(threadEvent,reachSetPath,varList,modeList,varPlotTuple,dispMode,timeStep,timeHoriz,
-                              plotStatus,title,filename,xindex,yindexlist)
-    else:
-      return plotMultipleModesV3(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,dispMode,
-                               timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist)
+  # if plotterversion == 3:
+  #   if len(varPlotTuple)>2:
+  #     return plotMultipleVarsV2(threadEvent,reachSetPath,varList,modeList,varPlotTuple,dispMode,timeStep,timeHoriz,
+  #                             plotStatus,title,filename,xindex,yindexlist)
+  #   else:
+  #     return plotMultipleModesV3(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,dispMode,
+  #                              timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist)
 
 
   
@@ -86,7 +96,7 @@ def plotMultipleVars(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,disp
   #store the result to upperbound or lowerbound in order
   #if there are few values for same time-step(because of multiple execution)
   #check the old value and over-write old value if needed
-  for line in reachData:
+  for line in reachData.readlines()[1:]:
     if line.rstrip():
       dataLine=line.rstrip().split()
       if dataLine[0]=="%":
@@ -253,7 +263,7 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
   #if there are few values for same time-step(because of multiple execution)
   #check the old value and over-write old value if needed
   #if it is unsafe excution, just store it since there will be only one unsafe execution.
-  for line in reachData:
+  for line in reachData.readlines()[1:]:
     if line.rstrip():
       dataLine=line.rstrip().split()
       if dataLine[0]=="%":
@@ -491,7 +501,7 @@ def plotMultipleModesV2(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
   
   print lowerbound
  
-  for line in reachData:
+  for line in reachData.readlines()[1:]:
     if line.rstrip():
       dataLine=line.rstrip().split()
       if dataLine[0]=="%":
@@ -705,7 +715,7 @@ def plotMultipleVarsV2(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,di
   #store the result to upperbound or lowerbound in order
   #if there are few values for same time-step(because of multiple execution)
   #check the old value and over-write old value if needed
-  for line in reachData:
+  for line in reachData.readlines()[1:]:
     if line.rstrip():
       dataLine=line.rstrip().split()
       if dataLine[0]=="%":
@@ -847,7 +857,7 @@ def plotMultipleModesV3(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
   #print lowerbound
   trace = []
 
-  for line in reachData:
+  for line in reachData.readlines()[1:]:
     if line.rstrip():
       dataLine=line.rstrip().split()
       if dataLine[0]=="%":

@@ -16,7 +16,7 @@
 #include "LinearSet.h"
 #include "CoverStack.h"
 #include "RepPoint.h"
-
+#include <ppl.hh>
 
 using namespace std;
 
@@ -66,6 +66,7 @@ public:
 	int getNextSetStack(class CoverStack* ItrStack, class RepPoint* parentRepPoint);
 	void clear(int from);
 	void addGuards(double *ptLower, vector<pair<int, double *> > guards);
+	void addGuards(vector<pair<NNC_Polyhedron, int> > guards);
 	void printGuards();
 
 };

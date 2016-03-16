@@ -71,7 +71,7 @@ all: C2E2
 C2E2: $(OBJS) $(USER_OBJS) $(MISC)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	$(CXX) -o"C2E2" $(OBJS) $(USER_OBJS) $(LIBS) -I/usr/include/python2.7/ -lpython2.7 -lstdc++ -ldl
+	$(CXX) -o"C2E2" $(OBJS) $(USER_OBJS) $(LIBS) -I/usr/include/python2.7/ -lpython2.7 -lstdc++ -ldl -lppl -lgmp -lgmpxx 
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -102,7 +102,7 @@ CoverStack.o: ./CoverStack.cpp ./CoverStack.o
 	@echo ' '
 
 main.o: ./main.cpp ./lex.yy.cc ./simuverif.tab.c ./simuverifScanner.h ./simuverifParser.h ./stack.hh
-	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"main.d" -MT"main.d" -o"main.o" "$<" -I/usr/include/python2.7/ -lpython2.7 -lstdc++
+	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"main.d" -MT"main.d" -o"main.o" "$<" -I/usr/include/python2.7/ -lpython2.7 -lstdc++  
 	@echo 'Finished building: $<'
 	@echo ' '
 

@@ -5,7 +5,7 @@
  *      Author: parasara
  */
 
-#include "Polyhedron.h"
+// #include "Polyhedron.h"
 #include "Vector.h"
 #include "Point.h"
 #include "Simulator.h"
@@ -42,7 +42,10 @@
 #include <Python.h>
 #include <dlfcn.h>
 
-#include <stack> 
+#include <stack>
+
+#include <ppl.hh>
+
 using namespace std;
 
 vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, int dimensions){
@@ -379,8 +382,14 @@ int main(int argc, char* argv[]) {
 	}
 	int indexitr = 0;
 
+	ofstream tmp;
+	tmp.open(visuFileName);
+	tmp << "hybrid simulation" << endl;
+	tmp.close();
+
 	//SUKET CODE
 	int isSafe = hybridSimulationCover(simVerify, checkVerify, unsafeSet, initialSet, dimensions, initMode, visuFileName);
+
 	if(simulation_flag || isSafe==-1){
 		ofstream resultStream;
 		resultStream.open("Result.dat");
@@ -390,7 +399,10 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	ofstream tmp;
+	tmp.open(visuFileName);
+	tmp << "reachtube simulation" << endl;
+	tmp.close();
+
 	tmp.open(visuFileName);
 	tmp.close();
 
@@ -430,20 +442,22 @@ int main(int argc, char* argv[]) {
 
 
 
-	typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
+	// typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
+	// typedef bool (*inv_fn)(int, double *, double *);
+
+	typedef vector<pair<NNC_Polyhedron, int> > (*guard_fn)(int, double *, double *);
 	typedef bool (*inv_fn)(int, double *, double *);
-	
+
 	guard_fn guards;
 	inv_fn invs;
 
-    void *lib = dlopen("./libhybridsim.so", RTLD_LAZY);
+    void *lib = dlopen("./libbloatedsim.so", RTLD_LAZY);
     if(!lib){
     	cerr << "Cannot open library: " << dlerror() << '\n';
     }
 
     guards = (guard_fn) dlsym (lib, "hitsGuard");
     invs = (inv_fn) dlsym(lib, "invariantSatisfied"); 
-
 
 	cout<<"|     |"<<endl;
 	cout<<"|     |"<<endl;
@@ -542,80 +556,60 @@ int main(int argc, char* argv[]) {
 		guardSet = new ReachTube();
 		guardSet->setDimensions(dimensions);
 
+		// int size = simulationTube->getSize();
+  //       double *ptLower, *ptUpper;
+  //       vector< pair<int, double*> > guards_hit;
+  //       bool hitGuard = false;
+  //       for(int i=0; i<size; i++){
+  //               ptLower = simulationTube->getLowerBound(i)->getCoordinates();
+  //               ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
+  //               guards_hit = guards(modeSimulated, ptLower, ptUpper);
+  //               if(!guards_hit.empty()){
+  //                       guardSet->addGuards(ptLower, guards_hit);
+  //                       hitGuard = true;
+  //               }
+  //               else if(hitGuard==true){
+  //               	cout << "GUARD: " << i << endl;
+  //                       simulationTube->clear(i);
+  //                       break;
+  //               }
+  //               if(!invs(modeSimulated, ptLower, ptUpper)){
+  //               	cout << "INV: " << i << endl;
+  //                       simulationTube->clear(i);
+  //                       break;
+  //               }
+  //       }
+
 		int size = simulationTube->getSize();
         double *ptLower, *ptUpper;
-        vector< pair<int, double*> > guards_hit;
+        vector< pair<NNC_Polyhedron, int> > guards_hit;
         bool hitGuard = false;
         for(int i=0; i<size; i++){
+        		cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+        		cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
                 ptLower = simulationTube->getLowerBound(i)->getCoordinates();
                 ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
-                guards_hit = guards(modeSimulated, ptLower, ptUpper);
-                if(!guards_hit.empty()){
-                        guardSet->addGuards(ptLower, guards_hit);
-                        hitGuard = true;
-                }
-                else if(hitGuard==true){
-                	cout << "GUARD: " << i << endl;
-                        simulationTube->clear(i);
-                        break;
-                }
+                
                 if(!invs(modeSimulated, ptLower, ptUpper)){
                 	cout << "INV: " << i << endl;
-                        simulationTube->clear(i);
-                        break;
+                    simulationTube->clear(i);
+                    break;
                 }
+
+                guards_hit = guards(modeSimulated, ptLower, ptUpper);
+                if(!guards_hit.empty()){
+                	cout << "GUARD: " << i << endl;
+                    guardSet->addGuards(guards_hit);
+                    hitGuard = true;
+                }
+                else if(hitGuard==true){
+                    simulationTube->clear(i);
+                    break;
+                }
+                cout << endl;
         }
 
-
-		// int size = simulationTube->getSize();
-		// double *ptLower, *ptUpper;
-		// Point *ptL, *ptU;
-		// vector< pair<int, double*> > guards_hit;
-		// bool hitGuard = false;
-		// bool invTrue, cornerHitGuard;
-		// for(int i=0; i<size; i++){
-		// 	cornerHitGuard = false;
-		// 	invTrue = false;
-		// 	ptL = simulationTube->getLowerBound(i);
-		// 	ptU = simulationTube->getUpperBound(i);
-		// 	vector<Point *> corners = getRepresentativeCover(ptL, ptU, 2, dimensions);
-		// 	// cout << "corners size: " << corners.size() << endl;
-		// 	for(int j=corners.size()-1; j>=0; j--){
-		// 		corners[j]->setCoordinate(0, ptU->getCoordinate(0));
-		// 		// cout << "Corner " << j << ": "; corners[j]->print();
-		// 		ptLower = ptL->getCoordinates();
-		// 		ptUpper = corners[j]->getCoordinates();
-		// 		guards_hit = guards(modeSimulated, ptLower, ptUpper);
-		// 		if(!guards_hit.empty() && !cornerHitGuard){
-		// 			cout << "i: " << i << " j: " << j << endl;
-		// 			// corners[j]->print();
-		// 			guardSet->addGuards(ptLower, guards_hit);
-		// 			hitGuard = true;
-		// 			cornerHitGuard = true;
-		// 		}
-		// 		// else if(hitGuard==true){
-		// 		// 	simulationTube->clear(i);
-		// 		// 	break;
-		// 		// }
-		// 		invTrue = invTrue || invs(modeSimulated, ptLower, ptUpper);
-		// 		// if(!invs(modeSimulated, ptLower, ptUpper)){
-		// 		// 	simulationTube->clear(i);
-		// 		// 	break;
-		// 		// }
-		// 	}
-		// 	if(!cornerHitGuard && hitGuard){
-		// 		cout << "GUARD: " << i << endl;
-		// 		simulationTube->clear(i);
-		// 		break;	
-		// 	}
-		// 	if(!invTrue){
-		// 		cout << "INV: " << i << endl;
-		// 		simulationTube->clear(i);
-		// 		break;
-		// 	}
-		// }
-
-		// guardSet->printGuards();
+		guardSet->printGuards();
 
 		// system("./invariants");
 		// system("./guards");

@@ -119,13 +119,11 @@ class Main(gtk.Window):
     typeInput = 0
     paramList = []
     if fileExtension==".hyxml":
-      hybridRep,propList=hyirXML(fileChoosen)
+      hybridRep,propList,varList,invariants,guardResets=hyirXML(fileChoosen)
       typeInput = 1
       for prop in propList:
           if prop.paramData[0] != 0 and prop.paramData[1] != 0 and prop.paramData[2] != 0 and prop.paramData[3] != 0 :
               paramList = [str(prop.paramData[0]),str(prop.paramData[1]),str(prop.paramData[2]),str(prop.paramData[3])]
-
-      
     else:
       typeInput = 2  
       model=open(fileChoosen,"r")
@@ -205,8 +203,10 @@ class Main(gtk.Window):
     verifLog.info('Model is \n' + hybridRep.convertToXML([]))
     # dupHybridRep.printGuardsResets()
     # dupHybridRep.printBloatedSimGuardsInvariants();
+    dupHybridRep.printFile(varList, invariants, guardResets)
+
     dupHybridRep.printHybridSimGuardsInvariants();
-    dupHybridRep.printBloatedSimGuardsInvariants();
+    # dupHybridRep.printBloatedSimGuardsInvariants();
     # dupHybridRep.printHybridSimulationGuardsResets()
     # dupHybridRep.printHybridSimulationInvariants() 
     # dupHybridRep.printInvariants()
@@ -237,9 +237,6 @@ class Main(gtk.Window):
     self.fileLabel.hide()
     self.windowVBox.pack_start(self.modelNotebook)
     #print("displayed")
-    
-
-    
 
   """
     openFileCallback

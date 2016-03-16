@@ -30,17 +30,16 @@ class Node:
         return equals
     
     def prints(self):
-        
-        print "Type is "+self.type+"\n"
+        print "Type is "+self.type
         
         if self.children is None:
-            print "ChildNone -"+printValue(self.type, self.value)+" \n"
+            print "Child is none - "+printValue(self.type, self.value)
         
         elif len(self.children) == 0:
-            print "nochild -"+printValue(self.type, self.value)+" \n"
+            print "No Child - "+printValue(self.type, self.value)
         
         elif len(self.children) > 0:
-            print "children = "+str(len(self.children))+" value -"+printValue(self.type, self.value)+" \n"
+            print "Num children: "+str(len(self.children))+", value: "+printValue(self.type, self.value)
             for j in self.children:
                 j.prints()
                 
