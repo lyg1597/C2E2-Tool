@@ -1,8 +1,6 @@
 #!/bin/sh
-echo "Delete previous result!!!!!!!!!!!!!!."
+echo "Deleting previous results."
 cd ../wd
-rm guard.dat
-rm invariant.dat
 rm SimuOutput
 rm Result.dat
 rm reachtube.dat

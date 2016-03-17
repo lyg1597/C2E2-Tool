@@ -203,9 +203,8 @@ class Main(gtk.Window):
     verifLog.info('Model is \n' + hybridRep.convertToXML([]))
     # dupHybridRep.printGuardsResets()
     # dupHybridRep.printBloatedSimGuardsInvariants();
-    dupHybridRep.printFile(varList, invariants, guardResets)
-
     dupHybridRep.printHybridSimGuardsInvariants();
+    dupHybridRep.printBloatedSimGuardsInvariants(varList, invariants, guardResets)
     # dupHybridRep.printBloatedSimGuardsInvariants();
     # dupHybridRep.printHybridSimulationGuardsResets()
     # dupHybridRep.printHybridSimulationInvariants() 

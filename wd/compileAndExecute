@@ -1,13 +1,13 @@
 #!/bin/sh
-echo "first parameter is $1"
-echo Compiling CAPD files to generate Simulator
+echo "First parameter is $1"
+#echo Compiling CAPD files to generate Simulator
 
 if [ "$1" -eq "2" ]
 then
-	echo "Use CAPD"
+	echo "Using CAPD"
 	g++ -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`
 else
-	echo "Use ODEINT"
+	echo "Using ODEINT"
 	g++ -w -O2 -std=c++11 simulator.cpp -o simu
 fi
 
@@ -15,5 +15,5 @@ fi
 #g++ -w -O2 Invcheck.cpp -o invariants `../capd/bin/capd-config --cflags --libs`
 g++ -fPIC -shared hybridSimGI.cpp -o libhybridsim.so
 g++ -fPIC -shared bloatedSimGI.cpp -o libbloatedsim.so
-echo Executables from CAPD generated, Verification process starts
+echo Executables generated, verification process starting
 #sh ./C2E2 < capdsimannot

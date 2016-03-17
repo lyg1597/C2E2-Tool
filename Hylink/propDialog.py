@@ -588,8 +588,8 @@ class ExprParser:
     elif len(p)==6:
       p[0]=Node('*',[Node('-',[p[3]]),Node(p[5],0)])
 
-  #def p_error(self,p):
-  #  yacc.errok()
+  def p_error(self,p):
+   yacc.errok()
 
   """
     isNumber

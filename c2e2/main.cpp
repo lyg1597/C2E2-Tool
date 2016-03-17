@@ -406,42 +406,6 @@ int main(int argc, char* argv[]) {
 	tmp.open(visuFileName);
 	tmp.close();
 
-	// if(simulation_flag){
-	// 	int isSafe = hybridSimulationCover(simVerify, checkVerify, unsafeSet, initialSet, dimensions, initMode, visuFileName);
-
-	// 	// cout << "HYBRID SIMULATION" << endl;
-	// 	// Point *ptLower = new Point(dimensions+1);
-	// 	// Point *ptUpper = new Point(dimensions+1);
-	// 	// for(int i=0; i<dimensions; i++){
-	// 	// 	ptLower->setCoordinate(i+1, initialSet->getMin(i));
-	// 	// 	ptUpper->setCoordinate(i+1, initialSet->getMax(i));
-	// 	// }
-
-	// 	// int isSafe = 1;
-	// 	// vector<Point *> pts = getRepresentativeCover(ptLower, ptUpper, 3, dimensions);
-	// 	// for(int i=0; i<pts.size(); i++){
-	// 	// 	cout << "Hybrid Simulation " << i+1 << " -> ";
-	// 	// 	pts[i]->print();
-	// 	// 	isSafe = hybridSimulation(simVerify, checkVerify, unsafeSet, dimensions, pts[i], initMode, visuFileName);
-	// 	// 	if(isSafe==-1){
-	// 	// 		cout << "Hybrid Simulation " << i+1 << " unsafe." << endl;
-	// 	// 		break;
-	// 	// 	}
-	// 	// 	else if(isSafe==1){
-	// 	// 		cout << "Hybrid Simulation " << i+1 << " safe.\n" << endl;
-	// 	// 	}
-	// 	// }
-		
- //     	ofstream resultStream;
-	// 	resultStream.open("Result.dat");
-	// 	resultStream << isSafe << endl;
-	// 	resultStream.close();
-
-	// 	exit(1);
-	// }
-
-
-
 	// typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
 	// typedef bool (*inv_fn)(int, double *, double *);
 
@@ -468,8 +432,6 @@ int main(int argc, char* argv[]) {
 	class RepPoint* curItrRepPoint;
 
 	while(!ItrStack->empty()){
-
-		//Step0. Get value for Rep Point
 		numberSamplePoints++;
 		//cout  << "\n Sample point " << numberSamplePoints << " being checked \n";
 		
@@ -491,24 +453,18 @@ int main(int argc, char* argv[]) {
 		//Step1. Simulation
 		simVerify->Simulate(simulationPoint,modeSimulated);
 
-		//cout<<"Simulation Done! Stop running to check file"<<endl;
-		//sleep(5);
-
 		//Read simulation result
 		class ReachTube* simulationTube = new ReachTube();
 		simulationTube->setDimensions(dimensions);
 		simulationTube->setMode(modeSimulated);
 		simulationTube->parseInvariantTube("SimuOutput", 0);
 
-
-		//Step2. Set up python value for Non-Linear bloating, bloating with python helper function
+		//Step 2. Non-linear bloating
 		if (linear_from_parser[modeSimulated-1]==0){
 			//cout<<"non-linear model"<<endl;
 			double CT_step = KConstArray[modeSimulated-1];
 			int modeforpython = simulationTube->getMode();
-
 		    strcpy (input_buff, "delta = [");
-
   			for (int i = 0; i< dimensions; i++){
     			char temp [8];
     			sprintf(temp,"%f", refDeltaArray[i]);
@@ -517,7 +473,6 @@ int main(int argc, char* argv[]) {
         			strcat(input_buff,",");
   			}
   			strcat(input_buff,"]");
-  			//cout<<input_buff<<endl;
 		    PyRun_SimpleString(input_buff);
 		    sprintf(input_buff2,"CT_step = int(%f)", CT_step);
 		    PyRun_SimpleString(input_buff2);
@@ -525,29 +480,22 @@ int main(int argc, char* argv[]) {
 		    PyRun_SimpleString(input_buff3);
 		    sprintf(input_buff4,"Is_linear = int(%f)",linear_from_parser[modeSimulated-1]);
 		    PyRun_SimpleString(input_buff4);
-		  
 		    fid = fopen(filename, "r");
 		    PyRun_SimpleFile(fid, filename);
 		    fclose(fid);
 		}
-		// Bloating for Linear Model
+		//Linear Bloating
 		else{
 			//cout<<"linear model"<<endl;
 		    class ReachTube* bloatedTube;
-			// Obtaining the bloating of the tube
 			bloatedTube = simulationTube->bloatReachTube(refDeltaArray,annotVerify);
-			// Printing the bloated tube;
 			bloatedTube->printReachTube("reachtube.dat",0);
-
 			delete bloatedTube;
 		}
 		
 		delete simulationTube;
 
-		/*cout<<"Bloating Done! Stop running to check file"<<endl;
-		sleep(5);*/
-
-		//Step3. Check invarant and guard
+		//Step 3. Check invariant and guard
 		simulationTube = new ReachTube();
 		simulationTube->setDimensions(dimensions);
 		simulationTube->setMode(modeSimulated);

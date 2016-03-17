@@ -118,9 +118,12 @@ class HyIR:
         swindow.add(modelTree)
         return swindow,varList,modeList
 
-    def printFile(self, varList, invariants, guardResets):
-        print invariants
-        print guardResets
+    def printBloatedSimGuardsInvariants(self, varList, invariants, guardResets):
+        print ''
+        print "Invariants: " + str(invariants)
+        print "Guard Resets: " + str(guardResets)
+        print ''
+
         file_name = "bloatedSimGI.cpp"
         checkFile = open(file_name, "w")
         codeString ="#include <ppl.hh>\n"
@@ -170,8 +173,8 @@ class HyIR:
         checkFile.close()
 
     def printGuardResets(self, file_name, varList, guardResets):
-        resetVarList = [var+"_new" for var in varList]
         varList = ["Simu_time"]+varList
+        resetVarList = [var+"_new" for var in varList]
         checkFile = open(file_name, "a")
         codeString="extern \"C\" vector<pair<NNC_Polyhedron, int> > hitsGuard(int curMode, double *ptLower, double *ptUpper){\n"
         codeString+="  vector<pair<NNC_Polyhedron, int> > toRet;\n"
@@ -194,17 +197,39 @@ class HyIR:
             for a,b in guardResets[key]:
                 codeString+="  if(curMode=="+init+"){\n"
                 codeString+="    Constraint_System cs;\n"
-                codeString+="    cs.set_space_dimension("+str(len(varList))+");\n"  
+                space_dim = 2*len(varList) if b else len(varList)
+                codeString+="    cs.set_space_dimension("+str(space_dim)+");\n"  
+                if b:
+                    remVars = set(varList)
+                    for i,var in enumerate(resetVarList):
+                        codeString+="    Variable "+var+"("+str(len(varList)+i)+");\n"
+                    codeString+="    box.add_space_dimensions_and_embed("+str(len(varList))+");\n"
+                    for reset_eq in b:
+                        if "<=" in reset_eq: delim = "<="
+                        if ">=" in reset_eq: delim = ">="
+                        eq_split = reset_eq.split(delim)
+                        var, eq_rhs = eq_split[0], eq_split[1]
+                        codeString+="    cs.insert("+var+"_new"+delim+eq_rhs+");\n"
+                        remVars.discard(var)
+                    for var in remVars:
+                        codeString+="    cs.insert("+var+"_new"+"=="+var+");\n"
+    
                 for guard_eq in a:
                     codeString+="    cs.insert("+guard_eq+");\n"
-                codeString+="    NNC_Polyhedron guard(cs);\n"
-                if not b:
-                    codeString+="    if(!guard.is_disjoint_from(box)){\n"
-                    codeString+="      guard.intersection_assign(box);\n"
-                    codeString+="      toRet.push_back(make_pair(guard,"+dest+"));\n"
-                    codeString+="    }\n"
-                else:
-                    codeString+="HI\n"
+                    codeString+="    NNC_Polyhedron guard(cs);\n"
+
+                codeString+="    if(!guard.is_disjoint_from(box)){\n"
+                codeString+="      guard.intersection_assign(box);\n"
+                if b:
+                    codeString+="      Variables_Set vars;\n"
+                    for var in varList:
+                        codeString+="      vars.insert("+var+");\n"
+                    codeString+="      guard.remove_space_dimensions(vars);\n"
+                codeString+="      toRet.push_back(make_pair(guard,"+dest+"));\n"
+                codeString+="    }\n"
+            
+                        # print reset_eq.split("==")
+                    # codeString+="HI\n"
                 codeString+="  }\n"
 
         codeString+="  return toRet;\n"
@@ -286,18 +311,18 @@ class HyIR:
         self.printHybridSimInvariants(file_name);
         self.printHybridSimGuardsResets(file_name);
     
-    def printBloatedSimGuardsInvariants(self):
-        file_name = "bloatedSimGI.cpp"
-        bloatedSimFile = open(file_name,"w")
-        declarationsReqd = '''#include <iostream> \n#include <stdio.h> \n#include <vector> \n#include <utility> \nusing namespace std; \n\n'''
-        bloatedSimFile.write(declarationsReqd)
-        bloatedSimFile.close()
+    # def printBloatedSimGuardsInvariants(self):
+    #     file_name = "bloatedSimGI.cpp"
+    #     bloatedSimFile = open(file_name,"w")
+    #     declarationsReqd = '''#include <iostream> \n#include <stdio.h> \n#include <vector> \n#include <utility> \nusing namespace std; \n\n'''
+    #     bloatedSimFile.write(declarationsReqd)
+    #     bloatedSimFile.close()
 
-        self.printBloatedSimInvariants(file_name);
-        self.printBloatedSimGuardsResets(file_name);
+    #     self.printBloatedSimInvariants(file_name);
+    #     self.printBloatedSimGuardsResets(file_name);
 
-    def printBloatedSimInvariants(self, file_name):
-        self.printHybridSimInvariants(file_name);
+    # def printBloatedSimInvariants(self, file_name):
+    #     self.printHybridSimInvariants(file_name);
         
     def printHybridSimInvariants(self, file_name):
         
@@ -386,9 +411,9 @@ class HyIR:
         invariantFile.close()
 
 
-    def printBloatedSimGuardsResets(self, file_name):
-        # pass
-        self.printHybridSimGuardsResets(file_name);
+    # def printBloatedSimGuardsResets(self, file_name):
+    #     # pass
+    #     self.printHybridSimGuardsResets(file_name);
 
         # Implementation of translation from guards in parsed format
         # to C++ CAPD file.
@@ -1679,20 +1704,11 @@ def hyirXML(fileName):
 #      print " ended list"    
     for inv in mode.iterfind("invariant"):
       i=inv.get("equation").replace("&lt;","<").replace("&gt;",">").replace("&amp;","&").replace("and","&&").replace("or","||")
-      #.replace("and", "&").replace("or", "\|\|")
-      # print " This is the invariant "
-      # print i
       #m.add_inv(Invariant(lstring3(i),i))
       m.add_inv(Invariant(parse_guardLogicalExp(i)[0],i))
-      # invariants[m.id].append(i);
-      print 'invariant equation: ' + i
+      print '\n' + 'invariant equation: ' + i
       aMatrix, bMatrix, eqMatrix = exprParser.parseSet(varList,i,2)
-      # print 'successfully parsed\n'
-      # convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix)
-      # print exprParser.parseSet(varList,i,2)
       invariants[m.id].append(convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix))
-      # print "added"
-      # invariants[m.id].append(exprParser.parseSet(varList,i,1))
     annot=mode.find("annotation")
     K=annot.find("K")
     Gamma=annot.find("gamma")
@@ -1707,49 +1723,48 @@ def hyirXML(fileName):
     annotElem += [int(annotTypeValue)]
     #annotElem += [int(Lin.get("value"))]
     
-    
     hybrid.annotationsParsed+= [annotElem]
-      
     hybrid.automata[0].add_mode(m)
 
   for tran in auto.iterfind("transition"):
     guard=tran.find("guard")
+    g_id = int(tran.get("id"))
+    g_src = int(tran.get("source"))
+    g_dest = int(tran.get("destination"))
+
     g=guard.get("equation").replace("&lt","<").replace("&gt",">").replace("&amp;","&").replace("and","&&").replace("or","||")
-    # print g
-    print 'guard equation: ' + g
+    print '\n' + 'guard equation: ' + g
     aMatrix, bMatrix, eqMatrix = exprParser.parseSet(varList,g,1)
-    # convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix)
-    # print exprParser.parseSet(varList,g,1)
-    #.replace("and", "&").replace("or", "\|\|")
+    g_eqs = convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix)
     #N = lstring3(g)
     #N.prints()
     actions=[]
     action_eqs = []
     for act in tran.iterfind("action"):
       a=act.get("equation").replace("&lt","<").replace("&gt",">").replace("&amp;","&").replace("and","&&").replace("or","||")
-      # print a
       actions.append(Action(parse_action(a)[0],a))
       a = a.replace("=","==")
-      print 'action equation: ' + a
+      print '\n' + 'action equation: ' + a
       aMatrix, bMatrix, eqMatrix = exprParser.parseSet(varList,a,1)
-      convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix)
-      # print exprParser.parseSet(varList,a,1)
-      # action_eqs.append(exprParser.parseSet(varList,a,1))
-      # action_eqs.append(a)
       action_eqs.extend(convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix))
-    t=Transition(Guard(parse_guardLogicalExp(g)[0],g),actions,int(tran.get("id")),int(tran.get("source")),int(tran.get("destination")))
+    t=Transition(Guard(parse_guardLogicalExp(g)[0],g),actions,g_id,g_src,g_dest)
     hybrid.automata[0].add_trans(t)
-    guardResets[(int(tran.get("source")),int(tran.get("destination")))].append((convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix), action_eqs))
+    guardResets[(g_src,g_dest)].append((g_eqs, action_eqs))
       
   propertyList=[]
   for prop in root.iterfind("property"):
     p=PropertyDatum(len(propertyList))
     p.name=prop.get("name")
     p.type=int(prop.get("type"))
+
     p.initialSetStr=str(prop.get("initialSet").replace("&lt","<").replace("&gt",">").replace("&amp;","&"))
-    p.unsafeSetStr=str(prop.get("unsafeSet")).replace("&lt","<").replace("&gt",">").replace("&amp;","&")
+    print '\n' + 'initial set equation: ' + p.initialSetStr
     p.initialSetParsed=exprParser.parseSet(varList,p.initialSetStr,0)
+    
+    p.unsafeSetStr=str(prop.get("unsafeSet")).replace("&lt","<").replace("&gt",">").replace("&amp;","&")
+    print '\n' + 'unsafe set equation: ' + p.unsafeSetStr
     p.unsafeSetParsed=exprParser.parseSet(varList,p.unsafeSetStr,1)
+
     for paramSubTree in prop.iterfind("parameters"):
         p.paramData[0] = float(paramSubTree.get("delta"))
         p.paramData[1] = float(paramSubTree.get("timestep"))
@@ -1769,6 +1784,7 @@ def convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix):
             elif coeff!=0:
                 lhs.append(str(coeff)+'*'+varList[i])
         eqs.append('+'.join(lhs)+str(eq[0])+str(b[0]))
+    print eqs
     return eqs
 
 def reconstructGuardsInvForHytech(automaton):
