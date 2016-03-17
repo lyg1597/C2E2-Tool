@@ -83,7 +83,7 @@ class Point* ReachTube::getLowerBound(int index){
 	return lowerBound.at(index);
 }
 
-void ReachTube::parseInvariantTube(char* filename, int hasMode){
+void ReachTube::parseInvariantTube(char const* filename, int hasMode){
 	FILE* tRFile;
 	tRFile = fopen(filename,"r");
 
@@ -413,14 +413,14 @@ void ReachTube::addGuards(double *ptLower, vector<pair<int, double *> > guards){
 
 void ReachTube::printGuards(){
 	for(int i=0; i<mode.size(); i++){
-		cout << "Mode: " << mode[i] << endl;
 		cout << "LB: "; lowerBound[i]->print();
 		cout << "UB: "; upperBound[i]->print();
+		cout << "Destination Mode: " << mode[i] << endl << endl;
 		// cout << endl;
 	}
 }
 
-void ReachTube::printReachTube(char* filename, int flag){
+void ReachTube::printReachTube(char const* filename, int flag){
 
 	ofstream invFile;
 

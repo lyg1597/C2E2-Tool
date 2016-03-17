@@ -216,8 +216,8 @@ class HyIR:
     
                 for guard_eq in a:
                     codeString+="    cs.insert("+guard_eq+");\n"
-                    codeString+="    NNC_Polyhedron guard(cs);\n"
-
+                    
+                codeString+="    NNC_Polyhedron guard(cs);\n"
                 codeString+="    if(!guard.is_disjoint_from(box)){\n"
                 codeString+="      guard.intersection_assign(box);\n"
                 if b:

@@ -45,11 +45,11 @@ public:
 	int getSize();
 	class Point* getUpperBound(int index);
 	class Point* getLowerBound(int index);
-	void parseInvariantTube(char* filename, int hasMode);
+	void parseInvariantTube(char const* filename, int hasMode);
 	class ReachTube* bloatReachTube(double bloatingFactor);
 	class ReachTube* bloatReachTube(double* deltaArray, class Annotation* currentAnnotation);
 	void parseGuardsTube(char* filename);
-	void printReachTube(char* filename, int flag);
+	void printReachTube(char const* filename, int flag);
 	int getGuardMode(int index);
 	void compressGuardSet();
 	class InitialSet* samplingGuardSet();
