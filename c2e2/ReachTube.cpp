@@ -13,6 +13,9 @@
 #include <fstream>
 #include <vector>
 #include <cstdlib>
+#include <cmath>
+#include <cfloat>
+#include <ppl.hh>
 
 using namespace std;
 
@@ -80,9 +83,7 @@ class Point* ReachTube::getLowerBound(int index){
 	return lowerBound.at(index);
 }
 
-void ReachTube::parseInvariantTube(char* filename){
-
-
+void ReachTube::parseInvariantTube(char const* filename, int hasMode){
 	FILE* tRFile;
 	tRFile = fopen(filename,"r");
 
@@ -90,50 +91,39 @@ void ReachTube::parseInvariantTube(char* filename){
 		cout << " Is this NULL ?" <<endl;
 	}
 
-	cout << "Opening the file \n";
-
 	class Point* tracePoint;
-
 	int breakloop = 0;
-
 	double bufferReader;
-
 	int flag = 0;
-
-
 	int number=0;
+
+	if(hasMode==1){
+		int mode;
+		fscanf(tRFile, "%d", &mode);
+	}
 
 	while( fscanf(tRFile,"%lf",&bufferReader) != EOF && breakloop == 0){
 		number++;
 		tracePoint = new Point(dimensions+1);
 		tracePoint->setCoordinate(0,bufferReader);
-//			cout << bufferReader << " \n";
 		for(int j=0;j<dimensions;j++){
 			if(fscanf(tRFile,"%lf",&bufferReader) != EOF){
-//				cout << bufferReader << " , ";
 				tracePoint->setCoordinate(j+1,bufferReader);
 			}
 			else{
-//					cout << "break loop is one \n";
 				breakloop = 1;
 			}
 		}
 
-//		cout << endl;
-
 		if(breakloop == 0 && flag == 0){
-			//cout << " Pushing into lowerBound \n";
 			lowerBound.push_back(tracePoint);
 		}
 		if(breakloop == 0 && flag == 1){
-			//cout << " Pushing into upper bound \n";
 			upperBound.push_back(tracePoint);
 		}
-
 		flag = 1-flag;
 	}
 	fclose(tRFile);
-
 }
 
 class ReachTube* ReachTube::bloatReachTube(double bloatingFactor){
@@ -159,13 +149,13 @@ class ReachTube* ReachTube::bloatReachTube(double bloatingFactor){
 		class Point* addingPointL = new Point(tempPointL->getDimension());
 		class Point* addingPointU = new Point(tempPointU->getDimension());
 
-		addingPointL->setCoordinate(0,tempPointL->getCoordiate(0));
-		addingPointU->setCoordinate(0,tempPointU->getCoordiate(0));
+		addingPointL->setCoordinate(0,tempPointL->getCoordinate(0));
+		addingPointU->setCoordinate(0,tempPointU->getCoordinate(0));
 
 		for(j = 1; j < addingPointL->getDimension(); j++){
 
-			value1 = tempPointL->getCoordiate(j);
-			value2 = tempPointU->getCoordiate(j);
+			value1 = tempPointL->getCoordinate(j);
+			value2 = tempPointU->getCoordinate(j);
 
 			if(value1 >= value2){
 				tempvalue = value2;
@@ -188,7 +178,7 @@ class ReachTube* ReachTube::bloatReachTube(double bloatingFactor){
 
 }
 
-class ReachTube* ReachTube::bloatReachTube(double delta, class Annotation* currentAnnotation){
+class ReachTube* ReachTube::bloatReachTube(double* deltaArray, class Annotation* currentAnnotation){
 
 
 	int iterator,j;
@@ -205,7 +195,9 @@ class ReachTube* ReachTube::bloatReachTube(double delta, class Annotation* curre
 	double tmin, tmax;
 	double epsilon;
 
-	cout << " In bloating \n";
+	double delta;
+
+	//cout << " In bloating \n";
 
 	for(iterator = 0; iterator < lowerBound.size(); iterator++){
 
@@ -215,26 +207,31 @@ class ReachTube* ReachTube::bloatReachTube(double delta, class Annotation* curre
 		class Point* addingPointL = new Point(tempPointL->getDimension());
 		class Point* addingPointU = new Point(tempPointU->getDimension());
 
-		addingPointL->setCoordinate(0,tempPointL->getCoordiate(0));
-		addingPointU->setCoordinate(0,tempPointU->getCoordiate(0));
+		addingPointL->setCoordinate(0,tempPointL->getCoordinate(0));
+		addingPointU->setCoordinate(0,tempPointU->getCoordinate(0));
 
 //		cout << " First and last " << tmin << " and " << tmax <<endl;
 
-		tmin = tempPointL->getCoordiate(0);
-		tmax = tempPointU->getCoordiate(0);
+		tmin = tempPointL->getCoordinate(0);
+		tmax = tempPointU->getCoordinate(0);
 
-		epsilon = currentAnnotation->getED(delta, tmin,tmax,reachTubeMode);
+		
 
 		for(j = 1; j < addingPointL->getDimension(); j++){
+			delta = deltaArray[j-1];
 
-			value1 = tempPointL->getCoordiate(j);
-			value2 = tempPointU->getCoordiate(j);
+			epsilon = currentAnnotation->getED(delta,tmin,tmax,reachTubeMode);
+			//cout<<"at dimensions "<<j<< " the epsilon is "<<epsilon<<endl;
+
+			value1 = tempPointL->getCoordinate(j);
+			value2 = tempPointU->getCoordinate(j);
 
 			if(value1 >= value2){
 				tempvalue = value2;
 				value2 = value1;
 				value1 = tempvalue;
 			}
+
 
 			addingPointL->setCoordinate(j,value1-epsilon);
 			addingPointU->setCoordinate(j,value2+epsilon);
@@ -260,7 +257,7 @@ void ReachTube::parseGuardsTube(char* filename){
 	FILE* tRFile;
 	tRFile = fopen(filename,"r");
 
-	cout << "Opening the file \n";
+	//cout << "Opening the file \n";
 
 	class Point* tracePoint;
 
@@ -315,7 +312,115 @@ void ReachTube::parseGuardsTube(char* filename){
 
 }
 
-void ReachTube::printReachTube(char* filename, int flag){
+void ReachTube::addGuards(vector<pair<NNC_Polyhedron,int> > guards){
+	isReachTube = 0;
+	reachTubeMode = -1;
+
+	int tempMode;
+	NNC_Polyhedron poly;
+	Point *ptU, *ptL;
+	for(int i=0; i<guards.size(); i++){
+		poly = guards[i].first;
+		tempMode = guards[i].second;
+
+		// Generator_System gs=box.minimized_generators();
+		// Generator_System::const_iterator i;
+
+		// double divisor, dividend;
+		// int dim;
+		// cout << "BOX: " << endl;
+		// for(i=gs.begin();i!=gs.end();++i)
+		// {
+		// 	if((*i).is_point())
+		// 	{
+		// 	  divisor=mpz_get_d((*i).divisor().get_mpz_t());
+		// 	  dim=int((*i).space_dimension());
+		// 	  cout << "POINT: ";
+		// 	  for(int j=0;j<dim;j++)
+		// 	  {
+		// 	    dividend=mpz_get_d((*i).coefficient(Variable(j)).get_mpz_t());
+		// 	    cout<<dividend/divisor<<" ";
+		// 	  }
+		// 	  cout<<endl;
+		// 	}
+		// }
+		// cout << endl;
+
+		ptL = new Point(dimensions+1);
+		ptU = new Point(dimensions+1);
+		
+		for(int j=0; j<dimensions+1; j++){
+			ptL->setCoordinate(j, DBL_MAX);
+			ptU->setCoordinate(j, -DBL_MAX);
+		}
+
+		Generator_System gs=poly.minimized_generators();
+		Generator_System::const_iterator k;
+		for(k=gs.begin();k!=gs.end();++k)
+		{
+			if(k->is_point())
+			{
+			 	double divisor=mpz_get_d(k->divisor().get_mpz_t());
+			  	int dim=int(k->space_dimension());
+			  	for(int j=0;j<dim;j++)
+			  	{
+			    	double dividend=mpz_get_d(k->coefficient(Variable(j)).get_mpz_t());
+			    	double num = dividend/divisor;
+			    	if(num < ptL->getCoordinate(j))
+			    		ptL->setCoordinate(j, num);
+			    	if(num > ptU->getCoordinate(j))
+			    		ptU->setCoordinate(j, num);
+			  	}
+			}
+		}
+		mode.push_back(tempMode);
+		upperBound.push_back(ptU);
+		lowerBound.push_back(ptL);
+	}
+}
+
+void ReachTube::addGuards(double *ptLower, vector<pair<int, double *> > guards){
+	isReachTube = 0;
+	reachTubeMode = -1;
+
+	int tempMode;
+	// bool exists;
+	Point *ptUpper, *ptL;
+	for(int i=0; i<guards.size(); i++){
+		// exists = false;
+		tempMode = guards[i].first;
+		ptL = new Point(dimensions+1, ptLower);
+		ptUpper = new Point(dimensions+1, guards[i].second);
+		// cout << "double * arr: ";
+		// for(int j=0; j<dimensions+1; j++){
+		// 	cout << j << ": " << guards[i].second[j] << ", ";
+		// }
+		// cout << endl;
+		// for(int j=0; j<mode.size(); j++){
+		// 	if(mode[j]==tempMode && lowerBound[j]==ptL && upperBound[j]==ptUpper){
+		// 		exists = true;
+		// 	}
+		// }
+		// if(!exists){
+		// cout << "ptUpper: "; ptUpper->print();
+			mode.push_back(tempMode);
+			upperBound.push_back(ptUpper);
+			lowerBound.push_back(ptL);
+		// }
+	}
+	// cout << "Guard Length: " << mode.size() << endl;
+}
+
+void ReachTube::printGuards(){
+	for(int i=0; i<mode.size(); i++){
+		cout << "LB: "; lowerBound[i]->print();
+		cout << "UB: "; upperBound[i]->print();
+		cout << "Destination Mode: " << mode[i] << endl << endl;
+		// cout << endl;
+	}
+}
+
+void ReachTube::printReachTube(char const* filename, int flag){
 
 	ofstream invFile;
 
@@ -346,13 +451,13 @@ void ReachTube::printReachTube(char* filename, int flag){
 	for(iterator = 0; iterator < lowerBound.size(); iterator++){
 		tempPoint = lowerBound.at(iterator);
 		for(i=0;i<tempPoint->getDimension();i++){
-			invFile << " " << tempPoint->getCoordiate(i);
+			invFile << " " << tempPoint->getCoordinate(i);
 		}
 		invFile << endl;
 
 		tempPoint = upperBound.at(iterator);
 		for(i=0;i<tempPoint->getDimension();i++){
-			invFile << " " << tempPoint->getCoordiate(i);
+			invFile << " " << tempPoint->getCoordinate(i);
 		}
 		invFile << endl;
 
@@ -406,11 +511,11 @@ void ReachTube::compressGuardSet(){
 				// Code for collapsing the dimensions;
 				for(dimIndex = 0; dimIndex < refLower->getDimension(); dimIndex++){
 					// merging the coordinates, lower is the lowest of them, higher is the largest of them.
-					if(tempPointLower->getCoordiate(dimIndex) <= refLower->getCoordiate(dimIndex)){
-						refLower->setCoordinate(dimIndex,tempPointLower->getCoordiate(dimIndex));
+					if(tempPointLower->getCoordinate(dimIndex) <= refLower->getCoordinate(dimIndex)){
+						refLower->setCoordinate(dimIndex,tempPointLower->getCoordinate(dimIndex));
 					}
-					if(tempPointUpper->getCoordiate(dimIndex) >= refUpper->getCoordiate(dimIndex)){
-						refUpper->setCoordinate(dimIndex,tempPointUpper->getCoordiate(dimIndex));
+					if(tempPointUpper->getCoordinate(dimIndex) >= refUpper->getCoordinate(dimIndex)){
+						refUpper->setCoordinate(dimIndex,tempPointUpper->getCoordinate(dimIndex));
 					}
 				}
 
@@ -458,8 +563,8 @@ double ReachTube::getMaxCoordinate(int dimension, int curMode){
 	for(pointIndex = upperBound.size()-1; pointIndex>=0; pointIndex--){
 		if(mode.at(pointIndex) == curMode){
 			tempPoint = upperBound.at(pointIndex);
-			if(maxValue <= tempPoint->getCoordiate(dimension)){
-				maxValue = tempPoint->getCoordiate(dimension);
+			if(maxValue <= tempPoint->getCoordinate(dimension)){
+				maxValue = tempPoint->getCoordinate(dimension);
 			}
 		}
 	}
@@ -474,10 +579,10 @@ vector<double> ReachTube::MaxCoordinate(int dimension){
 	class Point* pairPoint;
 	for (pointIndex = upperBound.size()-1; pointIndex>=0; pointIndex--){
 		maxPoint = upperBound.at(pointIndex);
-		if (maxValue<=maxPoint->getCoordiate(dimension)){
-			maxValue = maxPoint->getCoordiate(dimension);
+		if (maxValue<=maxPoint->getCoordinate(dimension)){
+			maxValue = maxPoint->getCoordinate(dimension);
 			pairPoint = lowerBound.at(pointIndex);
-			pairValue = pairPoint->getCoordiate(dimension);
+			pairValue = pairPoint->getCoordinate(dimension);
 		}
 	}
 	std::vector<double> retval;
@@ -494,8 +599,8 @@ double ReachTube::getMinCoordinate(int dimension, int curMode){
 	for(pointIndex = lowerBound.size()-1; pointIndex>=0; pointIndex--){
 		if(mode.at(pointIndex) == curMode){
 			tempPoint = lowerBound.at(pointIndex);
-			if(minValue >= tempPoint->getCoordiate(dimension)){
-				minValue = tempPoint->getCoordiate(dimension);
+			if(minValue >= tempPoint->getCoordinate(dimension)){
+				minValue = tempPoint->getCoordinate(dimension);
 			}
 		}
 	}
@@ -510,10 +615,10 @@ vector<double> ReachTube::MinCoordinate(int dimension){
 	class Point* pairPoint;
 	for (pointIndex = lowerBound.size()-1; pointIndex>=0; pointIndex--){
 		minPoint = lowerBound.at(pointIndex);
-		if(minValue >= minPoint->getCoordiate(dimension)){
-			minValue = minPoint->getCoordiate(dimension);
+		if(minValue >= minPoint->getCoordinate(dimension)){
+			minValue = minPoint->getCoordinate(dimension);
 			pairPoint = upperBound.at(pointIndex);
-			pairValue = pairPoint->getCoordiate(dimension);
+			pairValue = pairPoint->getCoordinate(dimension);
 		}
 	}
 	std::vector<double> retval;
@@ -539,8 +644,8 @@ int ReachTube::checkunsafe_rest(double* forM, double* forB, int numofeq, int ind
 		lowerPoint = lowerBound.at(index);
 		upperPoint = upperBound.at(index);
 		for(i=0;i<dimensions;i++){
-			uppersum+=forM[dimensions*equ+i]*upperPoint->getCoordiate(i+1);
-			lowersum+=forM[dimensions*equ+i]*lowerPoint->getCoordiate(i+1);
+			uppersum+=forM[dimensions*equ+i]*upperPoint->getCoordinate(i+1);
+			lowersum+=forM[dimensions*equ+i]*lowerPoint->getCoordinate(i+1);
 		}
 		if (uppersum<forB[equ]){
 			if(lowersum<forB[equ]){
@@ -575,8 +680,8 @@ int ReachTube::checkunsafe(double* forM, double* forB, int numofeq){
 		lowerPoint = lowerBound.at(pointIndex);
 		upperPoint = upperBound.at(pointIndex);
 		for(i=0;i<dimensions;i++){
-			uppersum+=forM[i]*upperPoint->getCoordiate(i+1);
-			lowersum+=forM[i]*lowerPoint->getCoordiate(i+1);
+			uppersum+=forM[i]*upperPoint->getCoordinate(i+1);
+			lowersum+=forM[i]*lowerPoint->getCoordinate(i+1);
 		}
 		if (uppersum<forB[0]){
 			if (numofeq>1){
@@ -615,16 +720,17 @@ int ReachTube::checkunsafe(double* forM, double* forB, int numofeq){
 
 }
 
-class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int exceptPoints){
+class InitialSet* ReachTube::getNextSet(){
 
 	std::vector<int> modesInSet;
 
 	class InitialSet* ToBeReturned = NULL;
-
 	class InitialSet* indexSet;
 	class InitialSet* modeSet;
 
 	class Point* currPoint;
+
+	double deltaArray[dimensions];
 
 	int modeIndex;
 	int tempMode;
@@ -664,6 +770,10 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 		for(indexDimension=1;indexDimension<=dimensions; indexDimension++){
 			double minValue = getMinCoordinate(indexDimension,tempMode);
 			double maxValue = getMaxCoordinate(indexDimension,tempMode);
+			/*cout<<"the max value is "<< maxValue<<endl;
+			cout<<"the min value is "<< minValue<<endl;*/
+			deltaArray[indexDimension-1] = abs(maxValue-minValue)/2;
+			/*cout<<"the delta is "<<deltaArray[indexDimension-1]<<endl;*/
 			*(b+2*(indexDimension-1)) = -1*minValue;
 			*(b+2*(indexDimension-1)+1) = maxValue;
 			*(matrix+2*(indexDimension-1)*dimensions+(indexDimension-1)) = -1;
@@ -675,15 +785,11 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 		modeLinear->setNumEqns(2*dimensions);
 		modeLinear->setB(b);
 		modeLinear->setMatrix(matrix);
-		modeLinear->setExceptPoints(exceptPoints);
+		
+		modeSet = modeLinear->getCover(deltaArray);
+	
 
-		modeSet = modeLinear->getCover(delta);
-		int error = modeSet->getMode();
-		if(error == -999){
-			cout <<"find error, too much point, return" <<endl;
-			return modeSet;
-		}
-		cout << "Size of just the partitioning is " << modeSet->getLength() << "\n";
+		/*cout << "Size of just the partitioning is " << modeSet->getLength() << "\n";*/
 
 		// modeSet->print();
 
@@ -697,31 +803,14 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 			currPoint = indexSet->getState();
 			int curMode = tempMode;
 
-			if(checkIntersection(curMode, currPoint, delta)){
+			if(checkIntersection(curMode, currPoint, deltaArray)){
 
 //				cout << "Checking intersections \n";
-				double tmin = getMinTime(curMode, currPoint, delta);
+				double tmin = getMinTime(curMode, currPoint, deltaArray);
 				//cout << "  The time minimum time is " << tmin << "\n";
 				currPoint->setCoordinate(0,tmin);
 				TempToBeAdded->add(currPoint);
 
-				//double tmax = getMaxTime(curMode, currPoint, delta);
-
-				//double tempTime = tmin;
-
-//				cout << "Temp timings are " << tmin << " and " << tmax << " thats all \n";
-
-				/*
-
-				while(tempTime < tmax){
-					cout << "How many times is it adding? \n";
-					class Point* addedPoint = new Point(currPoint->getDimension(), currPoint->getCoordinates());
-					addedPoint->setCoordinate(0,tempTime);
-					TempToBeAdded->add(addedPoint);
-					tempTime += timeStep;
-				}
-
-				*/
 
 			}
 
@@ -736,9 +825,9 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 		//
 		// Next thing to do is to check the intersection with any of the modes.
 
-		cout << " Size if to be added is " << TempToBeAdded->getLength() << "\n";
+		/*cout << " Size if to be added is " << TempToBeAdded->getLength() << "\n";*/
 		TempToBeAdded->setMode(tempMode);
-
+		TempToBeAdded->setDelta(deltaArray);
 //		cout << " Added? \n";
 
 
@@ -753,16 +842,134 @@ class InitialSet* ReachTube::getNextSet(double delta, double timeStep, int excep
 
 	}
 
-	if(ToBeReturned != NULL){
-		ToBeReturned->setDelta(delta);
-	}
+	/*if(ToBeReturned != NULL){
+		ToBeReturned->setDelta(deltaArray);
+	}*/
 
 	return ToBeReturned;
 
 }
 
 
-int ReachTube::checkIntersection(int curMode, class Point* currPoint, double delta){
+int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* parentRepPoint){
+	std::vector<int> modesInSet;
+	class Point* parentPoint;
+	double* parentDeltaArray;
+	class CoverStack* tempStack;
+	class RepPoint* tempRepPoint;
+	class Point* tempPoint;
+	int refinetime = parentRepPoint->getRefineTime();
+	int initMode;
+
+	if (parentRepPoint->getParentState()!=NULL){
+		parentPoint = parentRepPoint->getParentState();
+		parentDeltaArray = parentRepPoint->getParentDeltaArray();
+		initMode = parentRepPoint->getParentMode();
+	}
+	else{
+		parentPoint = parentRepPoint->getState();
+		parentDeltaArray = parentRepPoint->getDeltaArray();
+		initMode = parentRepPoint->getMode();
+	}
+
+	double deltaArray[dimensions];
+
+	int modeIndex;
+	int tempMode;
+
+	double* b = (double*)malloc(2*dimensions*sizeof(double));
+	double* matrix = (double*)malloc(2*dimensions*dimensions*sizeof(double));
+
+	for(int i =0; i< 2*dimensions*dimensions; i++){
+		*(matrix+i) = 0;
+	}
+
+	for(modeIndex=mode.size()-1; modeIndex>=0; modeIndex--){
+		tempMode = mode.at(modeIndex);
+		int foundFlag = 0;
+		for(int j=0; j<modesInSet.size(); j++){
+			if(tempMode == modesInSet.at(j)){
+				foundFlag = 1;
+			}
+		}
+		if(foundFlag == 0){
+			modesInSet.push_back(tempMode);
+		}
+	}
+
+	//cout<<"Number of next set is "<<modesInSet.size()<<endl;
+	if(modesInSet.size()==0)
+		return 0;
+
+	for(modeIndex = 0; modeIndex < modesInSet.size(); modeIndex++){
+		tempMode = modesInSet.at(modeIndex);
+		InitialSet* TempToBeAdded = new InitialSet();
+		int indexDimension;
+
+		for(indexDimension=1;indexDimension<=dimensions; indexDimension++){
+			double minValue = getMinCoordinate(indexDimension,tempMode);
+			double maxValue = getMaxCoordinate(indexDimension,tempMode);
+		
+			deltaArray[indexDimension-1] = abs(maxValue-minValue)/2;
+	
+			*(b+2*(indexDimension-1)) = -1*minValue;
+			*(b+2*(indexDimension-1)+1) = maxValue;
+			*(matrix+2*(indexDimension-1)*dimensions+(indexDimension-1)) = -1;
+			*(matrix+(2*(indexDimension-1)+1)*dimensions+(indexDimension-1)) = 1;
+		}
+
+		LinearSet* modeLinear = new LinearSet();
+		modeLinear->setDimensions(dimensions);
+		modeLinear->setNumEqns(2*dimensions);
+		modeLinear->setB(b);
+		modeLinear->setMatrix(matrix);
+		
+		//cout<<"Start to collect next rep Point"<<endl;
+		tempStack = modeLinear->getCoverStack(deltaArray, tempMode, refinetime);
+
+		//cout<<"Done collecting next guard"<<endl;
+		//cout<<"Check if next set is empty"<< tempStack->empty()<<endl;
+		while(!tempStack->empty()){
+			tempRepPoint = tempStack->top();
+			tempStack->pop();
+			tempPoint = new Point(*tempRepPoint->getState());
+			int curMode = tempMode;
+			if(checkIntersection(curMode, tempPoint, deltaArray)){
+				double tmin = getMinTime(curMode, tempPoint, deltaArray);
+				tempPoint->setCoordinate(0,tmin);
+				//cout<<tempPoint->getDimension()<<endl;
+				//cout<<"Start to verify next rep Point"<<endl;
+				tempRepPoint->setState(tempPoint);
+				//cout<<"Start to verify next rep Point"<<endl;
+				delete tempPoint;
+				tempRepPoint->setDimension(dimensions);
+				tempRepPoint->setDeltaArray(deltaArray);
+				tempRepPoint->setParentState(parentPoint);
+				tempRepPoint->setParentDeltaArray(parentDeltaArray);
+				tempRepPoint->setParentMode(initMode);
+				ItrStack->push(tempRepPoint);
+
+				cout<<"====Find next region Information, recalculating deltaArray, generate one RepPoint, Push to stack===="<<endl;
+				cout<<"|     |"<<endl;
+				cout<<"|     |"<<endl;
+				for(int i=0; i<ItrStack->size();i++)
+					cout<<"|=====|"<<endl;
+				cout<<"-------"<<endl;
+			}
+		}
+	}
+	//find Next Set, return 1
+	return 1;
+}
+
+
+
+
+
+
+
+
+int ReachTube::checkIntersection(int curMode, class Point* currPoint, double* deltaArray){
 
 	int index;
 	int hasIntersection;
@@ -771,16 +978,18 @@ int ReachTube::checkIntersection(int curMode, class Point* currPoint, double del
 	class Point* lowerBoundPoint;
 	double maxDim, minDim;
 	double maxPointDim, minPointDim;
+	double delta;
 	for(index=0;index < mode.size(); index++){
 		if(mode.at(index) == curMode){
 			hasIntersection = 1;
 			upperBoundPoint = upperBound.at(index);
 			lowerBoundPoint = lowerBound.at(index);
 			for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
-				maxDim = upperBoundPoint->getCoordiate(dimIndex);
-				minDim = lowerBoundPoint->getCoordiate(dimIndex);
-				maxPointDim = currPoint->getCoordiate(dimIndex)+delta;
-				minPointDim = currPoint->getCoordiate(dimIndex)-delta;
+				delta = deltaArray[dimIndex-1];
+				maxDim = upperBoundPoint->getCoordinate(dimIndex);
+				minDim = lowerBoundPoint->getCoordinate(dimIndex);
+				maxPointDim = currPoint->getCoordinate(dimIndex)+delta;
+				minPointDim = currPoint->getCoordinate(dimIndex)-delta;
 				if(minDim > maxPointDim || maxDim < minPointDim){
 					hasIntersection = 0;
 				}
@@ -794,7 +1003,7 @@ int ReachTube::checkIntersection(int curMode, class Point* currPoint, double del
 
 }
 
-double ReachTube::getMinTime(int curMode, class Point* currPoint, double delta){
+double ReachTube::getMinTime(int curMode, class Point* currPoint, double* deltaArray){
 
 	int index;
 	int hasIntersection;
@@ -804,23 +1013,25 @@ double ReachTube::getMinTime(int curMode, class Point* currPoint, double delta){
 	double maxDim, minDim;
 	double maxPointDim, minPointDim;
 	double minTime = 1000000;
+	double delta;
 	for(index=0;index < mode.size(); index++){
 		if(mode.at(index) == curMode){
 			hasIntersection = 1;
 			upperBoundPoint = upperBound.at(index);
 			lowerBoundPoint = lowerBound.at(index);
 			for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
-				maxDim = upperBoundPoint->getCoordiate(dimIndex);
-				minDim = lowerBoundPoint->getCoordiate(dimIndex);
-				maxPointDim = currPoint->getCoordiate(dimIndex)+delta;
-				minPointDim = currPoint->getCoordiate(dimIndex)-delta;
+				delta = deltaArray[dimIndex-1];
+				maxDim = upperBoundPoint->getCoordinate(dimIndex);
+				minDim = lowerBoundPoint->getCoordinate(dimIndex);
+				maxPointDim = currPoint->getCoordinate(dimIndex)+delta;
+				minPointDim = currPoint->getCoordinate(dimIndex)-delta;
 				if(minDim > maxPointDim || maxDim < minPointDim){
 					hasIntersection = 0;
 				}
 			}
 			if(hasIntersection == 1){
-				if(minTime > lowerBoundPoint->getCoordiate(0)){
-					minTime = lowerBoundPoint->getCoordiate(0);
+				if(minTime > lowerBoundPoint->getCoordinate(0)){
+					minTime = lowerBoundPoint->getCoordinate(0);
 				}
 			}
 		}
@@ -830,11 +1041,12 @@ double ReachTube::getMinTime(int curMode, class Point* currPoint, double delta){
 
 }
 
-double ReachTube::getMaxTime(int curMode, class Point* currPoint, double delta){
+double ReachTube::getMaxTime(int curMode, class Point* currPoint, double* deltaArray){
 
 	int index;
 	int hasIntersection;
 	int dimIndex;
+	double delta;
 	class Point* upperBoundPoint;
 	class Point* lowerBoundPoint;
 	double maxDim, minDim;
@@ -846,17 +1058,18 @@ double ReachTube::getMaxTime(int curMode, class Point* currPoint, double delta){
 			upperBoundPoint = upperBound.at(index);
 			lowerBoundPoint = lowerBound.at(index);
 			for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
-				maxDim = upperBoundPoint->getCoordiate(dimIndex);
-				minDim = lowerBoundPoint->getCoordiate(dimIndex);
-				maxPointDim = currPoint->getCoordiate(dimIndex)+delta;
-				minPointDim = currPoint->getCoordiate(dimIndex)-delta;
+				delta = deltaArray[dimIndex-1];
+				maxDim = upperBoundPoint->getCoordinate(dimIndex);
+				minDim = lowerBoundPoint->getCoordinate(dimIndex);
+				maxPointDim = currPoint->getCoordinate(dimIndex)+delta;
+				minPointDim = currPoint->getCoordinate(dimIndex)-delta;
 				if(minDim > maxPointDim || maxDim < minPointDim){
 					hasIntersection = 0;
 				}
 			}
 			if(hasIntersection == 1){
-				if(maxTime < upperBoundPoint->getCoordiate(0)){
-					maxTime = upperBoundPoint->getCoordiate(0);
+				if(maxTime < upperBoundPoint->getCoordinate(0)){
+					maxTime = upperBoundPoint->getCoordinate(0);
 				}
 			}
 		}
@@ -866,4 +1079,8 @@ double ReachTube::getMaxTime(int curMode, class Point* currPoint, double delta){
 
 }
 
+void ReachTube::clear(int from){
+	upperBound.erase(upperBound.begin()+from, upperBound.end());
+	lowerBound.erase(lowerBound.begin()+from, lowerBound.end());
+}
 

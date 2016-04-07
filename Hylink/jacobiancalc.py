@@ -2,7 +2,7 @@ from sympy import symbols,Matrix,cos,sin,tan,ln
 
 from calculator import parse,converthyxml
 
-no_Bloat = 0
+
 
 def removeDelete(grid):
     ret = []
@@ -57,8 +57,9 @@ def jacobian(difvar,diffun,loop):
             matrixvarcommand = matrixvarcommand+'])'
         else:
             matrixvarcommand = matrixvarcommand+','
-    #print(matrixvarcommand)
+    print(matrixvarcommand)
     exec('Y ='+matrixvarcommand)
+    print(len(Y))
     matrixcommand  = 'Matrix(['
     for i in range (funlen):
         matrixcommand = matrixcommand + dfl[i]
@@ -68,9 +69,13 @@ def jacobian(difvar,diffun,loop):
             matrixcommand = matrixcommand+','
     print(matrixcommand)
     exec('X ='+matrixcommand)
+    print(len(X))
     jac = X.jacobian(Y)
     Ljac = jac.tolist()
-
+    # print(Ljac[0])
+    # print(len(Ljac))
+    # print(len(Ljac[0]))
+    # print varlen
     
    
     deleterow = []
@@ -137,7 +142,7 @@ def jacobian(difvar,diffun,loop):
         ComputeLDFstring += "from math import *\n"
         ComputeLDFstring += "import numpy as np\n"
         ComputeLDFstring += "import numpy.linalg as la\n"
-        ComputeLDFstring += "import matplotlib.pyplot as plt\n"
+        #ComputeLDFstring += "import matplotlib.pyplot as plt\n"
         ComputeLDFstring += "import sys\n"
         ComputeLDFstring += "import timeit\n"
         ComputeLDFstring += "def jcalc(listvalue,curstate):\n"
@@ -193,8 +198,11 @@ def createCDFfunction(delete_element):
     ComputeLDFstring += "    curline+=1\n"
     ComputeLDFstring += "Simulation_data = np.array(Simulation_data)\n"
     ComputeLDFstring += "CT_step = min(CT_step,len(Simulation_data))\n"
-    ComputeLDFstring += "blowting = np.zeros(int(len(x)))\n"
-    ComputeLDFstring += "blowting[0] = delta\n"
+    ComputeLDFstring += "blowting = np.zeros((int(len(x)),numofvar-1-len(notbloating)))\n"
+    ComputeLDFstring += "for i in range (len(notbloating)-1,-1,-1):\n"
+    ComputeLDFstring += "   delta.pop(notbloating[i])\n"
+    ComputeLDFstring += "   notbloating[i]+=1\n"
+    ComputeLDFstring += "blowting[0,:] = delta\n"
     ComputeLDFstring += "\n"
     ComputeLDFstring += "storevalue = []\n"
     ComputeLDFstring += "for i in range (len(notbloating)):\n"
@@ -222,31 +230,30 @@ def createCDFfunction(delete_element):
     ComputeLDFstring += "        Current_Jacobian = np.reshape(Current_Jacobian,(numofvar,numofvar))\n"
     ComputeLDFstring += "        Current_Jordan = np.dot(la.inv(CT_matrix),np.dot(Current_Jacobian,CT_matrix))\n"
     ComputeLDFstring += "        Current_lambda = max(la.eigvalsh(np.transpose(Current_Jordan)+Current_Jordan))/2\n"
-    ComputeLDFstring += "        Disturb_matrix = np.reshape(jcalc((np.amax(Simulation_box,axis=0)+blowting[j]/2),int(state)),(numofvar,numofvar))-np.reshape(jcalc((np.amin(Simulation_box,axis=0)-blowting[j]/2),int(state)),(numofvar,numofvar))\n"
+    ComputeLDFstring += "        Disturb_matrix = np.reshape(jcalc((np.amax(Simulation_box,axis=0)+blowting[j,:]/2),int(state)),(numofvar,numofvar))-np.reshape(jcalc((np.amin(Simulation_box,axis=0)-blowting[j,:]/2),int(state)),(numofvar,numofvar))\n"
     ComputeLDFstring += "        Disturbance = la.norm(Disturb_matrix,ord=2)*exp(Local_Lipschitz*Delta_time)\n"
     ComputeLDFstring += "        Current_lambda = Current_lambda + Disturbance\n"
     ComputeLDFstring += "        if j == 0:\n"
-    ComputeLDFstring += "            blowting[1] = blowting[0]*exp(Current_lambda * Delta_time)\n"
+    ComputeLDFstring += "            blowting[1,:] = blowting[0,:]*exp(Current_lambda * Delta_time)\n"
     ComputeLDFstring += "        else:\n"
-    ComputeLDFstring += "            blowting[j] = blowting[j-1]\n"
-    ComputeLDFstring += "            blowting[j+1] = blowting[j] * exp(Current_lambda * Delta_time)\n"
+    ComputeLDFstring += "            blowting[j,:] = blowting[j-1,:]\n"
+    ComputeLDFstring += "            blowting[j+1,:] = blowting[j,:] * exp(Current_lambda * Delta_time)\n"
     ComputeLDFstring += "    for cnt in range (min(CT_step,len(Simulation_data))-i):\n"
-    ComputeLDFstring += "        blowting[i+cnt] = blowting[i+cnt] * la.cond(CT_matrix)\n"
+    ComputeLDFstring += "        blowting[i+cnt,:] = blowting[i+cnt,:] * la.cond(CT_matrix)\n"
     ComputeLDFstring += "\n"
-    if no_Bloat:
-        ComputeLDFstring += "blowting[:] = 0\n"
+    
     ComputeLDFstring += "Reach_tube = np.zeros((len(Simulation_data),len(Simulation_data[0])))\n"
     ComputeLDFstring += "for i in range (0,len(Simulation_data),2):\n"
     ComputeLDFstring += "    Reach_tube[i,0] = Simulation_data[i,0]\n"
     ComputeLDFstring += "    Reach_tube[i+1,0] = Simulation_data[i+1,0]\n"
-    ComputeLDFstring += "    Reach_tube[i,1:numofvar+1] = np.amin(Simulation_data[i:i+2,1:numofvar+1],axis=0)-blowting[i]\n"
-    ComputeLDFstring += "    Reach_tube[i+1,1:numofvar+1] = np.amax(Simulation_data[i:i+2,1:numofvar+1],axis=0)+blowting[i]\n"
+    ComputeLDFstring += "    Reach_tube[i,1:numofvar+1] = np.amin(Simulation_data[i:i+2,1:numofvar+1],axis=0)-blowting[i,:]\n"
+    ComputeLDFstring += "    Reach_tube[i+1,1:numofvar+1] = np.amax(Simulation_data[i:i+2,1:numofvar+1],axis=0)+blowting[i,:]\n"
     ComputeLDFstring += "\n"
     ComputeLDFstring += "for i in range (len(storevalue)):\n"
     ComputeLDFstring += "    Reach_tube = np.insert(Reach_tube,storevalue[i][0],storevalue[i][1],axis = 1)\n"
     ComputeLDFstring += "\n"
     ComputeLDFstring += "print('Final Bloating Size:')\n"
-    ComputeLDFstring += "print(blowting[-1])\n"
+    ComputeLDFstring += "print(blowting[-1,:])\n"
     ComputeLDFstring += "f = open('../wd/reachtube.dat', 'w')\n"
     ComputeLDFstring += "bloatstring = ''\n"
     ComputeLDFstring += "bloatstring += state\n"

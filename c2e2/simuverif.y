@@ -53,7 +53,7 @@
 %token INITMODE
 %token TSTEP
 %token THORIZON
-%token DELTA
+%token REFINE
 %token FORB
 %token FORBE
 %token FORBM
@@ -63,6 +63,7 @@
 %token ANNOT
 %token KCONST
 %token ISLINEAR
+%token SIMU
 %token TIME
 %token GAMMA
 %token BETA
@@ -83,6 +84,7 @@
 %token <str> STRING
 %token <str> WORD
 
+
 %%
 
 %start ss;
@@ -102,13 +104,13 @@ sentence:
 					holder.initMax = (double*)malloc(holder.dimensions*sizeof(double));
 					holder.forbMin = (double*)malloc(holder.dimensions*sizeof(double));
 					holder.forbMax = (double*)malloc(holder.dimensions*sizeof(double));
-					printf(" dim - %d - \n",holder.dimensions);}
+					/*printf(" dim - %d - \n",holder.dimensions);*/}
 	| DIMENSIONS EQ NUMBER {holder.dimensions = (int)$3; 
 					holder.initMin = (double*)malloc(holder.dimensions*sizeof(double));
 					holder.initMax = (double*)malloc(holder.dimensions*sizeof(double));
 					holder.forbMin = (double*)malloc(holder.dimensions*sizeof(double));
 					holder.forbMax = (double*)malloc(holder.dimensions*sizeof(double));
-					printf(" dim - %d - \n",holder.dimensions);}
+					/*printf(" dim - %d - \n",holder.dimensions);*/}
 	| MODES EQ NUMBER {holder.modes = (int)$3; holder.kConst = (double*)malloc(holder.modes*sizeof(double));
 					holder.gamma = (double*)malloc(holder.dimensions*sizeof(double));
 					holder.islinear = (int*)malloc(holder.dimensions*sizeof(int));}
@@ -123,6 +125,8 @@ sentence:
 	| RELERROR EQ NUMBER {holder.relativeError = (double)$3; /*printf(" relerror - %f -\n",$3);*/}
 	| INITMODE EQ QU NUMBER QU {holder.initMode = (int)$4;}
 	| INITMODE EQ NUMBER {holder.initMode = (int)$3;}
+	| SIMU EQ QU NUMBER QU {holder.simuval = (int)$4;}
+	| SIMU EQ NUMBER {holder.simuval = (int)$3;}
 	| INIT EQ QU XID IN SO NUMBER CO NUMBER SC QU {int curdim; curdim = (int)$4; 
 							*(holder.initMin+(curdim-1)) = $7; *(holder.initMax+(curdim-1)) = $9; 
 							/*printf(" dim - %d - lower %f - higher %f -\n",curdim,$7,$9);*/}
@@ -135,12 +139,12 @@ sentence:
 	| INITE EQ NUMBER {int numEqns; numEqns = (int)$3;
 							holder.initEqns = numEqns;
 							/*printf(" init equations - %d -\n",numEqns);*/}
-	| INITM EQ { holder.ptr = (double*)malloc(holder.dimensions*holder.initEqns*sizeof(double)); holder.index=0; printf("Starting init matrix");} SO numbersequence SC { holder.initMatrix = holder.ptr; printf(" Done parsing initial matrix \n");}
-	| INITB EQ { holder.ptr = (double*)malloc(holder.initEqns*sizeof(double)); holder.index=0; printf("Starting init b");} SO numbersequence SC { holder.initB = holder.ptr; printf(" Done parsing initial B \n");}
-	| DELTA EQ QU NUMBER QU {holder.deltaVal = (double)$4; /*printf(" delta - %f -\n",$4);*/}
+	| INITM EQ { holder.ptr = (double*)malloc(holder.dimensions*holder.initEqns*sizeof(double)); holder.index=0; /*printf("Starting init matrix")*/;} SO numbersequence SC { holder.initMatrix = holder.ptr; /*printf(" Done parsing initial matrix \n");*/}
+	| INITB EQ { holder.ptr = (double*)malloc(holder.initEqns*sizeof(double)); holder.index=0; /*printf("Starting init b");*/} SO numbersequence SC { holder.initB = holder.ptr; /*printf(" Done parsing initial B \n");*/}
+	| REFINE EQ QU NUMBER QU {holder.refineVal = (double)$4; /*printf(" delta - %f -\n",$4);*/}
 	| TSTEP EQ QU NUMBER QU {holder.tStep = (double)$4; /*printf(" tstep - %f -\n",$4);*/}
 	| THORIZON EQ QU NUMBER QU {holder.tGlobal = (double)$4; /*printf(" thorizon - %f -\n",$4);*/}
-	| DELTA EQ NUMBER {holder.deltaVal = (double)$3; /*printf(" delta - %f -\n",$3);*/}
+	| REFINE EQ NUMBER {holder.refineVal = (double)$3; /*printf(" delta - %f -\n",$3);*/}
 	| TSTEP EQ NUMBER {holder.tStep = (double)$3; /*printf(" tstep - %f -\n",$3);*/}
 	| THORIZON EQ NUMBER {holder.tGlobal = (double)$3; /*printf(" thorizon - %f -\n",$3);*/}
 	| FORB EQ QU XID IN SO NUMBER CO NUMBER SC QU {int curdim; curdim = (int)$4; 
@@ -155,8 +159,8 @@ sentence:
 	| FORBE EQ NUMBER {int numEqns; numEqns = (int)$3;
 							holder.forbEqns = numEqns;
 							/*printf(" forbidden - %d -\n",numEqns);*/}
-	| FORBM EQ { holder.ptr = (double*)malloc(holder.dimensions*holder.forbEqns*sizeof(double)); holder.index=0; printf("Starting forb matrix");} SO numbersequence SC { holder.forbMatrix = holder.ptr; printf(" Done parsing forbidden matrix \n");}
-	| FORBB EQ { holder.ptr = (double*)malloc(holder.forbEqns*sizeof(double)); holder.index=0; printf("Starting forb B");} SO numbersequence SC { holder.forbB = holder.ptr; printf(" Done parsing forbidden B \n");}
+	| FORBM EQ { holder.ptr = (double*)malloc(holder.dimensions*holder.forbEqns*sizeof(double)); holder.index=0; /*printf("Starting forb matrix")*/;} SO numbersequence SC { holder.forbMatrix = holder.ptr; /*printf(" Done parsing forbidden matrix \n");*/}
+	| FORBB EQ { holder.ptr = (double*)malloc(holder.forbEqns*sizeof(double)); holder.index=0; /*printf("Starting forb B");*/} SO numbersequence SC { holder.forbB = holder.ptr; /*printf(" Done parsing forbidden B \n");*/}
 	| ANNOTMODE EQ QU NUMBER QU { holder.curMode = (int) $4;}
 	| ANNOTMODE EQ NUMBER {holder.curMode = (int) $3;}
 	| ANNOTTYPE EQ QU LINEAR QU {holder.typeAnnot = 2; /*printf(" annot - linear \n");*/}
@@ -172,14 +176,14 @@ sentence:
 	| GAMMA EQ QU NUMBER QU {*(holder.gamma+(holder.curMode-1)) = (double)$4; /*printf(" Gamma - %f -\n",$4);*/}
 	| KCONST EQ NUMBER {*(holder.kConst+(holder.curMode-1)) = (double)$3; /*printf(" Kconst - %f -\n",$3);*/}
 	| GAMMA EQ NUMBER {*(holder.gamma+(holder.curMode-1)) = (double)$3; /*printf(" Gamma - %f -\n",$3);*/}
-	| VISU XID CO XID TO WORD {holder.val1 = (int)$2; holder.val2 = (int)$4; holder.visuFile = (char*) $6; printf(" visualize - %d and %d to %s \n",$2,$4,$6);}
-	| VISU ALL TO WORD {holder.val1 = -1; holder.val2 = -1; holder.visuFile = (char*) $4; printf(" visualize - -1 and -1 to %s \n",$4);}
+	| VISU XID CO XID TO WORD {holder.val1 = (int)$2; holder.val2 = (int)$4; holder.visuFile = (char*) $6; /*printf(" visualize - %d and %d to %s \n",$2,$4,$6);*/}
+	| VISU ALL TO WORD {holder.val1 = -1; holder.val2 = -1; holder.visuFile = (char*) $4; /*printf(" visualize - -1 and -1 to %s \n",$4);*/}
 	| VISU XID CO TIME TO WORD {holder.val1 = $2; holder.val2 = 0; holder.visuFile = (char*) $6; /*printf(" visualize - %d and time to %s \n",$2,$6);*/}
 	;
 
 numbersequence:
-	NUMBER {double val = (double)$1; *(holder.ptr+holder.index) = val; printf("The value is %f and index is %d \n",val,holder.index); holder.index++;}
-	| NUMBER {double val = (double)$1; *(holder.ptr+holder.index) = val; printf("The value is %f and index is %d \n",val,holder.index); holder.index++;} CO numbersequence
+	NUMBER {double val = (double)$1; *(holder.ptr+holder.index) = val; /*printf("The value is %f and index is %d \n",val,holder.index); */holder.index++;}
+	| NUMBER {double val = (double)$1; *(holder.ptr+holder.index) = val; /*printf("The value is %f and index is %d \n",val,holder.index);*/ holder.index++;} CO numbersequence
 	;
 
 %%

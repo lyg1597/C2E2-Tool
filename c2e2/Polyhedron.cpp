@@ -174,7 +174,7 @@ class Polyhedron* createExternalPolyhedron(class Point* Ptr1, class Point* Ptr2,
 					TempPoint = new Point(curDim);
 					TempPoint->setCoordinate(curDim-1,curValue);
 					for(int j = 0; j < curDim-1; j++){
-						TempPoint->setCoordinate(j,mulValue*LessPoint->getCoordiate(j));
+						TempPoint->setCoordinate(j,mulValue*LessPoint->getCoordinate(j));
 					}
 					unitpoly[index].push_back(TempPoint);
 				}
@@ -188,7 +188,7 @@ class Polyhedron* createExternalPolyhedron(class Point* Ptr1, class Point* Ptr2,
 		dist = 0;
 		TempPoint = unitpoly[dim-2].at(i);
 		for(int j = 0; j < dim-1; j++){
-			dist = TempPoint->getCoordiate(j)*TempPoint->getCoordiate(j);
+			dist = TempPoint->getCoordinate(j)*TempPoint->getCoordinate(j);
 			if(maxdist < dist)
 				maxdist = dist;
 		}
@@ -226,7 +226,7 @@ class Polyhedron* createExternalPolyhedron(class Point* Ptr1, class Point* Ptr2,
 		for(dimIndex=0;dimIndex<dim-1;dimIndex++){
 			TempVector = *(SetPtr+dimIndex);
 			TempVector2->setDirections(dim,TempVector->getDirections());
-			TempVector2->scalarProduct(TempPoint2->getCoordiate(dimIndex));
+			TempVector2->scalarProduct(TempPoint2->getCoordinate(dimIndex));
 			TempVector2->scalarProduct(epsilon);
 			TempVector2->addPoint(TempPoint,TempPoint);
 		}
@@ -241,7 +241,7 @@ class Polyhedron* createExternalPolyhedron(class Point* Ptr1, class Point* Ptr2,
 		for(dimIndex=0;dimIndex<dim-1;dimIndex++){
 			TempVector = *(SetPtr+dimIndex);
 			TempVector2->setDirections(dim,TempVector->getDirections());
-			TempVector2->scalarProduct(TempPoint2->getCoordiate(dimIndex));
+			TempVector2->scalarProduct(TempPoint2->getCoordinate(dimIndex));
 			TempVector2->scalarProduct(epsilon);
 			TempVector2->addPoint(TempPoint,TempPoint);
 		}
@@ -351,7 +351,7 @@ class Polyhedron* createNewPoly(class Point* Ptr1, class Point* Ptr2, int depth,
 						TempPoint = new Point(curDim);
 						TempPoint->setCoordinate(curDim-1,curValue);
 						for(int j = 0; j < curDim-1; j++){
-							TempPoint->setCoordinate(j,mulValue*LessPoint->getCoordiate(j));
+							TempPoint->setCoordinate(j,mulValue*LessPoint->getCoordinate(j));
 						}
 						unitpoly[index].push_back(TempPoint);
 					}
@@ -372,7 +372,7 @@ class Polyhedron* createNewPoly(class Point* Ptr1, class Point* Ptr2, int depth,
 					Dist = 0;
 					TempPoint = unitpoly[tempDim].at(i);
 					for(int j = 0; j <= tempDim; j++){
-						Dist += TempPoint->getCoordiate(j)*TempPoint->getCoordiate(j);
+						Dist += TempPoint->getCoordinate(j)*TempPoint->getCoordinate(j);
 					}
 					if(maxDist < Dist)
 						maxDist = Dist;

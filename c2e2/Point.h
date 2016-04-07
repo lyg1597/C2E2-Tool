@@ -8,6 +8,8 @@
 #ifndef POINT_H_
 #define POINT_H_
 
+using namespace std;
+
 class Point {
 private:
 	int dimension;
@@ -17,7 +19,11 @@ public:
 	Point();
 	Point(int dim);
 	Point(int dim, double* coArray);
-	virtual ~Point();
+	Point(const class Point &obj);
+	~Point();
+
+	Point & operator= (const class Point & other);
+	// bool operator==(Point& lhs);
 
 	void setDimension(int dim);
 	void setCoordinates(double* coArray);
@@ -25,7 +31,9 @@ public:
 
 	int getDimension();
 	double* getCoordinates();
-	double getCoordiate(int index);
+	double getCoordinate(int index);
+
+	void print();
 
 
 };

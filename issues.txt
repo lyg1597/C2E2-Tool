@@ -1,0 +1,6 @@
+GENERAL
+Don't understand the point of creating/compiling *.cpp files and generating all the separate output files that are used for simulating the system. It process could be significantly simplied without this extraneous stuff. 
+
+It may be better to have a C++ frontend that will be able to interact with the backend much easier because using Python requires all this baggage.
+
+Shouldn't it be possible to check the guards/invariants on the fly without having to run it over the output file later.

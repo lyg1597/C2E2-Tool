@@ -5,71 +5,56 @@
  *      Author: parasara
  */
 
-#include"Polyhedron.h"
-#include"Vector.h"
-#include"Point.h"
-#include"Simulator.h"
-#include"Annotation.h"
-#include"Checker.h"
+// #include "Polyhedron.h"
+#include "Vector.h"
+#include "Point.h"
+#include "Simulator.h"
+#include "Annotation.h"
+#include "Checker.h"
 //#include"y.tab.c"
-#include"InitialSet.h"
+#include "InitialSet.h"
 
-#include"Visualizer.h"
-#include"ReachTube.h"
-#include"LinearSet.h"
+#include "Visualizer.h"
+#include "ReachTube.h"
+#include "LinearSet.h"
+
+#include "RepPoint.h"
+#include "CoverStack.h"
 
 #include "simuverifScanner.h"
 #include "simuverifParser.h"
 #include "simuverif.tab.c"
 
-#include<iostream>
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <stdlib.h>
+#include <ctime>
+#include <cmath>
+#include <math.h>
+#include <time.h>
+#include <string.h>
 
-#include<fstream>
-#include<cstdlib>
-#include<stdlib.h>
-#include<ctime>
-#include<cmath>
-#include<math.h>
-
-#include<time.h>
-#include<string.h>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <iomanip>
 #include <Python.h>
-#include <iostream>
+#include <dlfcn.h>
+
+#include <stack>
+
+#include <ppl.hh>
 
 using namespace std;
 
-class InitialSet* compress(class InitialSet* guardSet);
-void printconstraints(char* String, class Polyhedron* reachSet,
-		class Polyhedron* unsafeSet);
-void printconstraints2(char* String, class Point* Pt1, class Point* Pt2,
-		class Polyhedron* unsafeSet, double epsilon);
-void printconstraints3(char* String, class Point* Pt1, class Point* Pt2,
-		class Point* UP1, class Point* UP2, double epsilon);
-void printconstraints4(char* String, class Polyhedron* reachset,
-		class Point* UP1, class Point* UP2, double epsilon);
-void printrealpaver(char* String, class Point* FirstPoint,
-		class Point* SecondPoint, class Polyhedron* unsafeSet, double epsilon);
-void printredlog(char* String, class Point* FirstPoint,
-		class Point* SecondPoint, class Polyhedron* unsafeSet, double epsilon);
-void Verify(int argc, char* argv[]);
-double getEpsilon(double delta, int example);
-int sanityCheck();
-int GsanityCheck(char* Ptr);
+int hybridSimulationCover(Simulator *simulator, Checker *checker, LinearSet *unsafeSet, LinearSet *initialSet, int dimensions, int mode, char *file);
+int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSet, int dimensions, Point *origin, int mode, char *file);
+vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, int dimensions);
 
 int main(int argc, char* argv[]) {
-
-
-	/* -- For redirecting file input from capdsimannot to
-	 * stdin for parsing, currently changes the operation to file input
-	// TODO Redirect the input stream from appropriate file.
- 	std::ifstream in("capdsimannot");
-    std::streambuf *cinbuf = std::cin.rdbuf(); //save old buf
-    std::cin.rdbuf(in.rdbuf()); //redirect std::cin to in.txt!
-    */
+	//clock_t begin = clock();
+	std::time_t start = std::time(NULL);
 
 	Parser parser;
 	parser.parse();
@@ -81,6 +66,7 @@ int main(int argc, char* argv[]) {
 	double timeStepValue;
 	double globalTimeValue;
 	int annotationTypeValue;
+	int simulation_flag;
 	char* annotationString = NULL;
 	char* betaString = NULL;
 	double kConstValue;
@@ -91,12 +77,13 @@ int main(int argc, char* argv[]) {
 	int dimensions;
 	int initMode;
 	int *linear_from_parser;
-	double delta;
+	double refine_control;
 
     double*lbv,*ubv;
     double* uslbv, *usubv;
     char simuName[50];
 
+    int refineunsafeflag = 0;
 
     dimValue = parser.scanner.dimensions;
     strcpy(simuName,parser.scanner.simulator);
@@ -112,22 +99,16 @@ int main(int argc, char* argv[]) {
     linear_from_parser = parser.scanner.islinear;
     initM = parser.scanner.initMatrix; initB = parser.scanner.initB;
     forbM = parser.scanner.forbMatrix; forbB = parser.scanner.forbB;
+    simulation_flag = parser.scanner.simuval;
     int initEquations, forbEquations;
     initEquations = parser.scanner.initEqns; forbEquations = parser.scanner.forbEqns;
-    deltaValue = parser.scanner.deltaVal; timeStepValue = parser.scanner.tStep; globalTimeValue = parser.scanner.tGlobal;
+    refine_control = parser.scanner.refineVal; timeStepValue = parser.scanner.tStep; globalTimeValue = parser.scanner.tGlobal;
     annotationTypeValue = parser.scanner.typeAnnot;
     KConstArray = parser.scanner.kConst; gammaValueArray = parser.scanner.gamma;
     kConstValue = 1; gammaValue = 0;
-    //kConstValue = parser.scanner.kConst; gammaValue = parser.scanner.gamma;
-
-    delta = deltaValue;
+    //kConstValue = parser.scanner.kConst; gammaValue = parser.scanner.gamma;   
 
     visu1 = parser.scanner.val1; visu2 = parser.scanner.val2; strcpy(visuFileName,parser.scanner.visuFile);
-
-
-    /*
-     * Case where initial mode is not specified
-     */
 
     if (parser.scanner.initMode == -1){
     	initMode = 1;
@@ -136,18 +117,7 @@ int main(int argc, char* argv[]) {
         initMode = parser.scanner.initMode;
     }
 
-
-    /*
-     * Printing parameters to screen after parsing the input and before verification procedure;
-     */
-
-    cout<< "Simulator name - "<<simuName << "\n";
-    cout << "absError "<< absoluteError << " relError " << relativeError << "\n";
-    cout << "delta " << deltaValue <<"\n";
-    cout << "time step " << timeStepValue << " GT " << globalTimeValue << " \n";
-    cout << " K " << kConstValue << " gamma " << gammaValue << " visu1 " << visu1 << " visu2 " << visu2 << " File name-"<< visuFileName << "\n";
-    cout << "is linear"<<linear_from_parser[0]<<endl;
-
+    //cout<<"The parser value of simu is "<<simulation_flag<<endl;
 
     // New object for simulator
     class Simulator* simVerify = new Simulator();
@@ -165,19 +135,12 @@ int main(int argc, char* argv[]) {
 
     // Visualizer for generating the reachset text files
     // Might be removed - not used anymore.
-    class Visualizer* simuVisualize = new Visualizer();
+    /*class Visualizer* simuVisualize = new Visualizer();
     simuVisualize->setDim1(visu1); simuVisualize->setDim2(visu2);
-
-    /*
-     * Opening the visu-filename and checking if it is editable
-     */
-    ofstream tempcleanvisu;
-    tempcleanvisu.open(visuFileName);
-    tempcleanvisu.close();
-
+*/
 	int numberRefinements = 0;
+	int refinementcounter = 0;
 
-	// Initial and Unsafe set for verification
 	class LinearSet* initialSet = new LinearSet();
 	initialSet->setDimensions(dimensions);
 	initialSet->setNumEqns(initEquations);
@@ -189,419 +152,370 @@ int main(int argc, char* argv[]) {
 	unsafeSet->setNumEqns(forbEquations);
 	unsafeSet->setMatrix(forbM);
 	unsafeSet->setB(forbB);
-
 	double* initMatrix, *bRow;
-
-	class Point* upperBoundPoint = new Point(dimensions);
-	class Point* lowerBoundPoint = new Point(dimensions);
 
 	int dimIndex;
 
-	for(dimIndex = 0; dimIndex < dimensions; dimIndex++){
-		upperBoundPoint->setCoordinate(dimIndex,initialSet->getMax(dimIndex));
-		lowerBoundPoint->setCoordinate(dimIndex,initialSet->getMin(dimIndex));
+	double deltaArray[dimensions];
+	double initdeltaArray[dimensions];
+	for (dimIndex =0; dimIndex <dimensions; dimIndex++){
+		deltaArray[dimIndex] = (initialSet->getMax(dimIndex)-initialSet->getMin(dimIndex))/2;
+		initdeltaArray[dimIndex] = deltaArray[dimIndex];
+		//cout<< "deltaArray at " <<dimIndex<< " is " << deltaArray[dimIndex] <<endl; 
 	}
 
+	class CoverStack* ItrStack;
+	//class RepPoint* reptemp;
 
-	// Generating the partitioning from the initial set - would probably require adding the glpk here
-	double minDelta = 1000000;
-	double vmax,vmin;
-
-	for(dimIndex=0;dimIndex < dimensions; dimIndex++){
-		vmax = upperBoundPoint->getCoordiate(dimIndex);
-		vmin = lowerBoundPoint->getCoordiate(dimIndex);
-			if(minDelta > 0.6*(vmax - vmin) && vmin != vmax){
-				minDelta = 0.6*(vmax - vmin);
-			}
-	}
-
-	if(delta < 0 && minDelta > 0.00005){
-		delta = minDelta;
-	}
-
-	class InitialSet* deltaCover;
-
-	// Computing the delta cover of the initial set.
-	deltaCover = initialSet->getCover(delta);
-	deltaCover->setDelta(delta);
-	deltaCover->setMode(initMode);
-
-	// delta for initial set
-	double deltaForInit = delta;
-	double initialDelta = delta;
-
-	cout << " Number of sample points " << deltaCover->getLength() << "\n";
-	cout << "--- Initializing iterator --- \n";
-	class InitialSet* Iterator;
-	// Iterator = I;
-	Iterator = deltaCover;
-
-	double refDelta;
+	ItrStack = initialSet->getCoverStack(deltaArray,initMode,0);
+	
 	class Point* simulationPoint;
-	int numberSamplePoints;
-	int modeSimulated;
-	numberSamplePoints = 0;
-
-	class InitialSet* NextSet;
-	NextSet = NULL;
+	
 	class ReachTube* nextReach = new ReachTube();
 	nextReach->setDimensions(dimensions);
 
-	std::vector<class ReachTube*> safeTubes;
-	std::vector<class ReachTube*> unknownTubes;
-	std::vector<class ReachTube*> unsafeTubes;
-
-	class ReachTube* guardSet = new ReachTube();
-	guardSet->setDimensions(dimensions);
-
+	std::vector<class ReachTube*> resultTube;
+	std::vector<class ReachTube*> TraceTube;
+	class ReachTube* guardSet;
 
 	/* Initialized, now just add this to the Iterator when it becomes NULL */
-
-	int continueIterator = 1;
+	int numberSamplePoints =0;
+	int modeSimulated;
+	int traceSafeFlag;
 	int numberOfPointsIterator = 0;
 	int numRefinedPoints = 0;
 	int numUnsafePoints = 0;
 	FILE *fid = NULL;
-	char *filename = "ComputeLDF.py"; //python code filename
-	char input_buff[32];
+	const char *filename = "ComputeLDF.py"; //python code filename
+	char input_buff[128];
 	char input_buff2[32];
 	char input_buff3[32];
 	char input_buff4[32];
-		  //double x = 0.0;
-	cout<<"number of unsafe equation is "<<forbEquations<<endl;
-	cout<<"the first value in unsafe matrix is "<<forbM[0]<<endl;
-	cout<<"the first value in unsafe B is "<<forbB[0]<<endl;
-	cout<<"length of unsafe matrix should be "<<dimensions*forbEquations<<endl;
 
 	Py_Initialize(); //starting Python environment
-	while(Iterator!= NULL){
 
-		// Delayed strategy. Collect all the refined states, check whether they are
-		// part of the initial set, or the collapsed set.
+	// read refine order file here
+	FILE* tRFile;
+	tRFile = fopen("refineorder.txt","r");
+	vector<int> refineorder;
+	int bufferReader;
+	if(tRFile == NULL){
+		cout<<"refineorder file does not exist, will do refinement by default method"<<endl;
+		refine_control = 0;
+	}
+	else{
+		cout<<"refineorder file detected, scan refine order file"<<endl;
+		while( fscanf(tRFile,"%d",&bufferReader) != EOF ){
+			if(bufferReader<=dimensions){
+				refineorder.push_back(bufferReader);
+			}
+		}
+	}
 
+	//Check which index is contained in unsafe set
+	int refineflag [dimensions];
+	for (int i=0; i<dimensions; i++){
+		refineflag[i] = 0;
+	}
+
+	int forbMsize = forbEquations*dimensions;
+	for(int i=0; i<forbMsize; i++){
+		if(forbM[i]!=0.0 || forbM[i]!=0.0){
+			//cout<<"forb matrix at "<<i<< " is not 0"<<endl;
+			refineflag[i%dimensions] = 1;
+		}
+	}
+
+	std::vector<int> index_in_unsafe_set;
+	for(int i=0; i<dimensions; i++){
+		if(refineflag[i] == 1){
+			index_in_unsafe_set.push_back(i);
+		}
+	}
+	int indexitr = 0;
+
+	ofstream tmp;
+	tmp.open(visuFileName);
+	tmp << "hybrid simulation" << endl;
+	tmp.close();
+
+	//SUKET CODE
+	int isSafe = hybridSimulationCover(simVerify, checkVerify, unsafeSet, initialSet, dimensions, initMode, visuFileName);
+
+	if(simulation_flag || isSafe==-1){
+		ofstream resultStream;
+		resultStream.open("Result.dat");
+		resultStream << isSafe << endl;
+		resultStream.close();
+
+		exit(1);
+	}
+
+	tmp.open(visuFileName);
+	tmp << "reachtube simulation" << endl;
+	tmp.close();
+
+	tmp.open(visuFileName);
+	tmp.close();
+
+	// typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
+	// typedef bool (*inv_fn)(int, double *, double *);
+
+	typedef vector<pair<NNC_Polyhedron, int> > (*guard_fn)(int, double *, double *);
+	typedef bool (*inv_fn)(int, double *, double *);
+
+	guard_fn guards;
+	inv_fn invs;
+
+    void *lib = dlopen("./libbloatedsim.so", RTLD_LAZY);
+    if(!lib){
+    	cerr << "Cannot open library: " << dlerror() << '\n';
+    }
+
+    guards = (guard_fn) dlsym (lib, "hitsGuard");
+    invs = (inv_fn) dlsym(lib, "invariantSatisfied"); 
+
+
+    cout << "Stack size: " << ItrStack->size() << endl;
+	// cout<<"|     |"<<endl;
+	// cout<<"|     |"<<endl;
+	// for(int i=0; i<ItrStack->size();i++)
+	// 	cout<<"|=====|"<<endl;
+	// cout<<"-------"<<endl;
+
+    int refine_threshold = 10;
+	// bool should_refine;
+	RepPoint* curItrRepPoint;
+	while(!ItrStack->empty()){
 		numberSamplePoints++;
-		numberOfPointsIterator++;
-		cout  << "\n Sample point " << numberSamplePoints << " being checked \n";
-		class InitialSet* stateTrace = new InitialSet();
-		ifstream traceReadFile;
-		double bufferReader;
-		int traceSafeFlag;
-		simulationPoint = Iterator->getState();
-		refDelta = Iterator->getDelta();
-		modeSimulated = Iterator->getMode();
+		//cout  << "\n Sample point " << numberSamplePoints << " being checked \n";
+		
+		curItrRepPoint = ItrStack->top();
+		ItrStack->pop();
 
+		if(curItrRepPoint->getRefineTime()>refine_threshold){
+			ofstream resultStream;
+			resultStream.open("Result.dat");
+			resultStream << "0" << endl;
+			resultStream.close();
+			exit(-1);
+		}
+
+		cout<<"========================POP 1 REP POINT, VERFICATION PROCESS START=================================="<<endl;
+
+		// cout<<"|     |"<<endl;
+		// cout<<"|     |"<<endl;
+		// for(int i=0; i<ItrStack->size();i++)
+		// 	cout<<"|=====|"<<endl;
+		// cout<<"-------"<<endl;
+		curItrRepPoint->print();
+	    cout << "Current stack size: " << ItrStack->size() << endl;
+		
+		simulationPoint = curItrRepPoint->getState();
+		modeSimulated = curItrRepPoint->getMode();
+		double* refDeltaArray = curItrRepPoint->getDeltaArray();
+
+		//Step1. Simulation
 		simVerify->Simulate(simulationPoint,modeSimulated);
 
-		/*
-		 * Here is where the simulation engine is called and the guard intersection
-		 * is given to guardSet.dat file. Now, the C2E2 will parse the guardSet.dat file
-		 * and get all the boxes and organize them into a set of boxes with delta as the
-		 * diameter of each of them. After that, initialize the iterator with the new
-		 * set collected.
-		 *
-		 */
-
-		 //sleep(2);
-		// Creates a reachTube from the simulation - sequence of rectangles
+		//Read simulation result
 		class ReachTube* simulationTube = new ReachTube();
-
 		simulationTube->setDimensions(dimensions);
 		simulationTube->setMode(modeSimulated);
-		simulationTube->parseInvariantTube("SimuOutput");
+		simulationTube->parseInvariantTube("SimuOutput", 0);
 
-
+		//Step 2. Non-linear bloating
 		if (linear_from_parser[modeSimulated-1]==0){
-			cout<<"non-linear"<<endl;
+			//cout<<"non-linear model"<<endl;
 			double CT_step = KConstArray[modeSimulated-1];
-			//double Islinear = gammaValueArray[modeSimulated-1];
-			
 			int modeforpython = simulationTube->getMode();
-			/*
-			char pythoncalling[100];
-			sprintf(pythoncalling,"python ComputeLDF.py %.6f %.6f %d",refDelta,CT_step,modeforpython );	
-			system(pythoncalling); */
-
-			
-
-		    sprintf(input_buff,"delta = %f", refDelta);
+		    strcpy (input_buff, "delta = [");
+  			for (int i = 0; i< dimensions; i++){
+    			char temp [8];
+    			sprintf(temp,"%f", refDeltaArray[i]);
+    			strcat(input_buff,temp);
+    			if (i<dimensions-1)
+        			strcat(input_buff,",");
+  			}
+  			strcat(input_buff,"]");
 		    PyRun_SimpleString(input_buff);
 		    sprintf(input_buff2,"CT_step = int(%f)", CT_step);
 		    PyRun_SimpleString(input_buff2);
 		    sprintf(input_buff3,"state = '%d'", modeforpython);
 		    PyRun_SimpleString(input_buff3);
-		    sprintf(input_buff4,"Is_linear = int(%f)",linear_from_parser[modeSimulated-1]);
+		    sprintf(input_buff4,"Is_linear = int(%d)",linear_from_parser[modeSimulated-1]);
 		    PyRun_SimpleString(input_buff4);
-		      // opening the file containing python code,
-		      // NOTE IT MUST BE OPENED AND CLOSED BEFORE/AFTER EACH PYTHON RUN QUERY
 		    fid = fopen(filename, "r");
-		      //running the Python code
 		    PyRun_SimpleFile(fid, filename);
 		    fclose(fid);
 		}
-
-		
+		//Linear Bloating
 		else{
-			cout<<"linear"<<endl;
+			//cout<<"linear model"<<endl;
 		    class ReachTube* bloatedTube;
-
-			// Obtaining the bloating of the tube
-			bloatedTube = simulationTube->bloatReachTube(refDelta,annotVerify);
-			// Printing the bloated tube;
+			bloatedTube = simulationTube->bloatReachTube(refDeltaArray,annotVerify);
 			bloatedTube->printReachTube("reachtube.dat",0);
+			delete bloatedTube;
 		}
-
-	    //sleep(1);
-		cout << "Started verification process \n";
-		/*
-		 * Checks for guards and invariants in the bloated rectangles obtained
-		 * from simulation and the bloated tube
-		 */
-		system("./invariants");
-		system("./guards");
-		//sleep(3);
-
-		// Parsing the invariants from the invariant file
-		class ReachTube* invariantTube = new ReachTube();
-		invariantTube->setDimensions(dimensions);
-		invariantTube->setMode(modeSimulated);
-		invariantTube->parseInvariantTube("invariant.dat");
-
-		/* Checks that the given trace is safe w.r.t the boxes given as unsafe set */
-		traceSafeFlag = checkVerify->check(invariantTube, unsafeSet);
-
-		//build my own checker for the output
-		cout<<"current simulation point "<<numberSamplePoints<<endl;
-		//cout<<"max node trail"<<invariantTube->getMaxCoordinate(1,modeSimulated)<<endl;
-		//vector<double> Maxvalue;
-		//Maxvalue = invariantTube->MaxCoordinate(1);
-		//vector<double> Minvalue;
-		//Minvalue = invariantTube->MaxCoordinate(1);
-		int checkresult;
-		checkresult = invariantTube->checkunsafe(forbM, forbB,forbEquations);
-		cout<<"my result is "<< checkresult << " glpk result is "<< traceSafeFlag<< endl;
-
-		//cout<<"number of unsafe equation is "<<forbEquations<<endl;
-		//cout<<"the first value in unsafe matrix is "<<forbM[0]<<endl;
-		//cout<<"the first value in unsafe B is "<<forbB[0]<<endl;
-		//cout<<"length of unsafe matrix should be "<<dimensions*forbEquations<<endl;
-		int unsafeI=0;
-		int lenofunsafeM = dimensions*forbEquations;
-		 
+		
+		delete simulationTube;
 
 
+		//Step 3. Check invariant and guard
+		simulationTube = new ReachTube();
+		simulationTube->setDimensions(dimensions);
+		simulationTube->setMode(modeSimulated);
+		simulationTube->parseInvariantTube("reachtube.dat", 1);
 
+		// should_refine = false;
+
+		guardSet = new ReachTube();
+		guardSet->setDimensions(dimensions);
+
+		int size = simulationTube->getSize();
+        double *ptLower, *ptUpper;
+        vector< pair<NNC_Polyhedron, int> > guards_hit;
+        bool hitGuard = false;
+        for(int i=0; i<size; i++){
+        		cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+        		cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
+                ptLower = simulationTube->getLowerBound(i)->getCoordinates();
+                ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
+                
+                if(!invs(modeSimulated, ptLower, ptUpper)){
+                	cout << "INVARIANT NOT SATISFIED: " << i << endl << endl;
+                    simulationTube->clear(i);
+                    break;
+                }
+
+                guards_hit = guards(modeSimulated, ptLower, ptUpper);
+                if(!guards_hit.empty()){
+         //        	if(i==0){
+         //        		// should_refine = true;
+    					// continue;
+         //        	}
+                	cout << "GUARD SATISFIED: " << i << endl;
+                    guardSet->addGuards(guards_hit);
+                    hitGuard = true;
+                }
+                else if(hitGuard==true){
+                    simulationTube->clear(i);
+                    break;
+                }
+                cout << endl;
+        }
+
+		guardSet->printGuards();
+
+		// system("./invariants");
+		// system("./guards");
+
+		/*cout<<"Inv && guard Done! Stop running to check file"<<endl;
+		sleep(5);*/
+
+		//Step4. Check unsafe 
+		// class ReachTube* invariantTube = new ReachTube();
+		// invariantTube->setDimensions(dimensions);
+		// invariantTube->setMode(modeSimulated);
+		// invariantTube->parseInvariantTube("invariant.dat");
+		traceSafeFlag = checkVerify->check(simulationTube, unsafeSet);
+
+		// if(traceSafeFlag == 0 || should_refine){
 		if(traceSafeFlag == 0){
-
-
-			numRefinedPoints++;
-			cout << " Tube unknown! \n";
-			unknownTubes.push_back(invariantTube);
-
-
-		}
-		if(traceSafeFlag == 1){
-
-			safeTubes.push_back(invariantTube);
-			invariantTube->printReachTube(visuFileName,1);
-
-			cout << " Tube verified to be safe \n";
-
-			// Collects all the points as ReachTube
-			guardSet->parseGuardsTube("guard.dat");
-
-
-
-		}
-		if(traceSafeFlag == -1){
-
-
-			numUnsafePoints++;
-			cout << "Tube unsafe \n";
-			unsafeTubes.push_back(invariantTube);
-
+			//Tube unknow, trace to the origin and refine immedately 
+			cout << " Tube unknown! Start to Refine\n";
+			TraceTube.clear();
+			int i;
+			double* originDeltaArray;
+			if (curItrRepPoint->getParentState()!=NULL)
+				originDeltaArray = curItrRepPoint->getParentDeltaArray();
+			else
+				originDeltaArray = curItrRepPoint->getDeltaArray();
 			
-		}
-
-		Iterator = Iterator->getNext();
-		//Iterator = NULL;
-
-		if(Iterator == NULL){
-
-			int collectNextGuards=0;
-			int refineInitialSet=0;
-			int printUnsafeSet=0;
-
-			if(numRefinedPoints == 0 && numUnsafePoints == 0){
-				collectNextGuards = 1;
-			}
-			else if(numRefinedPoints != 0 && numUnsafePoints == 0){
-				refineInitialSet = 1;
-			}
-			else if(numUnsafePoints != 0){
-				printUnsafeSet = 1;
-			}
-
-			if(collectNextGuards == 1){
-
-				// Logic for printing all the safe invariant tubes and
-				// collect all the next states
-				//cout<<"start to collect next Guard"<<endl;
-				class InitialSet* nextSet;
-				double nowDelta = refDelta;
-				int nextLen;
-				int error;
-				int exceptPoints = 40*numberOfPointsIterator;
-				while(1){
-					nextSet = guardSet->getNextSet(nowDelta, timeStepValue,exceptPoints);
-					if(nextSet != NULL){
-						nextLen = nextSet->getLength();
-						error = nextSet->getMode();
-						if(nextLen <= 20*numberOfPointsIterator && error!=-999){
-							break;
-						}
-						else{
-							nowDelta = 1.5*nowDelta;
+			if (refine_control==0){
+				cout<<"using default method refinement"<<endl;
+				if (refineunsafeflag<4)
+				{
+					//refine the dimension in unsafe equation 2 times
+					ItrStack->refine(curItrRepPoint,index_in_unsafe_set.at(indexitr%index_in_unsafe_set.size()));
+					indexitr++;
+					refineunsafeflag++;
+				}
+				else{
+					double max = 0;
+					int refineidx=0;
+					for(i=0; i<dimensions;i++){
+						if (originDeltaArray[i]>max){
+							max = originDeltaArray[i];
+							refineidx = i;
 						}
 					}
-					if(nextSet == NULL){
-						nextLen = 0;
-						break;
-					}
+					ItrStack->refine(curItrRepPoint,refineidx);
+					refineunsafeflag = 0;
 				}
-				//nextSet->print();
-				Iterator = nextSet;
-				cout << "Number of next states is " << nextLen << endl;
-
-				class ReachTube* safeInvTube = NULL;
-				int lengthSafeTubes = 0;
-				/*for(lengthSafeTubes=0;lengthSafeTubes<safeTubes.size();lengthSafeTubes++){
-					safeInvTube = safeTubes.at(lengthSafeTubes);
-					safeInvTube->printReachTube(visuFileName,1);
-				}*/
-
-				safeTubes.clear();
-				unsafeTubes.clear();
-				unknownTubes.clear();
-
-				guardSet = new ReachTube();
-				guardSet->setDimensions(dimensions);
-				numberOfPointsIterator = 0;
-				numRefinedPoints = 0;
-				numUnsafePoints = 0;
-
 			}
-
-
-			// Iterator = nextSet;
-			// if(nextSet != NULL){
-			//	 cout << " The next set size is " << nextSet->getLength() << " OK \n";
-			// }
-
-			if(refineInitialSet == 1){
-
-				if(refDelta < 0.00005) {
-
-					class ReachTube* unknownInvTube = NULL;
-					int lengthUnknownTubes = 0;
-					for(lengthUnknownTubes=0;lengthUnknownTubes<safeTubes.size();lengthUnknownTubes++){
-						unknownInvTube = unknownTubes.at(lengthUnknownTubes);
-						unknownInvTube->printReachTube(visuFileName,1);
-					}
-
-					ofstream resultStream;
-					resultStream.open("Result.dat");
-					resultStream << "-2" << endl;
-					resultStream << numberSamplePoints << endl;
-					resultStream << numberRefinements << endl;
-					resultStream.close();
-					cout << " Too robustly unsafe, please check design \n";
-					cout << "  -- Total points checked " << numberSamplePoints << endl;
-					cout << " -- Number of refinements " << numberRefinements << endl;
-					exit(-2);
-					cout << " Too robustly unsafe, please check design \n";
-				}
-
-				cout << " \n Tube unsafe, Need to refine \n New delta = " << refDelta/2.0 << "\n";
-				numberRefinements++;
-
-				numRefinedPoints=0;
-				numUnsafePoints=0;
-				numberOfPointsIterator = 0;
-
-				class InitialSet* refinedSet;
-				deltaForInit = deltaForInit*0.5;
-				refinedSet = initialSet->getCover(deltaForInit);
-				refinedSet->setMode(initMode);
-				refinedSet->setDelta(deltaForInit);
-
-				Iterator = refinedSet;
-
-
+			else{
+				cout<<"using method written in file for refinement"<<endl;
+				int refineidx = curItrRepPoint->getRefineTime();
+				ItrStack->refine(curItrRepPoint,refineidx%dimensions);
 			}
-
-			if(printUnsafeSet == 1){
-
-				class ReachTube* unsafeInvTube = NULL;
-				int lengthUnsafeTubes = 0;
-				//for(lengthUnsafeTubes=0;lengthUnsafeTubes<unsafeTubes.size();lengthUnsafeTubes++){
-					unsafeInvTube = unsafeTubes.at(0);
-					unsafeInvTube->printReachTube(visuFileName,2);
-				//}
-
-				cout << "  -- Total points checked " << numberSamplePoints << endl;
-				cout << " -- Number of refinements " << numberRefinements << endl;
-
-				cout << " The system is unsafe \n";
-				ofstream resultStream;
-				resultStream.open("Result.dat");
-				resultStream << "-1" << endl;
-				resultStream << numberSamplePoints << endl;
-				resultStream << numberRefinements << endl;
-				resultStream.close();
-
-				exit(-1);
-
-
-			}
-
-
-			//cout << " this is the next set? \n";
-
-			//cout << "The length of the next thing is " << nextSet->getLength() << " OK \n";
-			//nextSet->print();
-			//exit(1);
-
-			// First deal with the guard sets
-			// Assert the next set of states with the modes to be visited
-
-
-			// Logic that prints all the reachTubes at the end of each round
-
-			/*
-			if(NextSet != NULL){
-
-//				cout << " next mode is " << NextSet->getMode() << endl;
-//				cout << " Annotation details " << annotVerify->getKVal(NextSet->getMode()) << " and gamma " << annotVerify->getGammaVal(NextSet->getMode()) << endl;
-
-				Iterator = NextSet;
-				NextSet = NULL;
-
-			}
-			*/
+			delete curItrRepPoint;
 		}
+		else if(traceSafeFlag == 1){
+			cout<< "Tube Safe! Check if there is transition for next mode\n";
+			TraceTube.push_back(simulationTube);
+			// guardSet->parseGuardsTube("guard.dat");
 
+			int ifnextSet = guardSet->getNextSetStack(ItrStack,curItrRepPoint);
 
+			if (!ifnextSet){
+				cout << "No more transitions" << endl;
+				resultTube.reserve(resultTube.size()+TraceTube.size());
+				resultTube.insert(resultTube.end(),TraceTube.begin(),TraceTube.end());
+				TraceTube.clear();
+			}
+			delete curItrRepPoint;
+			delete guardSet;
+			// guardSet = new ReachTube();
+			// guardSet->setDimensions(dimensions);
+
+		}
+		else if(traceSafeFlag == -1){
+			cout<<"Tube Unsafe, Break"<<endl;
+			TraceTube.push_back(simulationTube);
+			resultTube.reserve(resultTube.size()+TraceTube.size());
+			resultTube.insert(resultTube.end(),TraceTube.begin(),TraceTube.end());
+			TraceTube.clear();
+			delete curItrRepPoint;
+			class ReachTube* InvTube = NULL;
+			int ResultTubeLength = 0;
+			//cout<<resultTube.size()<<endl;
+			for(ResultTubeLength=0;ResultTubeLength<resultTube.size();ResultTubeLength++){
+				InvTube = resultTube.at(ResultTubeLength);
+				InvTube->printReachTube(visuFileName,1);
+				delete InvTube;
+			}
+
+			cout << " The system is unsafe \n";
+			ofstream resultStream;
+			resultStream.open("Result.dat");
+			resultStream << "-1" << endl;
+			resultStream.close();
+
+			std::cout << "Execution time: "<< std::difftime(std::time(NULL), start) << " s.\n";
+			exit(-1);
+		}
+		
 	}
 
+	class ReachTube* InvTube = NULL;
+	int ResultTubeLength = 0;
+	for(ResultTubeLength=0;ResultTubeLength<resultTube.size();ResultTubeLength++){
+		InvTube = resultTube.at(ResultTubeLength);
+		InvTube->printReachTube(visuFileName,1);
+		delete InvTube;
+	}
 
-	class InitialSet* counterNext = NULL;
-	class Point* tempNextState = NULL;
-
-
-	cout << " ---- Guard Sets being done ----  " << endl;
-
-	cout << "  -- Total points checked " << numberSamplePoints << endl;
-	cout << " -- Number of refinements " << numberRefinements << endl;
 	cout << "System is safe" << endl;
 
 
@@ -613,525 +527,163 @@ int main(int argc, char* argv[]) {
 	resultStream.close();
 	Py_Finalize(); //finalize Python session
 
-	exit(1);
+	std::cout << "Execution time: "<< std::difftime(std::time(NULL), start) << " s.\n";
 
+	exit(1);
 }
 
-class InitialSet* compress(class InitialSet* guardSet){
-
-	if(guardSet == NULL)
-		return NULL;
-
-	int dimensions;
-	double currDelta;
-	double maxDelta;
-	double incrementDelta;
-	int curMode, nextMode;
-
-	class InitialSet* NewCompressed = NULL;
-	class InitialSet* tempCompressed;
-
-	class Point* currState = guardSet->getState();
-	if(currState != NULL){
-		dimensions = currState->getDimension();
-		dimensions = dimensions - 1;
+int hybridSimulationCover(Simulator *simulator, Checker *checker, LinearSet *unsafeSet, LinearSet *initialSet, int dimensions, int mode, char *file){
+	cout << "HYBRID SIMULATION" << endl;
+	Point *ptLower = new Point(dimensions+1);
+	Point *ptUpper = new Point(dimensions+1);
+	for(int i=0; i<dimensions; i++){
+		ptLower->setCoordinate(i+1, initialSet->getMin(i));
+		ptUpper->setCoordinate(i+1, initialSet->getMax(i));
 	}
 
-	class InitialSet* currGuardSetPointer;
-	class Point* nextState;
-	currGuardSetPointer = guardSet;
-	while(currGuardSetPointer != NULL){
+	int isSafe = 1;
+	vector<Point *> pts = getRepresentativeCover(ptLower, ptUpper, 3, dimensions);
+	for(int i=0; i<pts.size(); i++){
+		cout << "Hybrid Simulation " << i+1 << " -> ";
+		pts[i]->print();
+		isSafe = hybridSimulation(simulator, checker, unsafeSet, dimensions, pts[i], mode, file);
+		if(isSafe==-1){
+			cout << "Hybrid Simulation " << i+1 << " unsafe.\n" << endl;
+			break;
+		}
+		else if(isSafe==1){
+			cout << "Hybrid Simulation " << i+1 << " safe.\n" << endl;
+		}
+	}
+	
+	return isSafe;
 
-		tempCompressed = new InitialSet();
-		currState = currGuardSetPointer->getState();
-		currDelta = currGuardSetPointer->getDelta();
-		curMode = currGuardSetPointer->getMode();
-		maxDelta = 0;
+ 	ofstream resultStream;
+	resultStream.open("Result.dat");
+	resultStream << isSafe << endl;
+	resultStream.close();
 
-		while(currGuardSetPointer != NULL && currState != NULL && maxDelta < currDelta/3.0){
-			if(currGuardSetPointer->getNext() != NULL){
-				nextState = currGuardSetPointer->getNext()->getState();
-				nextMode = currGuardSetPointer->getNext()->getMode();
+	exit(1);
+}
+
+
+//Returns 1 if safe, -1 if unsafe
+int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSet, int dimensions, Point *origin, int mode, char *file){
+	int isSafe = 1;
+	int traceSafeFlag;
+
+	typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
+	typedef bool (*inv_fn)(int, double *, double *);
+	
+	guard_fn guards;
+	inv_fn invs;
+
+    void *lib = dlopen("./libhybridsim.so", RTLD_LAZY);
+    if(!lib){
+    	cerr << "Cannot open library: " << dlerror() << '\n';
+    }
+
+    guards = (guard_fn) dlsym (lib, "hitsGuard");
+    invs = (inv_fn) dlsym(lib, "invariantSatisfied"); 
+   
+    while(true){
+    	cout << "Simulating mode " << mode << " from ";
+    	origin->print();
+
+		simulator->Simulate(origin, mode);
+
+		// cout << "SIMULATED" << endl;
+
+		ReachTube* simulationTube = new ReachTube();
+		simulationTube->setDimensions(dimensions);
+		simulationTube->setMode(mode);
+		simulationTube->parseInvariantTube("SimuOutput", 0);
+
+		int size = simulationTube->getSize();
+		double *ptLower, *ptUpper;
+		vector< pair<int, double*> > guards_hit;
+		for(int i=0; i<size; i++){
+			ptLower = simulationTube->getLowerBound(i)->getCoordinates();
+			ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
+			guards_hit = guards(mode, ptLower, ptUpper);
+			if(!guards_hit.empty()){
+				pair<int, double *> guard_taken = guards_hit[rand() % guards_hit.size()];
+				mode = guard_taken.first;
+				origin = new Point(dimensions+1, guard_taken.second);
+				simulationTube->clear(i+1);
+				break;
 			}
-			incrementDelta = 0;
-			if(currState != NULL && nextState != NULL && curMode == nextMode){
-				for(int h = 1; h < dimensions + 1; h++){
-					double tempDiff = abs(currState->getCoordiate(h)-nextState->getCoordiate(h));
-					incrementDelta = incrementDelta > tempDiff ? incrementDelta : tempDiff;
+			if(!invs(mode, ptLower, ptUpper)){
+				simulationTube->clear(i);
+				break;
+			}
+		}
+
+		/* Checks that the given trace is safe w.r.t the boxes given as unsafe set */
+		traceSafeFlag = checker->checkHybridSimulation(simulationTube, unsafeSet);
+		if(traceSafeFlag==1){
+	       	simulationTube->printReachTube(file,1);
+		}
+		else if(traceSafeFlag==-1){
+	       	simulationTube->printReachTube(file,2);
+	  		isSafe = -1;
+			break;
+		}
+		else{
+			cout << "<SUKET ERROR> UNKNOWN TUBE IN HYBRID SIMULATION";
+		}
+
+		if(guards_hit.empty()){
+			break;
+		}
+    }
+	dlclose ( lib );
+	return isSafe;
+}
+
+vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, int dimensions){
+	int thick_dims = 0;
+	bool has_width;
+	for(int i=1; i<=dimensions; i++){
+		has_width = ptLower->getCoordinate(i)!=ptUpper->getCoordinate(i);
+		if(has_width){
+			thick_dims++;
+		}
+	}
+	
+	int num_pts = (int) pow(n, thick_dims);
+	vector<Point *> pts(num_pts);
+	for(int i=0; i<num_pts; i++){
+		pts[i] = new Point(dimensions+1);
+	}
+	
+	int block_size;
+	double val, start, step_size;
+	int num_thick_dim = 0;
+	for(int i=1; i<=dimensions; i++){
+		has_width = ptLower->getCoordinate(i)!=ptUpper->getCoordinate(i);
+		if(!has_width){
+			val = ptLower->getCoordinate(i);
+			for(int j=0; j<num_pts; j++){
+				pts[j]->setCoordinate(i, val);
+			}
+		}
+		else{
+			start = ptLower->getCoordinate(i);
+			step_size = (ptUpper->getCoordinate(i)-ptLower->getCoordinate(i))/(n-1);
+			// block_size = (int) pow(n, i-1);
+			block_size = (int) pow(n, num_thick_dim);
+			for(int j=0, pt_i=0; j<num_pts; pt_i++){
+				val = start + (pt_i%n)*step_size;
+				for(int k=0; k<block_size; k++, j++){
+					pts[j]->setCoordinate(i, val);
 				}
 			}
-			maxDelta = maxDelta + incrementDelta;
-			currGuardSetPointer = currGuardSetPointer->getNext();
+			num_thick_dim++;
 		}
-
-		tempCompressed->setState(currState);
-		tempCompressed->setDelta(maxDelta+currDelta);
-		tempCompressed->setMode(curMode);
-
-		if(NewCompressed == NULL){
-			NewCompressed = tempCompressed;
-		}
-		else{
-			NewCompressed->append(tempCompressed);
-		}
-
 	}
 
-	return NewCompressed;
+	return pts;
 }
 
-void Verify(int argc, char* argv[]) {
-
-}
-
-void printconstraints4(char* Filename, class Polyhedron* reachSet,
-		class Point* UnPt1, class Point* UnPt2, double epsilon){
-	ofstream outputFile;
-	outputFile.open(Filename);
-	int reachIndex, unsafeIndex;
-	int dimension, dimIndex;
-	int reachSetPoints, unsafeSetPoints;
-
-	dimension = reachSet->getPoint(0)->getDimension();
-	reachSetPoints = reachSet->getSize();
-
-	outputFile << "Minimize  \n v: Lr0 \n \n";
-
-	outputFile << "Subject To \n  \n";
-
-	outputFile << "sumr1: ";
-	for (reachIndex = 0; reachIndex < reachSetPoints - 1; reachIndex++) {
-		outputFile << " Lrs" << reachIndex << " + ";
-	}
-	outputFile << " Lrs" << reachSetPoints - 1 << " = 1.0 \n";
-
-	for (dimIndex = 0; dimIndex < dimension; dimIndex++) {
-		outputFile << "dim" << dimIndex << ": ";
-		for (reachIndex = 0; reachIndex < reachSetPoints; reachIndex++) {
-			if (reachSet->getPoint(reachIndex)->getCoordiate(dimIndex) >= 0)
-				outputFile << " + "
-						<< fixed << reachSet->getPoint(reachIndex)->getCoordiate(
-								dimIndex) << " Lrs" << reachIndex << " ";
-			else
-				outputFile << " - "
-						<< fixed << -1 * reachSet->getPoint(reachIndex)->getCoordiate(
-								dimIndex) << " Lrs" << reachIndex << " ";
-		}
-		outputFile << " - x"<< dimIndex << " = 0.0 \n";
-
-	}
-
-	for(dimIndex=0;dimIndex<dimension; dimIndex++){
-		outputFile << "dimlobd" << dimIndex <<": ";
-		outputFile << " x"<<dimIndex << " ";
-		outputFile << " >= " << UnPt1->getCoordiate(dimIndex) << " \n";
-		outputFile << "dimupbd" << dimIndex <<": ";
-		outputFile << " x"<<dimIndex << " ";
-		outputFile << " <= " << UnPt2->getCoordiate(dimIndex) << " \n";
-	}
-
-	outputFile << "\nBounds  \n";
-	for (reachIndex = 0; reachIndex < reachSetPoints; reachIndex++)
-		outputFile << " 0 <= Lrs" << reachIndex << " <= 1 \n";
-
-	outputFile << " \nEnd \n";
-
-	outputFile.close();
-
-}
-
-void printconstraints3(char* Filename, class Point* Pt1, class Point* Pt2,
-		class Point* UnPt1, class Point* UnPt2, double epsilon){
-
-	ofstream outputFile;
-	outputFile.open(Filename);
-	int dimensions, dimIndex;
-	int unsafeIndex;
-	int unsafeSetPoints;
-
-	dimensions = Pt1->getDimension();
-
-	outputFile << "Minimize \n v: x0 \n \n";
-
-	outputFile << "Subject To \n  \n";
-
-	outputFile << "sumr1: Lrs1 + Lrs2 = 1.0 \n";
-
-	outputFile << "sumu1: ";
-	for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints - 1; unsafeIndex++) {
-		outputFile << " Lus" << unsafeIndex << " + ";
-	}
-	outputFile << " Lus" << unsafeSetPoints - 1 << " = 1.0 \n";
-
-
-	for(dimIndex = 0; dimIndex < dimensions; dimIndex++){
-		outputFile << " dimxub"<< dimIndex << ": ";
-		outputFile << " x"<<dimIndex << " ";
-		if(Pt1->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt1->getCoordiate(dimIndex) << " Lrs1 ";
-		}
-		else{
-			outputFile << " + " << fixed << -1*Pt1->getCoordiate(dimIndex) << " Lrs1 ";
-		}
-		if(Pt2->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt2->getCoordiate(dimIndex) << " Lrs2 ";
-		}
-		else{
-			outputFile << " + " << fixed << -1*Pt2->getCoordiate(dimIndex) << " Lrs2 ";
-		}
-		outputFile << " <= "<< fixed << epsilon <<" \n";
-
-		outputFile << " dimxlb"<< dimIndex << ": ";
-		outputFile << " x"<<dimIndex << " ";
-		if(Pt1->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt1->getCoordiate(dimIndex) << " Lrs1 ";
-		}
-		else{
-			outputFile << " + " << fixed << -1*Pt1->getCoordiate(dimIndex) << " Lrs1 ";
-		}
-		if(Pt2->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt2->getCoordiate(dimIndex) << " Lrs2 ";
-		}
-		else{
-			outputFile << " + " << fixed << -1*Pt2->getCoordiate(dimIndex) << " Lrs2 ";
-		}
-		outputFile << " >= "<< fixed << -1*epsilon <<" \n";
-	}
-
-	for(dimIndex=0;dimIndex<dimensions; dimIndex++){
-		outputFile << "dimlobd" << dimIndex <<": ";
-		outputFile << " x"<<dimIndex << " ";
-		outputFile << " >= " << UnPt1->getCoordiate(dimIndex) << " \n";
-		outputFile << "dimupbd" << dimIndex <<": ";
-		outputFile << " x"<<dimIndex << " ";
-		outputFile << " <= " << UnPt2->getCoordiate(dimIndex) << " \n";
-	}
-
-	outputFile << "\nBounds  \n";
-	outputFile << " 0 <= Lrs1 <= 1 \n 0 <= Lrs2 <= 1 \n";
-
-	outputFile << " \nEnd \n";
-
-	outputFile.close();
-
-}
-
-void printconstraints2(char* Filename, class Point* Pt1, class Point* Pt2,
-		class Polyhedron* unsafeSet, double epsilon) {
-
-	ofstream outputFile;
-	outputFile.open(Filename);
-	int dimensions, dimIndex;
-	int unsafeIndex;
-	int unsafeSetPoints;
-
-	dimensions = Pt1->getDimension();
-	unsafeSetPoints = unsafeSet->getSize();
-
-	outputFile << "Minimize \n v: x0 \n \n";
-
-	outputFile << "Subject To \n  \n";
-
-	outputFile << "sumr1: Lrs1 + Lrs2 = 1.0 \n";
-
-	outputFile << "sumu1: ";
-	for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints - 1; unsafeIndex++) {
-		outputFile << " Lus" << unsafeIndex << " + ";
-	}
-	outputFile << " Lus" << unsafeSetPoints - 1 << " = 1.0 \n";
-
-
-	for(dimIndex = 0; dimIndex < dimensions; dimIndex++){
-		outputFile << " dimxub"<< dimIndex << ": ";
-		outputFile << " x"<<dimIndex << " ";
-		if(Pt1->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt1->getCoordiate(dimIndex) << " Lrs1 ";
-		}
-		else{
-			outputFile << " + " << fixed << -1*Pt1->getCoordiate(dimIndex) << " Lrs1 ";
-		}
-		if(Pt2->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt2->getCoordiate(dimIndex) << " Lrs2 ";
-		}
-		else{
-			outputFile << " + " << fixed << -1*Pt2->getCoordiate(dimIndex) << " Lrs2 ";
-		}
-		outputFile << " <= "<< fixed << epsilon <<" \n";
-
-		outputFile << " dimxlb"<< dimIndex << ": ";
-		outputFile << " x"<<dimIndex << " ";
-		if(Pt1->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt1->getCoordiate(dimIndex) << " Lrs1 ";
-		}
-		else{
-			outputFile << " + " << fixed << -1*Pt1->getCoordiate(dimIndex) << " Lrs1 ";
-		}
-		if(Pt2->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt2->getCoordiate(dimIndex) << " Lrs2 ";
-		}
-		else{
-			outputFile << " + " << fixed << -1*Pt2->getCoordiate(dimIndex) << " Lrs2 ";
-		}
-		outputFile << " >= "<< fixed << -1*epsilon <<" \n";
-	}
-
-	for(dimIndex=0; dimIndex < dimensions; dimIndex++){
-		outputFile << "dim" << dimIndex << ": ";
-		outputFile << " x" << dimIndex << " ";
-		for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints; unsafeIndex++) {
-			if (unsafeSet->getPoint(unsafeIndex)->getCoordiate(dimIndex) >= 0)
-				outputFile << " - "
-						<< fixed << unsafeSet->getPoint(unsafeIndex)->getCoordiate(
-								dimIndex) << " Lus" << unsafeIndex << " ";
-			else
-				outputFile << " + " << fixed << -1
-						* unsafeSet->getPoint(unsafeIndex)->getCoordiate(
-								dimIndex) << " Lus" << unsafeIndex << " ";
-		}
-		outputFile << "  =  0.0 \n";
-	}
-
-	outputFile << "\nBounds  \n";
-	outputFile << " 0 <= Lrs1 <= 1 \n 0 <= Lrs2 <= 1 \n";
-
-//	for (reachIndex = 0; reachIndex < reachSetPoints; reachIndex++)
-//		outputFile << " 0 <= Lrs" << reachIndex << " <= 1 \n";
-	for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints; unsafeIndex++)
-		outputFile << " 0 <= Lus" << unsafeIndex << " <= 1 \n";
-
-	outputFile << " \nEnd \n";
-
-	outputFile.close();
-
-
-}
-
-void printconstraints(char* Filename, class Polyhedron* reachSet,
-		class Polyhedron* unsafeSet) {
-
-	ofstream outputFile;
-	outputFile.open(Filename);
-	int reachIndex, unsafeIndex;
-	int dimension, dimIndex;
-	int reachSetPoints, unsafeSetPoints;
-
-	dimension = reachSet->getPoint(0)->getDimension();
-	reachSetPoints = reachSet->getSize();
-	unsafeSetPoints = unsafeSet->getSize();
-
-	outputFile << "Minimize  \n v: Lr0 \n \n";
-
-	outputFile << "Subject To \n  \n";
-
-	outputFile << "sumr1: ";
-	for (reachIndex = 0; reachIndex < reachSetPoints - 1; reachIndex++) {
-		outputFile << " Lrs" << reachIndex << " + ";
-	}
-	outputFile << " Lrs" << reachSetPoints - 1 << " = 1.0 \n";
-
-	outputFile << "sumu1: ";
-	for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints - 1; unsafeIndex++) {
-		outputFile << " Lus" << unsafeIndex << " + ";
-	}
-	outputFile << " Lus" << unsafeSetPoints - 1 << " = 1.0 \n";
-
-	for (dimIndex = 0; dimIndex < dimension; dimIndex++) {
-		outputFile << "dim" << dimIndex << ": ";
-		for (reachIndex = 0; reachIndex < reachSetPoints; reachIndex++) {
-			if (reachSet->getPoint(reachIndex)->getCoordiate(dimIndex) >= 0)
-				outputFile << " + "
-						<< fixed << reachSet->getPoint(reachIndex)->getCoordiate(
-								dimIndex) << " Lrs" << reachIndex << " ";
-			else
-				outputFile << " - "
-						<< fixed << -1 * reachSet->getPoint(reachIndex)->getCoordiate(
-								dimIndex) << " Lrs" << reachIndex << " ";
-		}
-		for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints; unsafeIndex++) {
-			if (unsafeSet->getPoint(unsafeIndex)->getCoordiate(dimIndex) >= 0)
-				outputFile << " - "
-						<< fixed << unsafeSet->getPoint(unsafeIndex)->getCoordiate(
-								dimIndex) << " Lus" << unsafeIndex << " ";
-			else
-				outputFile << " + " << fixed << -1
-						* unsafeSet->getPoint(unsafeIndex)->getCoordiate(
-								dimIndex) << " Lus" << unsafeIndex << " ";
-		}
-		outputFile << "  =  0.0 \n";
-	}
-
-	outputFile << "\nBounds  \n";
-	for (reachIndex = 0; reachIndex < reachSetPoints; reachIndex++)
-		outputFile << " 0 <= Lrs" << reachIndex << " <= 1 \n";
-	for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints; unsafeIndex++)
-		outputFile << " 0 <= Lus" << unsafeIndex << " <= 1 \n";
-
-	outputFile << " \nEnd \n";
-
-	outputFile.close();
-}
-
-void printrealpaver(char* Filename, class Point* FirstPoint,
-		class Point* SecondPoint, class Polyhedron* unsafeSet, double epsilon) {
-	ofstream outputFile;
-	outputFile.open(Filename);
-
-	//	cout<< "opening file in real paver output \n";
-	int unsafeIndex, unsafeSetPoints;
-	unsafeSetPoints = unsafeSet->getSize();
-	int dimensions, dimIndex;
-	dimensions = FirstPoint->getDimension();
-	outputFile << " Variables \n";
-	for (dimIndex = 0; dimIndex < dimensions; dimIndex++) {
-		outputFile << " real us" << dimIndex << " in ]-oo, +oo[,\n";
-		outputFile << " real cp" << dimIndex << " in ]-oo, +oo[,\n";
-	}
-	//	cout<< "printing first set of variables\n";
-	for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints; unsafeIndex++) {
-		outputFile << " real Lus" << unsafeIndex << " in [0,1],\n";
-	}
-	outputFile << " real l in [0,1];\n";
-	outputFile << "  \n  \n";
-	outputFile << " Constraints \n";
-
-	for (dimIndex = 0; dimIndex < dimensions; dimIndex++) {
-		outputFile << " cp" << dimIndex << " = l*" << FirstPoint->getCoordiate(
-				dimIndex) << " + (1-l)*" << SecondPoint->getCoordiate(dimIndex)
-				<< ",\n \n ";
-	}
-
-	//	cout << "printing the us constraint \n";
-
-	for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints; unsafeIndex++) {
-		outputFile << " Lus" << unsafeIndex << " + ";
-	}
-	outputFile << " 0 = 1,\n";
-
-	for (dimIndex = 0; dimIndex < dimensions; dimIndex++) {
-		outputFile << " us" << dimIndex << " = ";
-		for (unsafeIndex = 0; unsafeIndex < unsafeSetPoints - 1; unsafeIndex++) {
-			outputFile << " Lus" << unsafeIndex << "*" << unsafeSet->getPoint(
-					unsafeIndex)->getCoordiate(dimIndex) << " + ";
-		}
-		//		cout << " printing the last variable \n -- "<< dimIndex << " -- "<< dimensions <<"\n";
-		outputFile << "  Lus" << unsafeSetPoints - 1 << "*"
-				<< unsafeSet->getPoint(unsafeSetPoints - 1)->getCoordiate(
-						dimIndex) << " ,\n";
-	}
-
-	//	cout << "Just printing the last constraint \n";
-	for (dimIndex = 0; dimIndex < dimensions - 1; dimIndex++) {
-		outputFile << "( cp" << dimIndex << " - us" << dimIndex << " )^2 + ";
-	}
-	outputFile << "( cp" << dimensions - 1 << " - us" << dimensions - 1
-			<< " )^2 <= " << epsilon * epsilon << ";\n";
-
-	outputFile.close();
-
-}
-
-void printredlog(char* Filename, class Point* FirstPoint,
-		class Point* SecondPoint, class Polyhedron* unsafeSet, double epsilon) {
-
-	ofstream outputFile;
-	outputFile.open(Filename);
-
-	outputFile << "load redlog;\n";
-	outputFile << "rlset ofsf;\n \n";
-
-	int dim, index;
-	int unsafeSetIndex;
-	dim = FirstPoint->getDimension();
-
-	outputFile << "Formula := ex({ ";
-	for (index = 0; index < dim; index++) {
-		outputFile << "cp" << index << ",";
-		outputFile << "unsafe" << index << ",";
-	}
-	for (index = 0; index < unsafeSet->getSize(); index++) {
-		outputFile << "Lus" << index << ",";
-	}
-	outputFile << "l},(";
-
-	for (index = 0; index < dim; index++) {
-		outputFile << " cp" << index << " = l*" << FirstPoint->getCoordiate(
-				index) << " + (1-l)*" << SecondPoint->getCoordiate(index)
-				<< " and ";
-	}
-	outputFile << " l >= 0 and l <= 1 and";
-
-	for (index = 0; index < dim; index++) {
-		outputFile << " unsafe" << index << " = ";
-		for (unsafeSetIndex = 0; unsafeSetIndex < unsafeSet->getSize() - 1; unsafeSetIndex++) {
-			outputFile << " Lus" << unsafeSetIndex << "*"
-					<< unsafeSet->getPoint(unsafeSetIndex)->getCoordiate(index)
-					<< " + ";
-		}
-		outputFile << " Lus" << unsafeSetIndex << "*" << unsafeSet->getPoint(
-				unsafeSetIndex)->getCoordiate(index) << " and ";
-	}
-	for (unsafeSetIndex = 0; unsafeSetIndex < unsafeSet->getSize(); unsafeSetIndex++) {
-		outputFile << " Lus" << unsafeSetIndex << " >= 0 and Lus"
-				<< unsafeSetIndex << " <= 1 and ";
-	}
-	for (unsafeSetIndex = 0; unsafeSetIndex < unsafeSet->getSize() - 1; unsafeSetIndex++) {
-		outputFile << " Lus" << unsafeSetIndex << " + ";
-	}
-	outputFile << " Lus" << unsafeSetIndex << " = 1 and ";
-	for (index = 0; index < dim; index++) {
-		outputFile << " (cp" << index << " - unsafe" << index << ")**2 +";
-	}
-	outputFile << " 0 <= " << epsilon * epsilon << "))$ \n \n";
-	outputFile << "rlqe Formula; \n \n";
-	outputFile << "end;";
-	outputFile.close();
-
-}
-
-double getEpsilon(double delta, int example) {
-
-	double value;
-	value = sqrt(1 + ((9.8*9.8)/12));
-
-	return example*value*delta;
-
-}
-
-int sanityCheck(){
-
-	ifstream inputFile("Voutputglpk", ifstream::in);
-	char Test[25];
-
-	inputFile >> Test[0];
-	while(!inputFile.eof()){
-		inputFile >> Test[0];
-		if(Test[0] == 'O'){
-			for(int i=1;i<25;i++)
-				inputFile >> Test[i];
-			Test[20] = '\0';
-			if(!strcmp(Test,"OPTIMALSOLUTIONFOUND"))
-				return 0;
-		}
-	}
-	return 1;
-}
-
-int GsanityCheck(char* Ptr){
-
-	ifstream inputFile(Ptr, ifstream::in);
-	char Test[25];
-
-	inputFile >> Test[0];
-	while(!inputFile.eof()){
-		inputFile >> Test[0];
-		if(Test[0] == 'O'){
-			for(int i=1;i<25;i++)
-				inputFile >> Test[i];
-			Test[20] = '\0';
-			if(!strcmp(Test,"OPTIMALSOLUTIONFOUND"))
-				return 0;
-		}
-	}
-	return 1;
-}
 

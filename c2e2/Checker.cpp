@@ -38,6 +38,10 @@ vector<char*> Checker::getForbidden(){
 
 int Checker::check(class InitialSet* sequence, class Annotation* A, double delta){
 
+/*
+	double Boluntemp[4];
+
+
 	class Point* Pt1;
 	class Point* Pt2;
 
@@ -69,16 +73,17 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 
 		refDim = Refpt1->getDimension();
 		for(i=1;i<refDim;i++){
-			Pt1->setCoordinate(i-1,Refpt1->getCoordiate(i));
-			Pt2->setCoordinate(i-1,Refpt2->getCoordiate(i));
+			Pt1->setCoordinate(i-1,Refpt1->getCoordinate(i));
+			Pt2->setCoordinate(i-1,Refpt2->getCoordinate(i));
 		}
 
-		tmin = Refpt1->getCoordiate(0);
-		tmax = Refpt2->getCoordiate(0);
+		tmin = Refpt1->getCoordinate(0);
+		tmax = Refpt2->getCoordinate(0);
 
 		valueDouble = A->getED(delta, tmin, tmax);
 
-		refSequence->setDelta(valueDouble);
+		//refSequence->setDelta(valueDouble);
+		refSequence->setDelta(Boluntemp);
 
 		int sanityReturn;
 		sanityReturn = checkGLPKSol(Pt1,Pt2,valueDouble, tmin, tmax);
@@ -89,10 +94,13 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 	}
 
 	return 1;
-
+*/
 }
 
 int Checker::check(class InitialSet* sequence, class Annotation* A, double delta, class Point* Pt3, class Point* Pt4){
+/*
+
+	double Boluntemp[4];
 
 	class Point* Pt1;
 	class Point* Pt2;
@@ -131,17 +139,17 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 
 		refDim = Refpt1->getDimension();
 		for(i=1;i<refDim;i++){
-			Pt1->setCoordinate(i-1,Refpt1->getCoordiate(i));
-			Pt2->setCoordinate(i-1,Refpt2->getCoordiate(i));
+			Pt1->setCoordinate(i-1,Refpt1->getCoordinate(i));
+			Pt2->setCoordinate(i-1,Refpt2->getCoordinate(i));
 		}
 
-		tmin = Refpt1->getCoordiate(0);
-		tmax = Refpt2->getCoordiate(0);
+		tmin = Refpt1->getCoordinate(0);
+		tmax = Refpt2->getCoordinate(0);
 
 		valueDouble = A->getED(delta, tmin, tmax);
 
-		refSequence->setDelta(valueDouble);
-
+		//refSequence->setDelta(valueDouble);
+		refSequence->setDelta(Boluntemp);
 		int sanityReturn;
 		int newUnsafe = 0;
 
@@ -155,13 +163,13 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 			return newUnsafe;
 		}
 	}
-
+*/
 	return 1;
 
 }
 
 int Checker::check(class InitialSet* sequence, class Annotation* A, double delta, class Point* Pt3, class Point* Pt4, int modeSimu){
-
+/*
 	class Point* Pt1;
 	class Point* Pt2;
 
@@ -190,7 +198,7 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 
 	double refTime;
 
-	refTime = sequence->getState()->getCoordiate(0);
+	refTime = sequence->getState()->getCoordinate(0);
 
 	class InitialSet* refSequence;
 
@@ -203,12 +211,12 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 
 		refDim = Refpt1->getDimension();
 		for(i=1;i<refDim;i++){
-			Pt1->setCoordinate(i-1,Refpt1->getCoordiate(i));
-			Pt2->setCoordinate(i-1,Refpt2->getCoordiate(i));
+			Pt1->setCoordinate(i-1,Refpt1->getCoordinate(i));
+			Pt2->setCoordinate(i-1,Refpt2->getCoordinate(i));
 		}
 
-		tmin = Refpt1->getCoordiate(0)-refTime;
-		tmax = Refpt2->getCoordiate(0)-refTime;
+		tmin = Refpt1->getCoordinate(0)-refTime;
+		tmax = Refpt2->getCoordinate(0)-refTime;
 
 		valueDouble = A->getED(delta, tmin, tmax, modeSimu);
 
@@ -227,7 +235,7 @@ int Checker::check(class InitialSet* sequence, class Annotation* A, double delta
 			return newUnsafe;
 		}
 	}
-
+*/
 	return 1;
 
 }
@@ -243,49 +251,41 @@ int Checker::check(class ReachTube* invariantTube, class LinearSet* unsafeSet){
 
 	int checkIntersection;
 
-	// cout << "Checking for safety of tubes " << endl;
-
 	sizeReachSet = invariantTube->getSize();
 	for(iterator=0;iterator<sizeReachSet && isSafe != -1;iterator++){
 		PtU = invariantTube->getUpperBound(iterator);
 		PtL = invariantTube->getLowerBound(iterator);
 
-		int temporaryDim;
-		temporaryDim = PtL->getDimension();
-		for(int tempInt =0; tempInt < temporaryDim; tempInt++){
-//			cout << " -- values -- " << PtL->getCoordiate(tempInt) << " and " << PtL->getCoordiate(tempInt) << endl;
-		}
-
-
 		checkIntersection = unsafeSet->hasIntersection(PtL, PtU);
 
 		if(checkIntersection == 1){
-
-			// cout << "Is the intersection 1? If yes, this will be printed \n";
-			// new method for checking unsafe;
-
 			// Check for 2^n possibilities!
-
-			int UBP, LBP;
-			UBP = 0; LBP = 0;
+			bool UBP, LBP;
 			UBP = unsafeSet->isInternal(PtU);
 			LBP = unsafeSet->isInternal(PtL);
-			//cout << "Whats the values of UBP and LBP " << UBP  << " and " << LBP << "respectively \n";
 
-			if(UBP == 1 && LBP == 1){
-				//std::cout << "Is this every being called?" << endl;
+			if(UBP && LBP){
 				isSafe = -1;
 			}
 			else{
 				isSafe = 0;
 			}
 		}
-
 	}
-
 	return isSafe;
+}
 
-	// return 1;
+int Checker::checkHybridSimulation(class ReachTube* simulation, class LinearSet* unsafeSet){
+	Point *ptUpper;
+
+	int size = simulation->getSize();
+	for(int i=0; i<size; i++){
+		ptUpper = simulation->getUpperBound(i);
+		if(unsafeSet->isInternal(ptUpper)){
+			return -1;
+		}
+	}
+	return 1;
 }
 
 int Checker::checkUnsafe(class Point* Pt1, class Point* Pt2, class Point* Pt3, class Point* Pt4, double valueDouble){
@@ -293,8 +293,8 @@ int Checker::checkUnsafe(class Point* Pt1, class Point* Pt2, class Point* Pt3, c
 	int dimensions, i;
 	dimensions = Pt1->getDimension();
 	for(i=0;i<dimensions;i++){
-		if(Pt1->getCoordiate(i) + valueDouble <= Pt4->getCoordiate(i) && Pt1->getCoordiate(i) - valueDouble >= Pt3->getCoordiate(i) && Pt2->getCoordiate(i) + valueDouble <= Pt4->getCoordiate(i) && Pt2->getCoordiate(i) + valueDouble >= Pt3->getCoordiate(i)){
-			// cout << " " << Pt1->getCoordiate(i) << " " << Pt2->getCoordiate(i) << " " << Pt3->getCoordiate(i) << " " << Pt4->getCoordiate(i) << endl;
+		if(Pt1->getCoordinate(i) + valueDouble <= Pt4->getCoordinate(i) && Pt1->getCoordinate(i) - valueDouble >= Pt3->getCoordinate(i) && Pt2->getCoordinate(i) + valueDouble <= Pt4->getCoordinate(i) && Pt2->getCoordinate(i) + valueDouble >= Pt3->getCoordinate(i)){
+			// cout << " " << Pt1->getCoordinate(i) << " " << Pt2->getCoordinate(i) << " " << Pt3->getCoordinate(i) << " " << Pt4->getCoordinate(i) << endl;
 			return -1;
 		}
 	}
@@ -332,7 +332,7 @@ int Checker::checkGLPKSol(class Point* Pt1, class Point* Pt2, double epsilon, do
 
 	glp_add_cols(lp,dimensions+2);
 	for(dimIndex=1;dimIndex<=dimensions;dimIndex++){
-		glp_set_col_bnds(lp,dimIndex,GLP_DB,Pt3->getCoordiate(dimIndex-1),Pt4->getCoordiate(dimIndex-1));
+		glp_set_col_bnds(lp,dimIndex,GLP_DB,Pt3->getCoordinate(dimIndex-1),Pt4->getCoordinate(dimIndex-1));
 	}
 	glp_set_col_bnds(lp,dimensions+1,GLP_DB, 0.0, 1.0);
 	glp_set_col_bnds(lp,dimensions+2,GLP_DB, 0.0, 1.0);
@@ -349,10 +349,10 @@ int Checker::checkGLPKSol(class Point* Pt1, class Point* Pt2, double epsilon, do
 			count++;
 		}
 		irow[count+1] = i; icol[count+1] = dimensions+1;
-		icoeff[count+1] = -1*Pt1->getCoordiate(i-1);
+		icoeff[count+1] = -1*Pt1->getCoordinate(i-1);
 		count++;
 		irow[count+1] = i; icol[count+1] = dimensions+2;
-		icoeff[count+1] = -1*Pt2->getCoordiate(i-1);
+		icoeff[count+1] = -1*Pt2->getCoordinate(i-1);
 		count++;
 	}
 	for(i=1;i<=dimensions;i++){
@@ -443,10 +443,10 @@ int Checker::checkGLPKSol(class Point* Pt1, class Point* Pt2, double epsilon, do
 			count++;
 		}
 		irow[count+1] = i; icol[count+1] = dimensions+1;
-		icoeff[count+1] = -1*Pt1->getCoordiate(i-1);
+		icoeff[count+1] = -1*Pt1->getCoordinate(i-1);
 		count++;
 		irow[count+1] = i; icol[count+1] = dimensions+2;
-		icoeff[count+1] = -1*Pt2->getCoordiate(i-1);
+		icoeff[count+1] = -1*Pt2->getCoordinate(i-1);
 		count++;
 	}
 	for(i=1;i<=dimensions;i++){
@@ -500,33 +500,33 @@ void Checker::printChecker(class Point* Pt1, class Point* Pt2, double epsilon, d
 	for(dimIndex = 0; dimIndex < dimensions; dimIndex++){
 		outputFile << " dimxub"<< dimIndex+1 << ": ";
 		outputFile << " x"<<dimIndex+1 << " ";
-		if(Pt1->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt1->getCoordiate(dimIndex) << " Lrs1 ";
+		if(Pt1->getCoordinate(dimIndex) >= 0){
+			outputFile << " - " << fixed << Pt1->getCoordinate(dimIndex) << " Lrs1 ";
 		}
 		else{
-			outputFile << " + " << fixed << -1*Pt1->getCoordiate(dimIndex) << " Lrs1 ";
+			outputFile << " + " << fixed << -1*Pt1->getCoordinate(dimIndex) << " Lrs1 ";
 		}
-		if(Pt2->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt2->getCoordiate(dimIndex) << " Lrs2 ";
+		if(Pt2->getCoordinate(dimIndex) >= 0){
+			outputFile << " - " << fixed << Pt2->getCoordinate(dimIndex) << " Lrs2 ";
 		}
 		else{
-			outputFile << " + " << fixed << -1*Pt2->getCoordiate(dimIndex) << " Lrs2 ";
+			outputFile << " + " << fixed << -1*Pt2->getCoordinate(dimIndex) << " Lrs2 ";
 		}
 		outputFile << " <= "<< fixed << epsilon <<" \n";
 
 		outputFile << " dimxlb"<< dimIndex+1 << ": ";
 		outputFile << " x"<<dimIndex+1 << " ";
-		if(Pt1->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt1->getCoordiate(dimIndex) << " Lrs1 ";
+		if(Pt1->getCoordinate(dimIndex) >= 0){
+			outputFile << " - " << fixed << Pt1->getCoordinate(dimIndex) << " Lrs1 ";
 		}
 		else{
-			outputFile << " + " << fixed << -1*Pt1->getCoordiate(dimIndex) << " Lrs1 ";
+			outputFile << " + " << fixed << -1*Pt1->getCoordinate(dimIndex) << " Lrs1 ";
 		}
-		if(Pt2->getCoordiate(dimIndex) >= 0){
-			outputFile << " - " << fixed << Pt2->getCoordiate(dimIndex) << " Lrs2 ";
+		if(Pt2->getCoordinate(dimIndex) >= 0){
+			outputFile << " - " << fixed << Pt2->getCoordinate(dimIndex) << " Lrs2 ";
 		}
 		else{
-			outputFile << " + " << fixed << -1*Pt2->getCoordiate(dimIndex) << " Lrs2 ";
+			outputFile << " + " << fixed << -1*Pt2->getCoordinate(dimIndex) << " Lrs2 ";
 		}
 		outputFile << " >= "<< fixed << -1*epsilon <<" \n";
 	}

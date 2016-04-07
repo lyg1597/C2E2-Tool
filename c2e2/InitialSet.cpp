@@ -14,13 +14,14 @@ using namespace std;
 InitialSet::InitialSet() {
 	// Auto-generated constructor stub
 	State = NULL;
-	delta = -1;
+	deltaArray = NULL;
 	mode = -1;
 	next = NULL;
 }
 
 InitialSet::~InitialSet() {
 	// Auto-generated destructor stub
+	delete [] deltaArray;
 
 }
 
@@ -29,14 +30,21 @@ void InitialSet::setState(class Point* P){
 	next = NULL;
 }
 
-void InitialSet::setDelta(double value){
+void InitialSet::setDelta(double* value){
+	//cout<<"Point Dimension is "<<State->getDimension()<<endl;
+	int arraysize =State->getDimension()-1;
+	int i;
+	deltaArray = new double[arraysize];
 	if(next == NULL){
-		delta = value;
+		double tempArray[arraysize];
+		for (i = 0; i <arraysize; i++)
+			deltaArray[i] = value[i];
 	}
 	else{
 		next->setDelta(value);
 	}
-	delta = value;
+	for (i=0; i<arraysize; i++)
+		deltaArray[i] = value[i];
 }
 
 void InitialSet::setMode(int modeVal){
@@ -57,8 +65,8 @@ class Point* InitialSet::getState(){
 	return State;
 }
 
-double InitialSet::getDelta(){
-	return delta;
+double* InitialSet::getDelta(){
+	return deltaArray;
 }
 
 int InitialSet::getMode(){
@@ -110,7 +118,7 @@ void InitialSet::print(){
 		int dim;
 		cout << "[ ";
 		for(dim = 0; dim < State->getDimension(); dim++){
-			cout << State->getCoordiate(dim) << " ";
+			cout << State->getCoordinate(dim) << " ";
 		}
 		cout << " ]" << endl;
 		if(next != NULL){

@@ -1,16 +1,13 @@
-   c2e2.py:  25:Launching the logger
-   c2e2.py: 251: File opened /home/bolun/Desktop/C2E2_0.2/Examples/TotalMotion40s.hyxml
-   c2e2.py: 194:Model is 
 <?xml version='1.0' encoding='utf-8'?>
 <!DOCTYPE hyxml>
 <hyxml>
-  <variable name="sx" scope="LOCAL_DATA" type="Real"/>
-  <variable name="vx" scope="LOCAL_DATA" type="Real"/>
-  <variable name="ax" scope="LOCAL_DATA" type="Real"/>
-  <variable name="vy" scope="LOCAL_DATA" type="Real"/>
-  <variable name="omega" scope="LOCAL_DATA" type="Real"/>
-  <variable name="sy" scope="LOCAL_DATA" type="Real"/>
   <automaton name="default_automaton">
+    <variable name="sx" scope="LOCAL_DATA" type="Real"/>
+    <variable name="vx" scope="LOCAL_DATA" type="Real"/>
+    <variable name="ax" scope="LOCAL_DATA" type="Real"/>
+    <variable name="vy" scope="LOCAL_DATA" type="Real"/>
+    <variable name="omega" scope="LOCAL_DATA" type="Real"/>
+    <variable name="sy" scope="LOCAL_DATA" type="Real"/>
     <mode id="0" initial="True" name="SlowDown">
       <dai equation="vx_dot = 0.1*ax"/>
       <dai equation="sx_dot = vx-2.5"/>
@@ -169,21 +166,35 @@
       <guard equation="vy+0.05&gt;=0"/>
     </transition>
   </automaton>
+  <composition automata="default_automaton"/>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="SxUB1" type="0" unsafeSet="sx&gt;=50">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="SxLB1" type="0" unsafeSet="sx&lt;=-16.0">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="VxUB1" type="0" unsafeSet="vx&gt;=3.5">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="VxLB1" type="0" unsafeSet="vx&lt;=2.1">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="AxUB1" type="0" unsafeSet="ax&gt;=1.5">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="AxLB1" type="0" unsafeSet="ax&lt;=-1.5">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="SxSyBack" type="0" unsafeSet="sx&gt;=-4&amp;&amp;sx&lt;=4&amp;&amp;sy&lt;=7">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="SxSyFront" type="0" unsafeSet="sx&gt;=20&amp;&amp;sy&gt;=5">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="VyLB1" type="0" unsafeSet="vy&gt;=25">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
+  <property initialSet="SlowDown: sx&gt;=-15.0&amp;&amp;sx&lt;=-14.95&amp;&amp;vx&gt;=3.25&amp;&amp;vx&lt;=3.3&amp;&amp;ax==0&amp;&amp;vy==0&amp;&amp;omega==0&amp;&amp;sy==0" name="VyUB1" type="0" unsafeSet="vy&lt;=-25">
+    <parameters delta="0.01" taylororder="10.0" timehorizon="40.0" timestep="0.1"/>
+  </property>
 </hyxml>
-
-   c2e2.py:1052: Verification started - property name - SxUB1 - 
-   c2e2.py:1053: Property - initial set - SlowDown: sx>=-15.0&&sx<=-14.95&&vx>=3.25&&vx<=3.3&&ax==0&&vy==0&&omega==0&&sy==0 - unsafe set - sx>=50 - 
-   c2e2.py:1109: partiotion - 0.01 - time-step - 0.1 - time-horizon - 40.0 - 
-   c2e2.py:1344: Verification Result Returned - Safe - 
-plotWindow.py:  32: Started the plotter 
-plotDialog.py: 424: New Plotting Saved 
-plotDialog.py: 425: Name - A - title -  - status - Not plotted - modes - True - partitions - 128 - 
-plotDialog.py: 426: xaxis - time - yaxis - ['ax', 'vy'] -  xvarIndex - 0 - yvarIndex - [3, 4] - 
-plotWindow.py: 424: Started Plotting - A - 
-plotWindow.py: 480: Finished Plotting 
-plotDialog.py: 424: New Plotting Saved 
-plotDialog.py: 425: Name - total - title -  - status - Not plotted - modes - True - partitions - 128 - 
-plotDialog.py: 426: xaxis - time - yaxis - ['omega', 'vx'] -  xvarIndex - 0 - yvarIndex - [5, 2] - 
-plotWindow.py: 424: Started Plotting - A - 
-plotWindow.py: 424: Started Plotting - total - 
-plotWindow.py: 480: Finished Plotting 

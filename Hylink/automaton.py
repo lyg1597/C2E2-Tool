@@ -1,5 +1,3 @@
-
-
 class Automaton:
     def __init__(self, name="default_automaton", modes=None, trans=None):
         self.name = name
@@ -15,7 +13,7 @@ class Automaton:
             self.trans = []
         else:
             self.trans = trans
-    
+
     def print_trans(self):
         print "--- Transitions ---"
         for i in self.trans:
@@ -40,10 +38,10 @@ class Automaton:
         self.print_trans()
         
     def add_mode(self,mode):
-        self.modes = self.modes+[mode]
+        self.modes.append(mode)
     
     def add_trans(self,trans):
-        self.trans = self.trans+[trans]
+        self.trans.append(trans)
         
     def remove_tran(self, tran):
         self.trans.remove(tran)
@@ -57,13 +55,33 @@ class Automaton:
         id = self.next_transition_id
         self.next_transition_id += 1
         return id
+
+class Variables:
+    def __init__(self):
+        self.local = []
+        self.input = []
+        self.output = []
+
+    def add_var(self, v):
+        if v.scope=='LOCAL_DATA':
+            self.local.append(v)
+        elif v.scope=='OUTPUT_DATA':
+            self.output.append(v)
+        elif v.scope=='INPUT_DATA':
+            self.input.append(v)
+
+    def toVariable(self):
+        return self.input+self.local+self.output        
     
 class Variable:
     def __init__(self,name="",update_type="",type="",scope=""):
         self.name = name
-        self.update_type = type
         self.type = type
         self.scope = scope
+        self.update_type = type
+
+    def __eq__(self, other):
+        return self.name==other.name and self.update_type==other.update_type and self.type==other.type
         
 class Mode:
     '''name - name of the mode (can be different from the one specified in simulink/stateflow
@@ -100,13 +118,13 @@ class Mode:
         self.ypos = ypos
             
     def add_inv(self,inv):
-        self.invs = self.invs + [inv]
+        self.invs.append(inv)
     
     def clear_inv(self):
         self.invs = []
     
     def add_dai(self,dai):
-        self.dais = self.dais + [dai]
+        self.dais.append(dai)
         
 class Invariant:
     def __init__(self, parsed=[], raw=""):

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+APT_IN="apt-get install -y"
+APT_IN_NR="apt-get install -y --no-install-recommends"
+
 if [ $UID != 0 ]
 then
   echo "Please run this script with sudo: sudo $0"
@@ -44,13 +47,18 @@ apt-get install -y ppl-dev
 apt-get install -y libgmp10
 apt-get install -y gnuplot
 apt-get install -y python-gnuplot
-apt-get install -y python-sympy
+$APT_IN_NR python-sympy
 apt-get install -y libxslt1-dev
+apt-get install libboost1.58-all-dev 
 
-apt-get build-dep python-lxml
+apt-get install python-lxml
 pip install lxml
 pip install psutil
 
 sudo -u $SUDO_USER wget -O pyglpk.zip http://publish.illinois.edu/c2e2-tool/files/2014/10/pyglpk.zip
 sudo -u $SUDO_USER unzip -q pyglpk
 cd pyglpk && make && make install
+
+#Removes compressed files
+rm *.tar.gz
+rm *.zip

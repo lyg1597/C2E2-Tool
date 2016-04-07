@@ -416,6 +416,8 @@ class PropertyDatum():
     self.tabChild=None
     self.reachSetPath=""
     self.paramData=[0,0,0,0]
+    self.simulator=-1
+    self.simulation = -1
 
   def copyDatum(self,propDatum,propertyListNames):
     copyNum=0
@@ -586,8 +588,8 @@ class ExprParser:
     elif len(p)==6:
       p[0]=Node('*',[Node('-',[p[3]]),Node(p[5],0)])
 
-  #def p_error(self,p):
-  #  yacc.errok()
+  def p_error(self,p):
+   yacc.errok()
 
   """
     isNumber
@@ -656,7 +658,7 @@ class ExprParser:
       self.constant+=neg*val
     elif self.isNumber(node.value):
       self.checkDecimals(neg*node.value)
-      print "the constant value here " + str(neg*node.value)  
+      print "The constant value here " + str(neg*node.value)  
       self.constant+=neg*node.value
     else:
       self.checkDecimals(node.value)
@@ -670,7 +672,7 @@ class ExprParser:
     Return: none
   """
   def printNode(self,node):
-    print("Value: "+str(node.value)+" children: "+str(len(node.children)))
+    print("Value: "+str(node.value)+", Children: "+str(len(node.children)))
     for n in node.children:
       self.printNode(n)
 
@@ -692,7 +694,7 @@ class ExprParser:
     self.constant=0
 
     result=self.parser.parse(data,lexer=self.lexer)
-    print(result)
+    # print(result)
     self.parseTree(result,1)
     return self.termList,self.constant,self.divisorList,self.multiplier
 
@@ -716,7 +718,11 @@ class ExprParser:
     else:
       equations=''.join(inputText.split())
 
-    inequalities=equations.split("&&")
+    #setType 2 is for invariants
+    if setType==2:
+      inequalities=equations.split("||")
+    else:
+      inequalities=equations.split("&&")
     
     addInequalities=[]
     remInequalities=[]
@@ -745,9 +751,13 @@ class ExprParser:
       expression+="-"+constant
       print(expression)
       data,term,divisorList,multiplier=self.parse(expression)
-      print "for unsafe set, what is the expression and other things"
+      # print data
+      # print term
+      # print divisorList
+      # print multiplier
+      # print "for unsafe set, what is the expression and other things"
       
-      print " multiplier is " + str(multiplier)
+      print "Multiplier is " + str(multiplier)
       
       multiply=1*(10**multiplier)
       for d in divisorList:

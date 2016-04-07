@@ -17,6 +17,8 @@ CPP_SRCS += \
 ./simuverif.tab.c \
 ./lex.yy.c \
 ./Annotation.cpp \
+./RepPoint.cpp \
+./CoverStack.cpp \
 ./Checker.cpp \
 ./InitialSet.cpp \
 ./main.cpp \
@@ -32,6 +34,8 @@ CPP_SRCS += \
 
 OBJS += \
 ./Annotation.o \
+./RepPoint.o \
+./CoverStack.o \
 ./Checker.o \
 ./InitialSet.o \
 ./main.o \
@@ -48,6 +52,8 @@ CPP_DEPS += \
 ./y.tab.d \
 ./lex.yy.d \
 ./Annotation.d \
+./RepPoint.d \
+./CoverStack.d \
 ./Checker.d \
 ./InitialSet.d \
 ./main.d \
@@ -65,7 +71,7 @@ all: C2E2
 C2E2: $(OBJS) $(USER_OBJS) $(MISC)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	$(CXX)  -o"C2E2" $(OBJS) $(USER_OBJS) $(LIBS) -I/usr/include/python2.7/ -lpython2.7 -lstdc++
+	$(CXX) -o"C2E2" $(OBJS) $(USER_OBJS) $(LIBS) -I/usr/include/python2.7/ -lpython2.7 -lstdc++ -ldl -lppl -lgmp -lgmpxx 
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -74,7 +80,6 @@ Annotation.o: ./Annotation.cpp ./Annotation.h
 	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"Annotation.d" -MT"Annotation.d" -o"Annotation.o" "$<" 
 	@echo 'Finished building: $<'
 	@echo ' '
-
 
 Checker.o: ./Checker.cpp ./Checker.h
 	$(CXX) -lglpk -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"Checker.d" -MT"Checker.d" -o"Checker.o" "$<"
@@ -86,8 +91,18 @@ InitialSet.o: ./InitialSet.cpp ./InitialSet.h
 	@echo 'Finished building: $<'
 	@echo ' '
 
+RepPoint.o: ./RepPoint.cpp ./RepPoint.o
+	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"RepPoint.d" -MT"RepPoint.d" -o"RepPoint.o" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+CoverStack.o: ./CoverStack.cpp ./CoverStack.o
+	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"CoverStack.d" -MT"CoverStack.d" -o"CoverStack.o" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
 main.o: ./main.cpp ./lex.yy.cc ./simuverif.tab.c ./simuverifScanner.h ./simuverifParser.h ./stack.hh
-	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"main.d" -MT"main.d" -o"main.o" "$<" -I/usr/include/python2.7/ -lpython2.7 -lstdc++
+	$(CXX) -O0 -g3 -c -fmessage-length=0 -MMD -MP -MF"main.d" -MT"main.d" -o"main.o" "$<" -I/usr/include/python2.7/ -lpython2.7 -lstdc++  
 	@echo 'Finished building: $<'
 	@echo ' '
 

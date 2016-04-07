@@ -12,6 +12,8 @@
 #include<cstdlib>
 #include"Point.h"
 #include"InitialSet.h"
+#include"CoverStack.h"
+
 using namespace std;
 
 class LinearSet {
@@ -20,15 +22,12 @@ private:
 	int numberOfEquations;
 	double* matrix;
 	double* b;
-	int exceptPoints;
 
 public:
 	LinearSet();
 	~LinearSet();
 	void setDimensions(int dim);
 	int getDimensions();
-	void setExceptPoints(int p);
-	int getExceptPoints();
 	void setNumEqns(int numeqns);
 	int getNumEqns();
 	void setMatrix(double* M);
@@ -39,12 +38,13 @@ public:
 	double getMatrixElement(int row, int col);
 	void setBElement(int index, double value);
 	double getBElement(int index);
-	int isInternal(class Point* RefPoint);
-	int hasIntersection(class Point* RefPoint, double delta);
-	int hasIntersection(class Point* PtL, class Point* PtU);
+	bool isInternal(class Point* pt);
+	int hasIntersection(class Point* pt, double *deltaArray);
+	int hasIntersection(class Point* ptLower, class Point* ptUpper);
 	double getMax(int dimID);
 	double getMin(int dimID);
-	class InitialSet* getCover(double delta);
+	class InitialSet* getCover(double* deltaArray);
+	class CoverStack* getCoverStack(double *deltaArray, int mode, int refineTime);
 
 };
 

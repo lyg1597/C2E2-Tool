@@ -5,14 +5,9 @@ from guardParse import parse_guardExp
 
 class ExpLexer2:
     
-    tokens = ('STRING',
-          'LAND',
-          'LOR',
-          )
+    tokens = ('STRING', 'LAND', 'LOR',)
     
-    states = (
-        ('comment','exclusive'),
-    )
+    states = ( ('comment','exclusive'), )
     
     def t_comment(self,t):
         r'//'
@@ -61,6 +56,8 @@ class ExpParser2:
         '''totExpr : STRING LAND totExpr
                    | STRING LOR totExpr
                    | STRING'''
+        # for i,j in enumerate(p):
+        #     print str(i) + ': ' + str(j)
         if (len(p) == 4):
             p[0] = [Node('Logical',[parse_guardExp(p[1])]+p[3],p[2])]
         elif (len(p) == 2):
@@ -91,4 +88,4 @@ def parse_guardLogicalExp(data):
 
 # N = parse_guardLogicalExp("x<=1 || vx>=0")
 # N1 = parse_guardLogicalExp("x>=1 && vx <= 0")
-# N1.prints()
+# print N[0].prints()

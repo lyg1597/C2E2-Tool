@@ -167,7 +167,7 @@ namespace yy {
         INITMODE = 267,
         TSTEP = 268,
         THORIZON = 269,
-        DELTA = 270,
+        REFINE = 270,
         FORB = 271,
         FORBE = 272,
         FORBM = 273,
@@ -177,25 +177,26 @@ namespace yy {
         ANNOT = 277,
         KCONST = 278,
         ISLINEAR = 279,
-        TIME = 280,
-        GAMMA = 281,
-        BETA = 282,
-        CONTRACTION = 283,
-        LINEAR = 284,
-        EXPONENTIAL = 285,
-        VISU = 286,
-        TO = 287,
-        EQ = 288,
-        QU = 289,
-        IN = 290,
-        SO = 291,
-        SC = 292,
-        ALL = 293,
-        XID = 294,
-        NUMBER = 295,
-        CO = 296,
-        STRING = 297,
-        WORD = 298
+        SIMU = 280,
+        TIME = 281,
+        GAMMA = 282,
+        BETA = 283,
+        CONTRACTION = 284,
+        LINEAR = 285,
+        EXPONENTIAL = 286,
+        VISU = 287,
+        TO = 288,
+        EQ = 289,
+        QU = 290,
+        IN = 291,
+        SO = 292,
+        SC = 293,
+        ALL = 294,
+        XID = 295,
+        NUMBER = 296,
+        CO = 297,
+        STRING = 298,
+        WORD = 299
       };
     };
 
@@ -477,13 +478,13 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 190,     ///< Last index in yytable_.
+      yylast_ = 198,     ///< Last index in yytable_.
       yynnts_ = 10,  ///< Number of nonterminal symbols.
       yyempty_ = -2,
-      yyfinal_ = 55, ///< Termination state number.
+      yyfinal_ = 57, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 44  ///< Number of tokens.
+      yyntokens_ = 45  ///< Number of tokens.
     };
 
 
@@ -494,7 +495,7 @@ namespace yy {
 
 
 } // yy
-#line 498 "./simuverif.tab.h" // lalr1.cc:372
+#line 499 "./simuverif.tab.h" // lalr1.cc:372
 
 
 

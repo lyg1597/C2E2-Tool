@@ -14,6 +14,10 @@
 #include "Annotation.h"
 #include "InitialSet.h"
 #include "LinearSet.h"
+#include "CoverStack.h"
+#include "RepPoint.h"
+#include <ppl.hh>
+
 using namespace std;
 
 class ReachTube{
@@ -41,11 +45,11 @@ public:
 	int getSize();
 	class Point* getUpperBound(int index);
 	class Point* getLowerBound(int index);
-	void parseInvariantTube(char* filename);
+	void parseInvariantTube(char const* filename, int hasMode);
 	class ReachTube* bloatReachTube(double bloatingFactor);
-	class ReachTube* bloatReachTube(double delta, class Annotation* currentAnnotation);
+	class ReachTube* bloatReachTube(double* deltaArray, class Annotation* currentAnnotation);
 	void parseGuardsTube(char* filename);
-	void printReachTube(char* filename, int flag);
+	void printReachTube(char const* filename, int flag);
 	int getGuardMode(int index);
 	void compressGuardSet();
 	class InitialSet* samplingGuardSet();
@@ -55,11 +59,15 @@ public:
 	vector<double> MinCoordinate(int dimension);
 	int checkunsafe(double* forM, double* forB, int numofeq);
 	int checkunsafe_rest(double* forM, double* forB, int numofeq, int index);
-	class InitialSet* getNextSet(double delta, double timeStep, int exceptPoints);
-	int checkIntersection(int mode, class Point* currPoint, double delta);
-	double getMinTime(int mode, class Point* currPoint, double delta);
-	double getMaxTime(int mode, class Point* currPoint, double delta);
-
+	class InitialSet* getNextSet();
+	int checkIntersection(int mode, class Point* currPoint, double* deltaArray);
+	double getMinTime(int mode, class Point* currPoint, double* deltaArray);
+	double getMaxTime(int mode, class Point* currPoint, double* deltaArray);
+	int getNextSetStack(class CoverStack* ItrStack, class RepPoint* parentRepPoint);
+	void clear(int from);
+	void addGuards(double *ptLower, vector<pair<int, double *> > guards);
+	void addGuards(vector<pair<NNC_Polyhedron, int> > guards);
+	void printGuards();
 
 };
 

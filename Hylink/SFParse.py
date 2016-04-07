@@ -382,7 +382,14 @@ class LSParser:
 	### Chart Unit Specifications #####
 	###################################
 	
+        #FIXME
+        """
 	def p_ChartSpec(self,p):
+		'ChartSpec : IDRow NameRow WinPosRow viewLimRow zFacRow scrRow treeNodeRow fstTarRow fstTransRow viewObjRow visRow machRow sviewSCluster ssIdHWRow decompRow fstDataRow updateRow crfilnumRow usrSSTEORow disImpRow pmodelCluster smTypeRow suppVarSizingRow'
+		p[0] = [p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8],p[9],p[10],p[11],p[12],p[13],p[14],p[15],p[16],p[17],p[18],p[19],p[20],p[21],p[22]]
+        """	
+
+        def p_ChartSpec(self,p):
 		'ChartSpec : IDRow NameRow WinPosRow viewLimRow zFacRow scrRow treeNodeRow fstTarRow fstTransRow viewObjRow visRow machRow sviewSCluster ssIdHWRow decompRow fstDataRow updateRow crfilnumRow usrSSTEORow disImpRow pmodelCluster smTypeRow suppVarSizingRow'
 		p[0] = [p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8],p[9],p[10],p[11],p[12],p[13],p[14],p[15],p[16],p[17],p[18],p[19],p[20],p[21],p[22]]
 	
@@ -459,8 +466,12 @@ class LSParser:
 		p[0] = Node(p[1],None,p[2])
 		
 	def p_sviewSCluster(self,p):
-		'sviewSCluster : SUBVIEWS LFLBR x1Row y1Row zFacRow RFLBR'
-		p[0] = Node("SubviewS",[p[3],p[4],p[5]])
+		'''sviewSCluster : SUBVIEWS LFLBR x1Row y1Row zFacRow RFLBR
+                                 | empty'''
+                if len(p) == 7:
+                    p[0] = Node("SubviewS",[p[3],p[4],p[5]])
+                else:
+                    p[0] = Node('SubviewS', None, '')
 	
 	def p_x1Row(self,p):
 		'''x1Row : X1 FLOAT
@@ -503,8 +514,12 @@ class LSParser:
 			p[0] = Node('updateMethod',None,'')
 	
 	def p_crfilnumRow(self,p):
-		'crfilnumRow : CHARTFILENUMBER INTEGER'
-		p[0] = Node(p[1],None,p[2])
+		'''crfilnumRow : CHARTFILENUMBER INTEGER
+                               | empty'''
+                if len(p) == 3:
+                    p[0] = Node(p[1],None,p[2])
+                else:
+                    p[0] = Node('chartFileNumber', None, '')
 		
 	def p_usrSSTEORow(self,p):
 		'''usrSSTEORow : USERSPECIFIEDSTATETRANSITIONEXECUTIONORDER INTEGER
