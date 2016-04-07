@@ -283,6 +283,7 @@ int main(int argc, char* argv[]) {
 	// 	cout<<"|=====|"<<endl;
 	// cout<<"-------"<<endl;
 
+    int refine_threshold = 10;
 	// bool should_refine;
 	RepPoint* curItrRepPoint;
 	while(!ItrStack->empty()){
@@ -291,6 +292,14 @@ int main(int argc, char* argv[]) {
 		
 		curItrRepPoint = ItrStack->top();
 		ItrStack->pop();
+
+		if(curItrRepPoint->getRefineTime()>refine_threshold){
+			ofstream resultStream;
+			resultStream.open("Result.dat");
+			resultStream << "0" << endl;
+			resultStream.close();
+			exit(-1);
+		}
 
 		cout<<"========================POP 1 REP POINT, VERFICATION PROCESS START=================================="<<endl;
 
@@ -382,8 +391,8 @@ int main(int argc, char* argv[]) {
                 guards_hit = guards(modeSimulated, ptLower, ptUpper);
                 if(!guards_hit.empty()){
          //        	if(i==0){
-         //        		should_refine = true;
-    					// break;
+         //        		// should_refine = true;
+    					// continue;
          //        	}
                 	cout << "GUARD SATISFIED: " << i << endl;
                     guardSet->addGuards(guards_hit);
@@ -453,12 +462,11 @@ int main(int argc, char* argv[]) {
 			delete curItrRepPoint;
 		}
 		else if(traceSafeFlag == 1){
-			int ifnextSet=0;
 			cout<< "Tube Safe! Check if there is transition for next mode\n";
 			TraceTube.push_back(simulationTube);
 			// guardSet->parseGuardsTube("guard.dat");
 
-			ifnextSet = guardSet->getNextSetStack(ItrStack,curItrRepPoint);
+			int ifnextSet = guardSet->getNextSetStack(ItrStack,curItrRepPoint);
 
 			if (!ifnextSet){
 				cout << "No more transitions" << endl;
@@ -651,6 +659,7 @@ vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, in
 	
 	int block_size;
 	double val, start, step_size;
+	int num_thick_dim = 0;
 	for(int i=1; i<=dimensions; i++){
 		has_width = ptLower->getCoordinate(i)!=ptUpper->getCoordinate(i);
 		if(!has_width){
@@ -662,13 +671,15 @@ vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, in
 		else{
 			start = ptLower->getCoordinate(i);
 			step_size = (ptUpper->getCoordinate(i)-ptLower->getCoordinate(i))/(n-1);
-			block_size = (int) pow(n, i-1);
+			// block_size = (int) pow(n, i-1);
+			block_size = (int) pow(n, num_thick_dim);
 			for(int j=0, pt_i=0; j<num_pts; pt_i++){
 				val = start + (pt_i%n)*step_size;
 				for(int k=0; k<block_size; k++, j++){
 					pts[j]->setCoordinate(i, val);
 				}
 			}
+			num_thick_dim++;
 		}
 	}
 

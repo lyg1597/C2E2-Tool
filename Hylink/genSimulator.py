@@ -22,7 +22,7 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
     # Obtain and parse variables
     vars = []
     for var in hybrid_rep.vars:
-        if (var.scope != 'OUTPUT_DATA' and 'dot' not in var.name and 
+        if (var.scope == 'LOCAL_DATA' and 'dot' not in var.name and 
                 'clock' not in var.name):
             vars.append(var.name)
 

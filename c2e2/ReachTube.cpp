@@ -852,7 +852,6 @@ class InitialSet* ReachTube::getNextSet(){
 
 
 int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* parentRepPoint){
-
 	std::vector<int> modesInSet;
 	class Point* parentPoint;
 	double* parentDeltaArray;
@@ -862,14 +861,11 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 	int refinetime = parentRepPoint->getRefineTime();
 	int initMode;
 
-
-
 	if (parentRepPoint->getParentState()!=NULL){
 		parentPoint = parentRepPoint->getParentState();
 		parentDeltaArray = parentRepPoint->getParentDeltaArray();
 		initMode = parentRepPoint->getParentMode();
 	}
-
 	else{
 		parentPoint = parentRepPoint->getState();
 		parentDeltaArray = parentRepPoint->getDeltaArray();
@@ -888,12 +884,10 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 		*(matrix+i) = 0;
 	}
 
-
-	for(modeIndex=mode.size()-1;modeIndex>=0;modeIndex--){
-
+	for(modeIndex=mode.size()-1; modeIndex>=0; modeIndex--){
 		tempMode = mode.at(modeIndex);
 		int foundFlag = 0;
-		for(int j=0;j < modesInSet.size(); j++){
+		for(int j=0; j<modesInSet.size(); j++){
 			if(tempMode == modesInSet.at(j)){
 				foundFlag = 1;
 			}
@@ -901,7 +895,6 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 		if(foundFlag == 0){
 			modesInSet.push_back(tempMode);
 		}
-
 	}
 
 	//cout<<"Number of next set is "<<modesInSet.size()<<endl;
@@ -909,12 +902,8 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 		return 0;
 
 	for(modeIndex = 0; modeIndex < modesInSet.size(); modeIndex++){
-		
-
 		tempMode = modesInSet.at(modeIndex);
-
-		class InitialSet* TempToBeAdded = new InitialSet();
-
+		InitialSet* TempToBeAdded = new InitialSet();
 		int indexDimension;
 
 		for(indexDimension=1;indexDimension<=dimensions; indexDimension++){
@@ -929,28 +918,22 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 			*(matrix+(2*(indexDimension-1)+1)*dimensions+(indexDimension-1)) = 1;
 		}
 
-		class LinearSet* modeLinear = new LinearSet();
+		LinearSet* modeLinear = new LinearSet();
 		modeLinear->setDimensions(dimensions);
 		modeLinear->setNumEqns(2*dimensions);
 		modeLinear->setB(b);
 		modeLinear->setMatrix(matrix);
 		
 		//cout<<"Start to collect next rep Point"<<endl;
-
 		tempStack = modeLinear->getCoverStack(deltaArray, tempMode, refinetime);
 
 		//cout<<"Done collecting next guard"<<endl;
 		//cout<<"Check if next set is empty"<< tempStack->empty()<<endl;
 		while(!tempStack->empty()){
-
 			tempRepPoint = tempStack->top();
 			tempStack->pop();
-			
 			tempPoint = new Point(*tempRepPoint->getState());
-			
 			int curMode = tempMode;
-
-			
 			if(checkIntersection(curMode, tempPoint, deltaArray)){
 				double tmin = getMinTime(curMode, tempPoint, deltaArray);
 				tempPoint->setCoordinate(0,tmin);
@@ -959,7 +942,6 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 				tempRepPoint->setState(tempPoint);
 				//cout<<"Start to verify next rep Point"<<endl;
 				delete tempPoint;
-
 				tempRepPoint->setDimension(dimensions);
 				tempRepPoint->setDeltaArray(deltaArray);
 				tempRepPoint->setParentState(parentPoint);
