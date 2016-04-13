@@ -690,7 +690,7 @@ class HyIR:
             str1 = "    LHSGE"+str(numberOfAnds)+" = "+self.generateInvariantCode(child1, 0)+";\n"
             str2 = "    RHSGE"+str(numberOfAnds)+" = "+self.generateInvariantCode(child2, 0)+";\n"
             str3 = "    evalE"+str(numberOfAnds)+" = LHSGE"+str(numberOfAnds)+" - RHSGE"+str(numberOfAnds)+";\n"
-            str4 = "    SATE"+str(numberOfAnds)+" = not (evalE"+str(numberOfAnds)+" "+ExpressionNode.value+" 0);\n"
+            str4 = "    SATE"+str(numberOfAnds)+" = evalE"+str(numberOfAnds)+" "+ExpressionNode.value+" 0;\n"
 
             # if (ExpressionNode.value == '>=') | (ExpressionNode.value == '>'):
             #     str4 = "    SATE"+str(numberOfAnds)+" = not (evalE"+str(numberOfAnds)+" < 0);\n"

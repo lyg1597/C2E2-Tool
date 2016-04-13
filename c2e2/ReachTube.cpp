@@ -421,9 +421,7 @@ void ReachTube::printGuards(){
 }
 
 void ReachTube::printReachTube(char const* filename, int flag){
-
 	ofstream invFile;
-
 	if(flag == 0){
 		invFile.open(filename);
 		invFile << " " << reachTubeMode << endl;
@@ -434,16 +432,12 @@ void ReachTube::printReachTube(char const* filename, int flag){
 			invFile << " % mode " << reachTubeMode << endl;
 		}
 	}
-
 	if(flag == 2){
 		if(lowerBound.size()>=1){
 			invFile.open(filename, ios::app);
 			invFile << " % mode " << reachTubeMode << " unsafe"<< endl;
 		}
 	}
-
-
-
 //	invFile << " " << reachTubeMode << endl;
 
 	int iterator,i;
@@ -464,7 +458,6 @@ void ReachTube::printReachTube(char const* filename, int flag){
 	}
 
 	invFile.close();
-
 }
 
 int ReachTube::getGuardMode(int index){

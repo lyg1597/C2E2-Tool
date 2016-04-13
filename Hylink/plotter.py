@@ -1018,7 +1018,10 @@ def plotMultipleModesV3(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
   if len(listofunsafetube)==0:
     plotstring+='\n'
   else:
-    plotstring+=',"" u '
+    if len(tubeorder)==0:
+      plotstring+='plot "-" u '
+    else:
+      plotstring+=',"" u '
     plotstring+=str(varPlotTuple[0]+1)
     plotstring+=':'
     plotstring+=str(varPlotTuple[1]+1)

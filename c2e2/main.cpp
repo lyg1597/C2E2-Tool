@@ -571,7 +571,6 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 		simulationTube->setDimensions(dimensions);
 		simulationTube->setMode(mode);
 		simulationTube->parseInvariantTube("SimuOutput", 0);
-
 		int size = simulationTube->getSize();
 		double *ptLower, *ptUpper;
 		vector< pair<int, double*> > guards_hit;
@@ -603,7 +602,7 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 			break;
 		}
 		else{
-			cout << "<SUKET ERROR> UNKNOWN TUBE IN HYBRID SIMULATION";
+			cout << "<SUKET ERROR> UNKNOWN TUBE IN HYBRID SIMULATION" << endl;
 		}
 
 		if(guards_hit.empty()){
