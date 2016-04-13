@@ -104,13 +104,11 @@ void CoverStack::refine(class RepPoint *P, int dimindex){
 	RP2->setDeltaArray(deltaArray);
 	RP2->setRefineTime(reft+1);
 	elems.push(RP2);
-
-
-	cout<<"|     |"<<endl;
-	cout<<"|     |"<<endl;
-	for(int i=0; i<elems.size();i++)
-		cout<<"|=====|"<<endl;
-	cout<<"-------"<<endl;
+	// cout<<"|     |"<<endl;
+	// cout<<"|     |"<<endl;
+	// for(int i=0; i<elems.size();i++)
+	// 	cout<<"|=====|"<<endl;
+	// cout<<"-------"<<endl;
 
 	return;
 	

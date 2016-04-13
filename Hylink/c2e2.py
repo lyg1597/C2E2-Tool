@@ -135,88 +135,16 @@ class Main(gtk.Window):
       if IsHierarchical(sf_tree):
         sf_tree=RemoveHierarchy(sf_tree)
       hybridRep=hyirMdl(sf_tree,fileChoosen)
-      # self.hybridRep.remove_nd()
-      # Processing the annotations now.
-      #Removed following block because of removal of annotations
-#       for annotString in hybridRep.annotationsRaw:
-#           print("annotation find")
-#           annotMode = 0; K = 2000; gamma = 0; annotType = 1;
-#           splits = string.split(annotString, ';')
-#           for substrings in splits:
-#               match = re.search('mode=.*',substrings)
-#               if not match == None:
-#                   matchedString = match.group(0)
-#                   modeString = matchedString[5:]
-#                   modeIndex=0;
-#                   for mode in hybridRep.automata[0].modes:
-#                       modeIndex+=1
-#                       if mode.name == modeString:
-#                           annotMode = modeIndex
-#                           #print " annot mode is " + str(annotMode)
-# #                  print "split and searched"
-# #                  print match.group(0);
-              
-#               match = re.search('k=.*',substrings)
-#               if not match == None:
-#                   Kstring = match.group(0)[2:]
-#                   K = float(Kstring)
-
-# #                  print " K string is " + Kstring + " k is "+ str(K)
-              
-#               match = re.search('gamma=.*',substrings)
-#               if not match == None:
-#                   GammaString = match.group(0)[6:]
-#                   gamma = float(GammaString) 
-
-# #                  print " gamma string is " + GammaString + " k is "+ str(gamma)
-              
-#               match = re.search('type=.*',substrings)
-#               if not match == None:
-#                   TypeString = match.group(0)[5:]
-#                   if TypeString == "exponential" :
-#                       annotType = 1
-#                   if TypeString == "linear" :
-#                       annotType = 2
-#                   if TypeString == "contraction" :
-#                       annotType = 3        
-# #              print "splitted"
-# #              print substrings
-              
-#           newAnnot = [annotMode,K,gamma,annotType]
-#           hybridRep.annotationsParsed += [newAnnot]
-#           print hybridRep.annotationsParsed 
-          
-#           print " sequence "
-#           print annotString
-
-#       if hybridRep.annotationsRaw == []:
-#         print ("No annotation find")
-#         annotMode = 1; K = 2000; gamma = 0; annotType = 1;
-#         #newAnnot = [annotMode,K,gamma,annotType]
-#         modenum = hybridRep.modesnumber()
-#         for i in range (modenum):
-#           newAnnot = [annotMode,K,gamma,annotType]
-#           hybridRep.annotationsParsed += [newAnnot]
-#           annotMode+=1
-
 
     dupHybridRep = hybridRep
     verifLog.info('Model is \n' + hybridRep.convertToXML([]))
     dupHybridRep.printHybridSimGuardsInvariants();
     dupHybridRep.printBloatedSimGuardsInvariants()
-    #dupHybridRep.convertToCAPD("simulator")
-    #generate default Simulator
     st = 'constant'
     path = '../Hylink/simulator.cpp'
     gen_simulator(path, dupHybridRep, step_type=st)
 
     parseTree,vList,mList=hybridRep.display_system("System")
-    
-    # if typeInput == 1 :
-    #     self.modelNotebook=ModelNotebook(parseTree,hybridRep,propList,vList,mList,paramList)
-    # if typeInput == 2 :
-    #     self.modelNotebook=ModelNotebook(parseTree,hybridRep,propList,vList,mList,None)
-
     self.modelNotebook=ModelNotebook(parseTree,hybridRep,propList,vList,mList,paramList)
 
     #self.ModelNotebook.propertiesFrame.disableAllButtons()
@@ -224,11 +152,9 @@ class Main(gtk.Window):
     subp1 = subprocess.Popen(arguments1)
     subp1.wait()
 
-  
     arguments = ['sh', './compileAndExecute', "0"]
     subp = subprocess.Popen(arguments,cwd="../wd/")
     subp.wait()
-
 
     self.fileLabel.hide()
     self.windowVBox.pack_start(self.modelNotebook)
@@ -256,12 +182,7 @@ class Main(gtk.Window):
       verifLog.info(' File opened ' + fileName)
       self.loadFileChoosen(fileName)
       self.fileOpened=True
-
-    #FIXME
-
-   
     openDialog.destroy()
-    
     
   """
     saveFileCallback
@@ -336,12 +257,6 @@ class ModelNotebook(gtk.Notebook):
     if paramsData:
       for i,param in enumerate(paramsData):
         self.paramData[i][1]=param
-    # if paramsData == None or paramsData == []:
-    #   self.paramData=[["Partitioning:","0.2",1],["Time-step:","0.01",1],["Time horizon:","10.0",1],
-    #                 ["Taylor model order:","10",1]]
-    # if paramsData != None and paramsData != []:
-    #   self.paramData=[["Partitioning:",paramsData[0],1],["Time-step:",paramsData[1],1],["Time horizon:",paramsData[2],1],
-    #                 ["Taylor model order:",paramsData[3],1]]
     self.parseTree=parseTree
     self.verifyingPlotting=[False]
     self.hybridRep=hybridRep
@@ -1129,651 +1044,6 @@ class PropertiesFrame(gtk.Frame):
   def simulateAbortBtnCallback(self, btn):
     self.executeBtnCallback(btn,1,"Simulate","Simulating","Simulated")
 
-
-  # """
-  #   verifyAbortBtnCallback
-  #   Description: handles the verification of the selected properties in the list
-  #   Inputs: btn - button clicked
-  #   Outputs: none
-  #   Return: none
-  # """
-  # #Change this to be verifyAbort instead
-  # def verifyAbortBtnCallback(self,btn):   
-  #   for param in self.paramData:
-  #     if param[2]==0:
-  #       return
-  #   if btn.get_label()=="Verify" and self.editListLen > 0:
-  #     os.system("./DeleteRE.sh")
-  #     self.enableWidgets(False)
-  #     for prop in self.propertyList:
-  #       prop=prop[0]
-  #       if prop.checked and prop.status=="Not verified":
-  #         global Global_Simulator
-  #         prop.simulator = Global_Simulator
-  #         prop.simulation  = 0
-
-
-  #         pathString="../wd/ReachSet"+prop.name
-          
-  #         verifLog.info(' Verification started - property name - ' + prop.name + ' - ')
-  #         verifLog.info(' Property - initial set - ' + prop.initialSetStr + ' - unsafe set - ' + prop.unsafeSetStr + ' - ')
-          
-  #         prop.reachSetPath=pathString
- 
-  #         # Here we will print the entire file where the file is automatically generated
-  #         c2e2String = ""
-  #         c2e2String+= "dimensions=\""+str(len(self.varList))+"\"\n"
-  #         c2e2String+= "modes=\""+str(len(self.modeList))+"\"\n"
-  #         c2e2String+= "simulator=\"simu\"\n"
-          
-  #         initialSet = prop.initialSetParsed
-  #         unsafeSet = prop.unsafeSetParsed
-          
-  #         initialModeString = initialSet[0]
-  #         initialMatrix = initialSet[1]
-  #         initialB = initialSet[2]
-  #         initialIneqs = initialSet[3]
-          
-  #         unsafeMatrix = unsafeSet[0]
-  #         unsafeB = unsafeSet[1]
-  #         unsafeIneqs = unsafeSet[2]
-  #         initModeC2E2Rep = -1;
-  #         modesList = self.hybridRep.automata[0].modes
-  #         modeI = 0
-  #         for modeIndex in modesList:
-  #             modeI += 1
-  #             if(initialModeString == modeIndex.name):
-  #                 initModeC2E2Rep = modeI;
-          
-  #         c2e2String+= "init-mode=\""+str(initModeC2E2Rep)+"\"\n"
-  #         print(self.paramData)
-  #         taylor = self.paramData[3][1]
-  #         relerr = "0.000000001"
-  #         abserr = "0.0000000001"
-  #         thoriz = self.paramData[2][1]
-  #         tstep = self.paramData[1][1]
-  #         global Global_Refine
-  #         refine = str(Global_Refine)
-  #         delta = "0"
-  #         prop.paramData[0]=float(delta)
-  #         prop.paramData[1]=float(tstep)
-  #         prop.paramData[2]=float(thoriz)
-  #         prop.paramData[3]=float(taylor)
-  #         c2e2String+= "refine=\""+refine+"\"\n"
-  #         c2e2String+= "time-step=\""+tstep+"\"\n"
-  #         c2e2String+= "abs-error=\""+abserr+"\"\n"
-  #         c2e2String+= "rel-error=\""+relerr+"\"\n"
-  #         c2e2String+= "time-horizon=\""+thoriz+"\"\n"
-
-  #         c2e2String+= 'simuflag = "0"\n'
-
-          
-  #         verifLog.info(' partiotion - ' + delta + ' - time-step - ' + tstep + ' - time-horizon - ' + thoriz + ' - ')
-          
-  #         numInitEqns = len(initialIneqs)
-  #         c2e2String+= "init-eqns=\""+str(numInitEqns)+"\"\n"
-  #         c2e2String+= "init-matrix=["
-  #         commaCount = 0;
-  #         for j in range(0,numInitEqns):
-  #             multiplicity = 1;
-  #             rowMatrix = initialMatrix[j]
-  #             rowDir = initialIneqs[j][0]
-              
-  #             if rowDir == '>=':
-  #                 multiplicity = -1
-                  
-  #             for number in rowMatrix:
-  #                 if commaCount == 0:
-  #                     c2e2String += str(multiplicity*number)
-  #                     commaCount+=1
-  #                 else:
-  #                     c2e2String += ","+str(multiplicity*number)
-          
-  #         c2e2String += "]\n"
-  #         c2e2String += "init-b=["
-  #         commaCount = 0
-  #         for j in range(0,numInitEqns):
-  #             multiplicity = 1;
-  #             number = initialB[j][0]
-  #             rowDir = initialIneqs[j][0]
-              
-  #             if rowDir == '>=':
-  #                 multiplicity = -1
-              
-  #             if commaCount == 0:
-  #                 c2e2String += str(multiplicity*number)
-  #                 commaCount+=1
-  #             else:
-  #                 c2e2String += ","+str(multiplicity*number)
-          
-  #         c2e2String += "]\n"        
-              
-  #         numUnsafeEqns = len(unsafeIneqs)
-  #         c2e2String+= "unsafe-eqns=\""+str(numUnsafeEqns)+"\"\n"
-  #         c2e2String+= "unsafe-matrix=["
-  #         commaCount = 0;
-  #         for j in range(0,numUnsafeEqns):
-  #             multiplicity = 1;
-  #             rowMatrix = unsafeMatrix[j]
-  #             rowDir = unsafeIneqs[j][0]
-              
-  #             if rowDir == '>=':
-  #                 multiplicity = -1
-                  
-  #             for number in rowMatrix:
-  #                 if commaCount == 0:
-  #                     c2e2String += str(multiplicity*number)
-  #                     commaCount+=1
-  #                 else:
-  #                     c2e2String += ","+str(multiplicity*number)
-          
-  #         c2e2String += "]\n"
-  #         c2e2String += "unsafe-b=["
-  #         commaCount = 0
-  #         for j in range(0,numUnsafeEqns):
-  #             multiplicity = 1;
-  #             number = unsafeB[j][0]
-  #             rowDir = unsafeIneqs[j][0]
-              
-  #             if rowDir == '>=':
-  #                 multiplicity = -1
-              
-  #             if commaCount == 0:
-  #                 c2e2String += str(multiplicity*number)
-  #                 commaCount+=1
-  #             else:
-  #                 c2e2String += ","+str(multiplicity*number)
-          
-  #         c2e2String += "]\n"
-       
-
-  #         mode_num  = 1
-  #         if len(self.hybridRep.annotationsParsed) == len(self.modeList) :
-  #             for array in self.hybridRep.annotationsParsed :
-  #                 c2e2String+= "annotation-mode=\""+str(array[0])+"\"\n"
-  #                 if array[3] == 1 or array[3] == 3 :
-  #                     c2e2String+= "annotation-type=\"contraction\"\n"
-  #                 if array[3] == 2 :
-  #                     c2e2String+= "annotation-type=\"linear\"\n"
-  #                 c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
-  #                 c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-  #                 if (Global_Linear):
-  #                     filename = ""
-  #                     filename +="../wd/jacobiannature"
-  #                     filename += str(mode_num)
-  #                     filename +=".txt"
-  #                     fid = open(filename,'r').read().split('\n')
-  #                     numofvar = int(fid[0])
-  #                     #print numofvar
-  #                     listofvar = []
-  #                     for i in range (numofvar):
-  #                       listofvar.append(fid[i+1])
-  #                     #rint listofvar
-  #                     equationpos = 1+numofvar
-  #                     numofeq = int(fid[equationpos])
-  #                     equationpos+=1
-  #                     listofeq = []
-  #                     for i in range (numofeq):
-  #                       listofeq.append(fid[equationpos+i])
-  #                     #print listofeq
-  #                     codestring = "def jcalc("
-  #                     codestring += "listofvar, "
-  #                     codestring += "listvalue"
-  #                     codestring+='):\n'
-  #                     codestring+=" for i in range (len(listofvar)):\n"
-  #                     codestring+="   temp = listofvar[i]\n"
-  #                     codestring+="   rightside = '='+str(listvalue[i])\n"
-  #                     codestring+="   exec(temp+rightside)\n"
-  #                     codestring+=" ret = []\n"
-  #                     for i in range (numofeq):
-  #                       codestring+=" "
-  #                       codestring+=listofeq[i]
-  #                       codestring+='\n'
-  #                       codestring+=' ret.append(Entry)\n'
-  #                     codestring+=' return ret'
-  #                     #print(codestring)
-  #                     exec(codestring)
-  #                     Constant_Jacobian = jcalc(listofvar,np.ones((1,numofvar))[0])
-  #                     Constant_Jacobian = np.reshape(Constant_Jacobian,(numofvar,numofvar))
-  #                     gamma_rate = la.eigvals(Constant_Jacobian).real
-  #                     array[2] = max(gamma_rate)
-  #                     if abs(max(gamma_rate)) < 0.00001:
-  #                       array[2] = 0                   
-  #                     array[1] = la.norm(Constant_Jacobian)
-  #                 c2e2String+= "k=\""+str(array[1])+"\"\n"
-  #                 c2e2String+= "gamma=\""+str(array[2])+"\"\n"
-  #                 c2e2String+= "is_linear=\""+str(Global_Linear)+"\"\n"
-  #                 mode_num = mode_num+1
-          
-  #         else:
-  #             i = 0
-  #             while i < len(self.modeList) :
-  #                 c2e2String+= "annotation-mode=\""+str(i+1)+"\"\n"
-  #                 c2e2String+= "annotation-type=\"contraction\"\n"
-  #                 c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
-  #                 c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-  #                 c2e2String+= "k=\"1.1\"\n"
-  #                 c2e2String+= "gamma=\"0.0\"\n"
-  #                 i+=1   
-        
-
-            
-  #         c2e2String+= "visualize all to ReachSet"+prop.name+"\n"
-          
-  #         filenamestring = "ReachSet"+prop.name
-  #         os.system("rm ../wd/"+filenamestring)
-  #         writer = open("../wd/Configuration-C2E2","w")
-  #         writer.write(c2e2String)
-  #         writer.close()
-          
-  #         # arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
-  #         # subp1 = subprocess.Popen(arguments1); 
-    
-  #         arguments = ['sh', './ExecuteC2E2']
-  #         self.subp = subprocess.Popen(arguments,cwd="../wd/",preexec_fn=os.setsid)
-
-  #         #Might need a variable here to check if the process was aborted
-  #         while self.subp.poll() == None:
-  #             prop.status="Verifying"
-  #             self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #             while gtk.events_pending():
-  #               gtk.main_iteration()
-  #             time.sleep(0.5) 
-  #             if not self.subp.poll()==None:
-  #               break
-
-  #             prop.status="Verifying."
-  #             self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #             while gtk.events_pending():
-  #               gtk.main_iteration()
-  #             time.sleep(0.5) 
-  #             if not self.subp.poll()==None:
-  #               break
-
-  #             prop.status="Verifying.."
-  #             self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #             while gtk.events_pending():
-  #               gtk.main_iteration()
-  #             time.sleep(0.5) 
-  #             if not self.subp.poll()==None:
-  #               break
-
-  #             prop.status="Verifying..."
-  #             self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #             while gtk.events_pending():
-  #               gtk.main_iteration()
-  #             time.sleep(0.5)
-  #             if not self.subp.poll()==None:
-  #               break
-
-    
-  #         checkfilename = "../wd/ReachSet"+prop.name
-
-  #         self.subp=None
-  #         if self.abortedVerifying==False:
-  #           prop.status="Verified"
-  #           with open("../wd/Result.dat",'r') as f:
-  #             res=f.readline()
-  #             print "This is the result read " + res
-  #             res = int(res)
-  #             print "This is the result read " + str(res)
-  #             if res<0:
-  #               prop.verifResult="Unsafe"
-  #             elif res==0:
-  #               prop.verifResult="Unknown"
-  #             else:
-  #               if os.stat(checkfilename).st_size == 0:
-  #                 prop.verifResult="ERROR"
-  #               else:
-  #                 prop.verifResult="Safe"
-  #           prop.newTabPixbuf=gtk.gdk.pixbuf_new_from_file("./Resources/newTab.png").scale_simple(16,16,
-  #                                                          gtk.gdk.INTERP_HYPER)
-  #           prop.reachSetPath=pathString
-            
-  #           verifLog.info(' Verification Result Returned - ' + prop.verifResult + ' - ')
-            
-  #           self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #         else:
-  #           self.abortedVerifying=False
-  #           prop.status="Not verified"
-            
-  #           verifLog.info(' Verification Aborted ')
-
-  #           self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #           print("Breaking")
-  #           break;
-
-  #     self.enableWidgets(True)
-  #     self.notebook.set_current_page(self.notebook.get_current_page())
-
-  #   else:
-  #     #Note that I will have race conditions here regardless unless I have a lock
-  #     if not self.subp==None:
-  #       print("Here!",self.subp.pid)
-  #       parent=psutil.Process(self.subp.pid)
-  #       for child in parent.children(recursive=True):
-  #         child.kill()
-  #       parent.kill()
-  #     self.abortedVerifying=True
-  #     verifLog.info(' Verification completely aborted ')
-  
-  # def simulateAbortBtnCallback(self,btn):
-  #   for param in self.paramData:
-  #     if param[2]==0:
-  #       return
-  #   if btn.get_label()=="Simulate" and self.editListLen > 0:
-  #     os.system("./DeleteRE.sh")
-  #     self.enableWidgetsSimulate(False)
-  #     for prop in self.propertyList:
-  #       prop=prop[0]
-  #       if prop.checked and prop.status=="Not verified":
-  #         global Global_Simulator
-  #         prop.simulator = Global_Simulator
-  #         prop.simulation  = 1
-
-  #         pathString="../wd/ReachSet"+prop.name
-          
-  #         verifLog.info(' Verification started - property name - ' + prop.name + ' - ')
-  #         verifLog.info(' Property - initial set - ' + prop.initialSetStr + ' - unsafe set - ' + prop.unsafeSetStr + ' - ')
-          
-  #         prop.reachSetPath=pathString
- 
-  #         # Here we will print the entire file where the file is automatically generated
-  #         c2e2String = ""
-  #         c2e2String+= "dimensions=\""+str(len(self.varList))+"\"\n"
-  #         c2e2String+= "modes=\""+str(len(self.modeList))+"\"\n"
-  #         c2e2String+= "simulator=\"simu\"\n"
-          
-  #         initialSet = prop.initialSetParsed
-  #         unsafeSet = prop.unsafeSetParsed
-          
-  #         initialModeString = initialSet[0]
-  #         initialMatrix = initialSet[1]
-  #         initialB = initialSet[2]
-  #         initialIneqs = initialSet[3]
-          
-  #         unsafeMatrix = unsafeSet[0]
-  #         unsafeB = unsafeSet[1]
-  #         unsafeIneqs = unsafeSet[2]
-  #         initModeC2E2Rep = -1;
-  #         modesList = self.hybridRep.automata[0].modes
-  #         modeI = 0
-  #         for modeIndex in modesList:
-  #             modeI += 1
-  #             if(initialModeString == modeIndex.name):
-  #                 initModeC2E2Rep = modeI;
-          
-  #         c2e2String+= "init-mode=\""+str(initModeC2E2Rep)+"\"\n"
-  #         print(self.paramData)
-  #         taylor = self.paramData[3][1]
-  #         relerr = "0.000000001"
-  #         abserr = "0.0000000001"
-  #         thoriz = self.paramData[2][1]
-  #         tstep = self.paramData[1][1]
-  #         global Global_Refine
-  #         refine = str(Global_Refine)
-  #         delta = "0"
-  #         prop.paramData[0]=float(delta)
-  #         prop.paramData[1]=float(tstep)
-  #         prop.paramData[2]=float(thoriz)
-  #         prop.paramData[3]=float(taylor)
-  #         c2e2String+= "refine=\""+refine+"\"\n"
-  #         c2e2String+= "time-step=\""+tstep+"\"\n"
-  #         c2e2String+= "abs-error=\""+abserr+"\"\n"
-  #         c2e2String+= "rel-error=\""+relerr+"\"\n"
-  #         c2e2String+= "time-horizon=\""+thoriz+"\"\n"
-
-  #         c2e2String+= 'simuflag = "1"\n'
-
-          
-  #         verifLog.info(' partiotion - ' + delta + ' - time-step - ' + tstep + ' - time-horizon - ' + thoriz + ' - ')
-          
-  #         numInitEqns = len(initialIneqs)
-  #         c2e2String+= "init-eqns=\""+str(numInitEqns)+"\"\n"
-  #         c2e2String+= "init-matrix=["
-  #         commaCount = 0;
-  #         for j in range(0,numInitEqns):
-  #             multiplicity = 1;
-  #             rowMatrix = initialMatrix[j]
-  #             rowDir = initialIneqs[j][0]
-              
-  #             if rowDir == '>=':
-  #                 multiplicity = -1
-                  
-  #             for number in rowMatrix:
-  #                 if commaCount == 0:
-  #                     c2e2String += str(multiplicity*number)
-  #                     commaCount+=1
-  #                 else:
-  #                     c2e2String += ","+str(multiplicity*number)
-          
-  #         c2e2String += "]\n"
-  #         c2e2String += "init-b=["
-  #         commaCount = 0
-  #         for j in range(0,numInitEqns):
-  #             multiplicity = 1;
-  #             number = initialB[j][0]
-  #             rowDir = initialIneqs[j][0]
-              
-  #             if rowDir == '>=':
-  #                 multiplicity = -1
-              
-  #             if commaCount == 0:
-  #                 c2e2String += str(multiplicity*number)
-  #                 commaCount+=1
-  #             else:
-  #                 c2e2String += ","+str(multiplicity*number)
-          
-  #         c2e2String += "]\n"        
-              
-  #         numUnsafeEqns = len(unsafeIneqs)
-  #         c2e2String+= "unsafe-eqns=\""+str(numUnsafeEqns)+"\"\n"
-  #         c2e2String+= "unsafe-matrix=["
-  #         commaCount = 0;
-  #         for j in range(0,numUnsafeEqns):
-  #             multiplicity = 1;
-  #             rowMatrix = unsafeMatrix[j]
-  #             rowDir = unsafeIneqs[j][0]
-              
-  #             if rowDir == '>=':
-  #                 multiplicity = -1
-                  
-  #             for number in rowMatrix:
-  #                 if commaCount == 0:
-  #                     c2e2String += str(multiplicity*number)
-  #                     commaCount+=1
-  #                 else:
-  #                     c2e2String += ","+str(multiplicity*number)
-          
-  #         c2e2String += "]\n"
-  #         c2e2String += "unsafe-b=["
-  #         commaCount = 0
-  #         for j in range(0,numUnsafeEqns):
-  #             multiplicity = 1;
-  #             number = unsafeB[j][0]
-  #             rowDir = unsafeIneqs[j][0]
-              
-  #             if rowDir == '>=':
-                  # multiplicity = -1
-              
-  #             if commaCount == 0:
-  #                 c2e2String += str(multiplicity*number)
-  #                 commaCount+=1
-  #             else:
-  #                 c2e2String += ","+str(multiplicity*number)
-          
-  #         c2e2String += "]\n"
-       
-
-  #         mode_num  = 1
-  #         if len(self.hybridRep.annotationsParsed) == len(self.modeList) :
-  #             for array in self.hybridRep.annotationsParsed :
-  #                 c2e2String+= "annotation-mode=\""+str(array[0])+"\"\n"
-  #                 if array[3] == 1 or array[3] == 3 :
-  #                     c2e2String+= "annotation-type=\"contraction\"\n"
-  #                 if array[3] == 2 :
-  #                     c2e2String+= "annotation-type=\"linear\"\n"
-  #                 c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
-  #                 c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-  #                 if (Global_Linear):
-  #                     filename = ""
-  #                     filename +="../wd/jacobiannature"
-  #                     filename += str(mode_num)
-  #                     filename +=".txt"
-  #                     fid = open(filename,'r').read().split('\n')
-  #                     numofvar = int(fid[0])
-  #                     #print numofvar
-  #                     listofvar = []
-  #                     for i in range (numofvar):
-  #                       listofvar.append(fid[i+1])
-  #                     #rint listofvar
-  #                     equationpos = 1+numofvar
-  #                     numofeq = int(fid[equationpos])
-  #                     equationpos+=1
-  #                     listofeq = []
-  #                     for i in range (numofeq):
-  #                       listofeq.append(fid[equationpos+i])
-  #                     #print listofeq
-  #                     codestring = "def jcalc("
-  #                     codestring += "listofvar, "
-  #                     codestring += "listvalue"
-  #                     codestring+='):\n'
-  #                     codestring+=" for i in range (len(listofvar)):\n"
-  #                     codestring+="   temp = listofvar[i]\n"
-  #                     codestring+="   rightside = '='+str(listvalue[i])\n"
-  #                     codestring+="   exec(temp+rightside)\n"
-  #                     codestring+=" ret = []\n"
-  #                     for i in range (numofeq):
-  #                       codestring+=" "
-  #                       codestring+=listofeq[i]
-  #                       codestring+='\n'
-  #                       codestring+=' ret.append(Entry)\n'
-  #                     codestring+=' return ret'
-  #                     #print(codestring)
-  #                     exec(codestring)
-  #                     Constant_Jacobian = jcalc(listofvar,np.ones((1,numofvar))[0])
-  #                     Constant_Jacobian = np.reshape(Constant_Jacobian,(numofvar,numofvar))
-  #                     gamma_rate = la.eigvals(Constant_Jacobian).real
-  #                     array[2] = max(gamma_rate)
-  #                     if abs(max(gamma_rate)) < 0.00001:
-  #                       array[2] = 0                   
-  #                     array[1] = la.norm(Constant_Jacobian)
-  #                 c2e2String+= "k=\""+str(array[1])+"\"\n"
-  #                 c2e2String+= "gamma=\""+str(array[2])+"\"\n"
-  #                 c2e2String+= "is_linear=\""+str(Global_Linear)+"\"\n"
-  #                 mode_num = mode_num+1
-          
-  #         else:
-  #             i = 0
-  #             while i < len(self.modeList) :
-  #                 c2e2String+= "annotation-mode=\""+str(i+1)+"\"\n"
-  #                 c2e2String+= "annotation-type=\"contraction\"\n"
-  #                 c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
-  #                 c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-  #                 c2e2String+= "k=\"1.1\"\n"
-  #                 c2e2String+= "gamma=\"0.0\"\n"
-  #                 i+=1   
-        
-
-            
-  #         c2e2String+= "visualize all to ReachSet"+prop.name+"\n"
-          
-  #         filenamestring = "ReachSet"+prop.name
-  #         os.system("rm ../wd/"+filenamestring)
-  #         writer = open("../wd/Configuration-C2E2","w")
-  #         writer.write(c2e2String)
-  #         writer.close()
-          
-  #         # arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
-  #         # subp1 = subprocess.Popen(arguments1); 
-    
-  #         arguments = ['sh', './ExecuteC2E2']
-  #         self.subp = subprocess.Popen(arguments,cwd="../wd/",preexec_fn=os.setsid)
-
-  #         #Might need a variable here to check if the process was aborted
-  #         while self.subp.poll() == None:
-  #             prop.status="Simulating"
-  #             self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #             while gtk.events_pending():
-  #               gtk.main_iteration()
-  #             time.sleep(0.5) 
-  #             if not self.subp.poll()==None:
-  #               break
-
-  #             prop.status="Simulating."
-  #             self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #             while gtk.events_pending():
-  #               gtk.main_iteration()
-  #             time.sleep(0.5) 
-  #             if not self.subp.poll()==None:
-  #               break
-
-  #             prop.status="Simulating.."
-  #             self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #             while gtk.events_pending():
-  #               gtk.main_iteration()
-  #             time.sleep(0.5) 
-  #             if not self.subp.poll()==None:
-  #               break
-
-  #             prop.status="Simulating..."
-  #             self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #             while gtk.events_pending():
-  #               gtk.main_iteration()
-  #             time.sleep(0.5)
-  #             if not self.subp.poll()==None:
-  #               break
-
-    
-  #         checkfilename = "../wd/ReachSet"+prop.name
-
-  #         self.subp=None
-  #         if self.abortedVerifying==False:
-  #           prop.status="Simulated"
-  #           with open("../wd/Result.dat",'r') as f:
-  #             res=f.readline()
-  #             print "This is the result read " + res
-  #             res = int(res)
-  #             print "This is the result read " + str(res)
-  #             if res<0:
-  #               prop.verifResult="Unsafe"
-  #             elif res==0:
-  #               prop.verifResult="Unknown"
-  #             else:
-  #               if os.stat(checkfilename).st_size == 0:
-  #                 prop.verifResult="ERROR"
-  #               else:
-  #                 prop.verifResult="Safe"
-  #           prop.newTabPixbuf=gtk.gdk.pixbuf_new_from_file("./Resources/newTab.png").scale_simple(16,16,
-  #                                                          gtk.gdk.INTERP_HYPER)
-  #           prop.reachSetPath=pathString
-            
-  #           verifLog.info(' Simulation Result Returned - ' + prop.verifResult + ' - ')
-            
-  #           self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #         else:
-  #           self.abortedVerifying=False
-  #           prop.status="Not Simulated"
-            
-  #           verifLog.info(' Simulation Aborted ')
-
-  #           self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-  #           print("Breaking")
-  #           break;
-
-  #     self.enableWidgetsSimulate(True)
-  #     self.notebook.set_current_page(self.notebook.get_current_page())
-  #   else:
-  #       #Note that I will have race conditions here regardless unless I have a lock
-  #       if not self.subp==None:
-  #         print("Here!",self.subp.pid)
-  #         parent=psutil.Process(self.subp.pid)
-  #         for child in parent.children(recursive=True):
-  #           child.kill()
-  #         parent.kill()
-  #       self.abortedVerifying=True
-  #       verifLog.info(' Verification completely aborted ')
-
   def executeBtnCallback(self,btn,flag,task_str,status_str,completed_str):
     for param in self.paramData:
       if param[2]==0:
@@ -1783,9 +1053,7 @@ class PropertiesFrame(gtk.Frame):
       self.enableWidgets(False, flag, task_str)
       for prop in self.propertyList:
         prop=prop[0]
-        verifLog.info('hi')
         if prop.checked and prop.status=='Not verified':
-          verifLog.info('inside if')
           global Global_Simulator
           prop.simulator = Global_Simulator
           prop.simulation  = flag
@@ -1841,11 +1109,9 @@ class PropertiesFrame(gtk.Frame):
           c2e2String+= "abs-error=\""+abserr+"\"\n"
           c2e2String+= "rel-error=\""+relerr+"\"\n"
           c2e2String+= "time-horizon=\""+thoriz+"\"\n"
-
           c2e2String+= 'simuflag = "'+str(flag)+'"'
 
-          
-          verifLog.info(' partiotion - ' + delta + ' - time-step - ' + tstep + ' - time-horizon - ' + thoriz + ' - ')
+          verifLog.info(' Partition - ' + delta + ' - Time step - ' + tstep + ' - Time horizon - ' + thoriz + ' - ')
           
           numInitEqns = len(initialIneqs)
           c2e2String+= "init-eqns=\""+str(numInitEqns)+"\"\n"
@@ -1923,12 +1189,7 @@ class PropertiesFrame(gtk.Frame):
           
           c2e2String += "]\n"
        
-
-          # mode_num  = 1
           for mode_num in range(1, len(self.modeList)+1):
-        # if len(self.hybridRep.annotationsParsed) == len(self.modeList) :
-        #   for array in self.hybridRep.annotationsParsed :
-            # c2e2String+= "annotation-mode=\""+str(array[0])+"\"\n"
             c2e2String+= "annotation-mode=\""+str(mode_num)+"\"\n"
             c2e2String+= "annotation-type=\"contraction\"\n"    
             # if array[3] == 1 or array[3] == 3 :
@@ -1944,18 +1205,15 @@ class PropertiesFrame(gtk.Frame):
                 filename +=".txt"
                 fid = open(filename,'r').read().split('\n')
                 numofvar = int(fid[0])
-                #print numofvar
                 listofvar = []
                 for i in range (numofvar):
                   listofvar.append(fid[i+1])
-                #rint listofvar
                 equationpos = 1+numofvar
                 numofeq = int(fid[equationpos])
                 equationpos+=1
                 listofeq = []
                 for i in range (numofeq):
                   listofeq.append(fid[equationpos+i])
-                #print listofeq
                 codestring = "def jcalc("
                 codestring += "listofvar, "
                 codestring += "listvalue"
@@ -1971,7 +1229,6 @@ class PropertiesFrame(gtk.Frame):
                   codestring+='\n'
                   codestring+=' ret.append(Entry)\n'
                 codestring+=' return ret'
-                #print(codestring)
                 exec(codestring)
                 Constant_Jacobian = jcalc(listofvar,np.ones((1,numofvar))[0])
                 Constant_Jacobian = np.reshape(Constant_Jacobian,(numofvar,numofvar))
@@ -1986,21 +1243,7 @@ class PropertiesFrame(gtk.Frame):
             c2e2String+= "k=\""+str(k)+"\"\n"
             c2e2String+= "gamma=\""+str(gamma)+"\"\n"
             c2e2String+= "is_linear=\""+str(Global_Linear)+"\"\n"
-            # mode_num = mode_num+1
-          
-          # else:
-          #     i = 0
-          #     while i < len(self.modeList) :
-          #         c2e2String+= "annotation-mode=\""+str(i+1)+"\"\n"
-          #         c2e2String+= "annotation-type=\"contraction\"\n"
-          #         c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
-          #         c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-          #         c2e2String+= "k=\"1.1\"\n"
-          #         c2e2String+= "gamma=\"0.0\"\n"
-          #         i+=1   
-        
 
-            
           c2e2String+= "visualize all to ReachSet"+prop.name+"\n"
           
           filenamestring = "ReachSet"+prop.name
@@ -2009,9 +1252,6 @@ class PropertiesFrame(gtk.Frame):
           writer.write(c2e2String)
           writer.close()
           
-          # arguments1 = ['mv', 'Configuration-C2E2', '../wd/']
-          # subp1 = subprocess.Popen(arguments1); 
-    
           arguments = ['sh', './ExecuteC2E2']
           self.subp = subprocess.Popen(arguments,cwd="../wd/",preexec_fn=os.setsid)
 

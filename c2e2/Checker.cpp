@@ -257,7 +257,9 @@ int Checker::check(class ReachTube* invariantTube, class LinearSet* unsafeSet){
 		PtL = invariantTube->getLowerBound(iterator);
 
 		checkIntersection = unsafeSet->hasIntersection(PtL, PtU);
-
+		// cout << "PtL: "; PtL->print();
+		// cout << "PtU: "; PtU->print();
+		// cout << "Has intersection: " << checkIntersection << endl;
 		if(checkIntersection == 1){
 			// Check for 2^n possibilities!
 			bool UBP, LBP;

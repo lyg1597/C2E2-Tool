@@ -34,6 +34,7 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include <string>
 #include <sstream>
@@ -258,9 +259,6 @@ int main(int argc, char* argv[]) {
 	tmp.open(visuFileName);
 	tmp.close();
 
-	// typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
-	// typedef bool (*inv_fn)(int, double *, double *);
-
 	typedef vector<pair<NNC_Polyhedron, int> > (*guard_fn)(int, double *, double *);
 	typedef bool (*inv_fn)(int, double *, double *);
 
@@ -277,14 +275,8 @@ int main(int argc, char* argv[]) {
 
 
     cout << "Stack size: " << ItrStack->size() << endl;
-	// cout<<"|     |"<<endl;
-	// cout<<"|     |"<<endl;
-	// for(int i=0; i<ItrStack->size();i++)
-	// 	cout<<"|=====|"<<endl;
-	// cout<<"-------"<<endl;
 
     int refine_threshold = 10;
-	// bool should_refine;
 	RepPoint* curItrRepPoint;
 	while(!ItrStack->empty()){
 		numberSamplePoints++;
@@ -303,11 +295,6 @@ int main(int argc, char* argv[]) {
 
 		cout<<"========================POP 1 REP POINT, VERFICATION PROCESS START=================================="<<endl;
 
-		// cout<<"|     |"<<endl;
-		// cout<<"|     |"<<endl;
-		// for(int i=0; i<ItrStack->size();i++)
-		// 	cout<<"|=====|"<<endl;
-		// cout<<"-------"<<endl;
 		curItrRepPoint->print();
 	    cout << "Current stack size: " << ItrStack->size() << endl;
 		
@@ -367,8 +354,6 @@ int main(int argc, char* argv[]) {
 		simulationTube->setMode(modeSimulated);
 		simulationTube->parseInvariantTube("reachtube.dat", 1);
 
-		// should_refine = false;
-
 		guardSet = new ReachTube();
 		guardSet->setDimensions(dimensions);
 
@@ -376,25 +361,29 @@ int main(int argc, char* argv[]) {
         double *ptLower, *ptUpper;
         vector< pair<NNC_Polyhedron, int> > guards_hit;
         bool hitGuard = false;
+        struct timeval inv_start, inv_end, guard_start, guard_end;
         for(int i=0; i<size; i++){
-        		cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
-        		cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
+        		// cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+        		// cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
                 ptLower = simulationTube->getLowerBound(i)->getCoordinates();
                 ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
                 
-                if(!invs(modeSimulated, ptLower, ptUpper)){
-                	cout << "INVARIANT NOT SATISFIED: " << i << endl << endl;
+                // gettimeofday(&inv_start, NULL);
+                bool inv_true = invs(modeSimulated, ptLower, ptUpper);
+       //          gettimeofday(&inv_end, NULL);
+		    	// cout << "INVARIANT TIME: "<< inv_end.tv_usec - inv_start.tv_usec << endl;
+                if(!inv_true){
+                	// cout << "INVARIANT NOT SATISFIED: " << i << endl << endl;
                     simulationTube->clear(i);
                     break;
                 }
 
+                // gettimeofday(&guard_start, NULL);
                 guards_hit = guards(modeSimulated, ptLower, ptUpper);
+                // gettimeofday(&guard_end, NULL);
+            	// cout << "GUARD TIME: "<< guard_end.tv_usec - guard_start.tv_usec << endl;
                 if(!guards_hit.empty()){
-         //        	if(i==0){
-         //        		// should_refine = true;
-    					// continue;
-         //        	}
-                	cout << "GUARD SATISFIED: " << i << endl;
+                	// cout << "GUARD SATISFIED: " << i << endl;
                     guardSet->addGuards(guards_hit);
                     hitGuard = true;
                 }
@@ -402,28 +391,16 @@ int main(int argc, char* argv[]) {
                     simulationTube->clear(i);
                     break;
                 }
-                cout << endl;
+                // cout << endl;
         }
 
-		guardSet->printGuards();
+		// guardSet->printGuards();
 
-		// system("./invariants");
-		// system("./guards");
-
-		/*cout<<"Inv && guard Done! Stop running to check file"<<endl;
-		sleep(5);*/
-
-		//Step4. Check unsafe 
-		// class ReachTube* invariantTube = new ReachTube();
-		// invariantTube->setDimensions(dimensions);
-		// invariantTube->setMode(modeSimulated);
-		// invariantTube->parseInvariantTube("invariant.dat");
 		traceSafeFlag = checkVerify->check(simulationTube, unsafeSet);
 
-		// if(traceSafeFlag == 0 || should_refine){
 		if(traceSafeFlag == 0){
-			//Tube unknow, trace to the origin and refine immedately 
-			cout << " Tube unknown! Start to Refine\n";
+			//Tube unknown, trace to the origin and refine immedately 
+			cout << " Tube unknown! Start to refine\n";
 			TraceTube.clear();
 			int i;
 			double* originDeltaArray;
@@ -464,7 +441,6 @@ int main(int argc, char* argv[]) {
 		else if(traceSafeFlag == 1){
 			cout<< "Tube Safe! Check if there is transition for next mode\n";
 			TraceTube.push_back(simulationTube);
-			// guardSet->parseGuardsTube("guard.dat");
 
 			int ifnextSet = guardSet->getNextSetStack(ItrStack,curItrRepPoint);
 
@@ -476,9 +452,6 @@ int main(int argc, char* argv[]) {
 			}
 			delete curItrRepPoint;
 			delete guardSet;
-			// guardSet = new ReachTube();
-			// guardSet->setDimensions(dimensions);
-
 		}
 		else if(traceSafeFlag == -1){
 			cout<<"Tube Unsafe, Break"<<endl;
@@ -598,7 +571,6 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 		simulationTube->setDimensions(dimensions);
 		simulationTube->setMode(mode);
 		simulationTube->parseInvariantTube("SimuOutput", 0);
-
 		int size = simulationTube->getSize();
 		double *ptLower, *ptUpper;
 		vector< pair<int, double*> > guards_hit;
@@ -630,7 +602,7 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 			break;
 		}
 		else{
-			cout << "<SUKET ERROR> UNKNOWN TUBE IN HYBRID SIMULATION";
+			cout << "<SUKET ERROR> UNKNOWN TUBE IN HYBRID SIMULATION" << endl;
 		}
 
 		if(guards_hit.empty()){

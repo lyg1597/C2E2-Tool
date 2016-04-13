@@ -421,9 +421,7 @@ void ReachTube::printGuards(){
 }
 
 void ReachTube::printReachTube(char const* filename, int flag){
-
 	ofstream invFile;
-
 	if(flag == 0){
 		invFile.open(filename);
 		invFile << " " << reachTubeMode << endl;
@@ -434,16 +432,12 @@ void ReachTube::printReachTube(char const* filename, int flag){
 			invFile << " % mode " << reachTubeMode << endl;
 		}
 	}
-
 	if(flag == 2){
 		if(lowerBound.size()>=1){
 			invFile.open(filename, ios::app);
 			invFile << " % mode " << reachTubeMode << " unsafe"<< endl;
 		}
 	}
-
-
-
 //	invFile << " " << reachTubeMode << endl;
 
 	int iterator,i;
@@ -464,7 +458,6 @@ void ReachTube::printReachTube(char const* filename, int flag){
 	}
 
 	invFile.close();
-
 }
 
 int ReachTube::getGuardMode(int index){
@@ -950,11 +943,11 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 				ItrStack->push(tempRepPoint);
 
 				cout<<"====Find next region Information, recalculating deltaArray, generate one RepPoint, Push to stack===="<<endl;
-				cout<<"|     |"<<endl;
-				cout<<"|     |"<<endl;
-				for(int i=0; i<ItrStack->size();i++)
-					cout<<"|=====|"<<endl;
-				cout<<"-------"<<endl;
+				// cout<<"|     |"<<endl;
+				// cout<<"|     |"<<endl;
+				// for(int i=0; i<ItrStack->size();i++)
+				// 	cout<<"|=====|"<<endl;
+				// cout<<"-------"<<endl;
 			}
 		}
 	}
