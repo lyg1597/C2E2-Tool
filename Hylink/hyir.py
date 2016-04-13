@@ -204,27 +204,37 @@ class HyIR:
         varList = self.varList
 
         for m in self.automata[0].modes:
+          inv_eqs = []
+          inv_vars = []
           for inv in m.invs:
             i = inv.raw
             print '\n' + 'invariant equation: ' + i
             aMatrix, bMatrix, eqMatrix = exprParser.parseSet(varList,i,2)
-            invariants[m.id].append(convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix))
+            i_eqs, i_vars = convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, True)
+            inv_eqs.append(i_eqs)
+            inv_vars = [v for v in varList if v in i_vars or v in inv_vars]
+          invariants[m.id] = (inv_eqs, inv_vars)
+
+            # invariants[m.id].append(convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, True))
 
         for t in self.automata[0].trans:
           g = t.guard.raw
           print '\n' + 'guard equation: ' + g
           aMatrix, bMatrix, eqMatrix = exprParser.parseSet(varList,g,1)
-          g_eqs = convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix)
+          g_eqs, g_vars = convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, True)
           action_eqs = []
           for act in t.actions:
             a = act.raw.replace('=','==')
             print '\n' + 'action equation: ' + a
             aMatrix, bMatrix, eqMatrix = exprParser.parseSet(varList,a,1)
-            action_eqs.extend(convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix))
-          guardResets[(t.src,t.dest)].append((g_eqs, action_eqs))
+            action_eqs.extend(convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, False))
+          guardResets[(t.src,t.dest)].append((g_eqs, action_eqs, g_vars))
 
         self.guardResets = dict(guardResets)
         self.invariants = dict(invariants)
+
+        print self.guardResets
+        print self.invariants
 
     def printBloatedSimGuardsInvariants(self):
         print ''
@@ -242,7 +252,8 @@ class HyIR:
         codeString+="#include <typeinfo>\n\n"
         codeString+="using namespace std;\n\n"
         codeString+=self.printPoly()
-        codeString+=self.constructBox()
+        codeString+=self.getMultFactor()
+        # codeString+=self.constructBox()
         checkFile.write(codeString)
         checkFile.close()
 
@@ -252,22 +263,28 @@ class HyIR:
     def printInvariants(self, file_name):
         checkFile = open(file_name, "a")
         codeString="extern \"C\" bool invariantSatisfied(int curMode, double *ptLower, double *ptUpper){\n"
-        varList = ["Simu_time"]+self.varList
-        for i,var in enumerate(varList):
-            codeString+="  Variable "+var+"("+str(i)+");\n"
-        codeString+="\n"
-
-        codeString+="  Pointset_Powerset<NNC_Polyhedron> box(constructBox(ptLower, ptUpper));\n"
-        codeString+="  Pointset_Powerset<NNC_Polyhedron> invariant("+str(len(varList))+",UNIVERSE);\n"
+        # varList = ["Simu_time"]+self.varList
+        # for i,var in enumerate(varList):
+        #     codeString+="  Variable "+var+"("+str(i)+");\n"
+        # codeString+="\n"
+        codeString+="  NNC_Polyhedron box_poly;\n"
+        codeString+="  double mult_factor = getMultFactor(ptLower, ptUpper);\n"
         for mode in self.invariants:
+            eqs, varsUsed = self.invariants[mode]
             codeString+="  if(curMode=="+str(mode+1)+"){\n"
+            # for i,var in enumerate(varsUsed):
+            #     codeString+="    Variable "+var+"("+str(i)+");\n"
+            # codeString+="\n"
+            codeString+= self.constructBoxHelper(varsUsed, "", 4)
+            codeString+="    Pointset_Powerset<NNC_Polyhedron> box(box_poly);\n"
+            codeString+="    Pointset_Powerset<NNC_Polyhedron> invariant("+str(len(varsUsed))+",UNIVERSE);\n"
             codeString+="    Pointset_Powerset<NNC_Polyhedron> curInv;\n"
             codeString+="    NNC_Polyhedron curPoly;\n"
             codeString+="    Constraint_System cs;\n"
-            for eq in self.invariants[mode]:
-                codeString+="    curInv = Pointset_Powerset<NNC_Polyhedron>("+str(len(varList))+",EMPTY);\n\n"
+            for eq in eqs:
+                codeString+="    curInv = Pointset_Powerset<NNC_Polyhedron>("+str(len(varsUsed))+",EMPTY);\n\n"
                 for i,disjunct in enumerate(eq):
-                    codeString+="    cs.set_space_dimension("+str(len(varList))+");\n"
+                    codeString+="    cs.set_space_dimension("+str(len(varsUsed))+");\n"
                     codeString+="    cs.insert("+disjunct+");\n"
                     codeString+="    curPoly = NNC_Polyhedron(cs);\n"
                     codeString+="    curInv.add_disjunct(curPoly);\n"
@@ -283,50 +300,81 @@ class HyIR:
     def printGuardResets(self, file_name):
         varList = ["Simu_time"]+self.varList
         resetVarList = [var+"_new" for var in varList]
+        tempVarList = [var+"_temp" for var in varList]
         checkFile = open(file_name, "a")
         codeString="extern \"C\" vector<pair<NNC_Polyhedron, int> > hitsGuard(int curMode, double *ptLower, double *ptUpper){\n"
         codeString+="  vector<pair<NNC_Polyhedron, int> > toRet;\n"
-        codeString+="  NNC_Polyhedron box = constructBox(ptLower, ptUpper);\n"
-
-        for i,var in enumerate(varList):
-            codeString+="  Variable "+var+"("+str(i)+");\n"
-        codeString+="\n"
-
+        codeString+="  NNC_Polyhedron box_poly;\n"
+        codeString+="  double mult_factor = getMultFactor(ptLower, ptUpper);\n"
+        # codeString+="  NNC_Polyhedron box = constructBox(ptLower, ptUpper);\n"
+        # for i,var in enumerate(varList):
+        #     codeString+="  Variable "+var+"("+str(i)+");\n"
+        # codeString+="\n"
         for key in self.guardResets:
             init = str(key[0]+1)
             dest = str(key[1]+1)
-            for a,b in self.guardResets[key]:
+            for a,b,varsUsed in self.guardResets[key]:
                 codeString+="  if(curMode=="+init+"){\n"
+                codeString+= self.constructBoxHelper(varsUsed, "", 4)
                 codeString+="    Constraint_System cs;\n"
-                space_dim = 2*len(varList) if b else len(varList)
-                codeString+="    cs.set_space_dimension("+str(space_dim)+");\n"  
-                if b:
-                    remVars = set(varList)
-                    for i,var in enumerate(resetVarList):
-                        codeString+="    Variable "+var+"("+str(len(varList)+i)+");\n"
-                    codeString+="    box.add_space_dimensions_and_embed("+str(len(varList))+");\n"
-                    for reset_eq in b:
-                        if "<=" in reset_eq: delim = "<="
-                        if ">=" in reset_eq: delim = ">="
-                        eq_split = reset_eq.split(delim)
-                        var, eq_rhs = eq_split[0], eq_split[1]
-                        codeString+="    cs.insert("+var+"_new"+delim+eq_rhs+");\n"
-                        remVars.discard(var)
-                    for var in remVars:
-                        codeString+="    cs.insert("+var+"_new"+"=="+var+");\n"
+                # space_dim = 2*len(varList) if b else len(varList)
+                # codeString+="    cs.set_space_dimension("+str(space_dim)+");\n"
+                codeString+="    cs.set_space_dimension("+str(len(varsUsed))+");\n"    
+                # if b:
+                #     remVars = set(varList)
+                #     for i,var in enumerate(resetVarList):
+                #         codeString+="    Variable "+var+"("+str(len(varList)+i)+");\n"
+                #     codeString+="    box.add_space_dimensions_and_embed("+str(len(varList))+");\n"
+                #     for reset_eq in b:
+                #         if "<=" in reset_eq: delim = "<="
+                #         if ">=" in reset_eq: delim = ">="
+                #         eq_split = reset_eq.split(delim)
+                #         var, eq_rhs = eq_split[0], eq_split[1]
+                #         codeString+="    cs.insert("+var+"_new"+delim+eq_rhs+");\n"
+                #         remVars.discard(var)
+                #     for var in remVars:
+                #         codeString+="    cs.insert("+var+"_new"+"=="+var+");\n"
     
                 for guard_eq in a:
                     codeString+="    cs.insert("+guard_eq+");\n"
                     
                 codeString+="    NNC_Polyhedron guard(cs);\n"
-                codeString+="    if(!guard.is_disjoint_from(box)){\n"
-                codeString+="      guard.intersection_assign(box);\n"
+                codeString+="    if(!guard.is_disjoint_from(box_poly)){\n"
+                codeString+= self.constructBoxHelper(tempVarList, "_temp", 6)
+                codeString+="      Constraint_System cs_gd;\n"
+                space_dim = 2*len(varList) if b else len(varList)
+                codeString+="      cs_gd.set_space_dimension("+str(space_dim)+");\n"
+                
+                if b:
+                    remVars = set(varList)
+                    for i,var in enumerate(resetVarList):
+                        codeString+="      Variable "+var+"("+str(len(varList)+i)+");\n"
+                    codeString+="      box_poly.add_space_dimensions_and_embed("+str(len(varList))+");\n"
+                    for reset_eq in b:
+                        if "<=" in reset_eq: delim = "<="
+                        if ">=" in reset_eq: delim = ">="
+                        eq_split = reset_eq.split(delim)
+                        var, eq_rhs = eq_split[0], eq_split[1]
+                        for v in self.varList:
+                            eq_rhs = eq_rhs.replace(v, v+"_temp")
+                        codeString+="      cs_gd.insert("+var+"_new"+delim+eq_rhs+");\n"
+                        remVars.discard(var)
+                    for var in remVars:
+                        codeString+="      cs_gd.insert("+var+"_new"+"=="+var+"_temp);\n"
+                
+                for guard_eq in a:
+                    for v in self.varList:
+                        guard_eq = guard_eq.replace(v, v+"_temp")
+                    codeString+="      cs_gd.insert("+guard_eq+");\n"
+                codeString+="      NNC_Polyhedron guard_reset(cs_gd);\n"
+                codeString+="      guard_reset.intersection_assign(box_poly);\n"
+
                 if b:
                     codeString+="      Variables_Set vars;\n"
                     for var in varList:
-                        codeString+="      vars.insert("+var+");\n"
-                    codeString+="      guard.remove_space_dimensions(vars);\n"
-                codeString+="      toRet.push_back(make_pair(guard,"+dest+"));\n"
+                        codeString+="      vars.insert("+var+"_temp);\n"
+                    codeString+="      guard_reset.remove_space_dimensions(vars);\n"
+                codeString+="      toRet.push_back(make_pair(guard_reset,"+dest+"));\n"
                 codeString+="    }\n"
                 codeString+="  }\n"
 
@@ -335,18 +383,46 @@ class HyIR:
         checkFile.write(codeString)
         checkFile.close()
 
-
-    def constructBox(self):
+    def constructBox(self, varList=None):
+        if not varList:
+            varList=["Simu_time"]+self.varList
         codeString="NNC_Polyhedron constructBox(double *ptLower, double *ptUpper){\n"
-        varList = ["Simu_time"]+self.varList
+        codeString+="  NNC_Polyhedron box_poly;\n"
+        codeString+="  double mult_factor = getMultFactor(ptLower, ptUpper);\n"
+        codeString+=self.constructBoxHelper(varList, "", 2)
+        codeString+="  return box_poly;\n"
+        codeString+="}\n\n"
+        return codeString
+
+    def constructBoxHelper(self, varList, suffix, indentationLevel):
+        indentation = " "*indentationLevel
+        allVars = ["Simu_time"]+self.varList
+
+        codeString=indentation+"Constraint_System cs_box;\n"        
         for i,var in enumerate(varList):
-            codeString+="  Variable "+var+"("+str(i)+");\n"
+            codeString+=indentation+"Variable "+var+"("+str(i)+");\n"
         codeString+="\n"
 
-        codeString+="  char buffer[100];\n\n"
+        for i,v in enumerate(allVars):
+            if v+suffix in varList:
+                var = v+suffix
+                codeString+=indentation+"if(ptLower["+str(i)+"]<ptUpper["+str(i)+"]){\n"
+                codeString+=indentation+"  cs_box.insert(mult_factor*"+var+">=mult_factor*ptLower["+str(i)+"]);\n"
+                codeString+=indentation+"  cs_box.insert(mult_factor*"+var+"<=mult_factor*ptUpper["+str(i)+"]);\n"
+                codeString+=indentation+"}\n"
+                codeString+=indentation+"else{\n"
+                codeString+=indentation+"  cs_box.insert(mult_factor*"+var+"<=mult_factor*ptLower["+str(i)+"]);\n"
+                codeString+=indentation+"  cs_box.insert(mult_factor*"+var+">=mult_factor*ptUpper["+str(i)+"]);\n"
+                codeString+=indentation+"}\n\n"
+        codeString+=indentation+"box_poly = NNC_Polyhedron(cs_box);\n"
+        return codeString
+
+    def getMultFactor(self):
+        codeString="double getMultFactor(double *ptLower, double *ptUpper){\n"
         codeString+="  int multiplier=0, tmp_mul, str_len;\n"
+        codeString+="  char buffer[100];\n"
         codeString+="  char *dot_loc;\n\n"
-        mulLoop="  for(int i=0; i<"+str(len(varList))+"; i++){\n"
+        mulLoop="  for(int i=0; i<"+str(len(self.varList)+1)+"; i++){\n"
         mulLoop+="    sprintf(buffer, \"%lf\", ptLower[i]);\n"
         mulLoop+="    str_len = strlen(buffer);\n"
         mulLoop+="    dot_loc = strchr(buffer,'.');\n"
@@ -360,19 +436,7 @@ class HyIR:
         codeString+=mulLoop
         mulLoop=mulLoop.replace('ptLower','ptUpper')
         codeString+=mulLoop
-
-        codeString+="  double mult_factor=pow(10,multiplier);\n"
-        codeString+="  Constraint_System cs_box;\n"
-        for i,var in enumerate(varList):
-            codeString+="  if(ptLower["+str(i)+"]<ptUpper["+str(i)+"]){\n"
-            codeString+="    cs_box.insert(mult_factor*"+var+">=mult_factor*ptLower["+str(i)+"]);\n"
-            codeString+="    cs_box.insert(mult_factor*"+var+"<=mult_factor*ptUpper["+str(i)+"]);\n"
-            codeString+="  }\n"
-            codeString+="  else{\n"
-            codeString+="    cs_box.insert(mult_factor*"+var+"<=mult_factor*ptLower["+str(i)+"]);\n"
-            codeString+="    cs_box.insert(mult_factor*"+var+">=mult_factor*ptUpper["+str(i)+"]);\n"
-            codeString+="  }\n\n"
-        codeString+="  return NNC_Polyhedron(cs_box);\n"
+        codeString+="  return pow(10,multiplier);\n"
         codeString+="}\n\n"
         return codeString
 
@@ -1128,8 +1192,11 @@ def hyirXML(fileName):
 
   return hybrid,propertyList
 
-def convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix):
+#Return varsUsed if flag is True
+def convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, varsUsedFlag):
     eqs = []
+    if varsUsedFlag:
+        varsUsed = []
     for a,b,eq in zip(aMatrix, bMatrix, eqMatrix):
         lhs = []
         for i,coeff in enumerate(a):
@@ -1138,8 +1205,14 @@ def convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix):
             elif coeff!=0:
                 lhs.append(str(coeff)+'*'+varList[i])
         eqs.append('+'.join(lhs)+str(eq[0])+str(b[0]))
+        if varsUsedFlag:
+            varsUsed = [varList[i] for i,coeff in enumerate(a) if varList[i] in varsUsed or coeff!=0 ]
     print eqs
-    return eqs                   
+    if varsUsedFlag:
+        print varsUsed
+        return eqs, varsUsed
+    else:
+        return eqs
         
 def separateAutomata(hyir):
     '''For a given hybrid intermediate representation (hyir), this function

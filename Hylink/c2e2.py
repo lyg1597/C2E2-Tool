@@ -1053,9 +1053,7 @@ class PropertiesFrame(gtk.Frame):
       self.enableWidgets(False, flag, task_str)
       for prop in self.propertyList:
         prop=prop[0]
-        verifLog.info('hi')
         if prop.checked and prop.status=='Not verified':
-          verifLog.info('inside if')
           global Global_Simulator
           prop.simulator = Global_Simulator
           prop.simulation  = flag

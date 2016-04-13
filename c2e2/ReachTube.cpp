@@ -950,11 +950,11 @@ int ReachTube::getNextSetStack(class CoverStack* ItrStack, class RepPoint* paren
 				ItrStack->push(tempRepPoint);
 
 				cout<<"====Find next region Information, recalculating deltaArray, generate one RepPoint, Push to stack===="<<endl;
-				cout<<"|     |"<<endl;
-				cout<<"|     |"<<endl;
-				for(int i=0; i<ItrStack->size();i++)
-					cout<<"|=====|"<<endl;
-				cout<<"-------"<<endl;
+				// cout<<"|     |"<<endl;
+				// cout<<"|     |"<<endl;
+				// for(int i=0; i<ItrStack->size();i++)
+				// 	cout<<"|=====|"<<endl;
+				// cout<<"-------"<<endl;
 			}
 		}
 	}

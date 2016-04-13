@@ -406,7 +406,10 @@ int LinearSet::hasIntersection(class Point* ptLower, class Point* ptUpper){
 	int i,j,k;
 
 	for(i=1;i<=dim;i++){
-		glp_set_col_bnds(feas, i, GLP_DB, ptLower->getCoordinate(i), ptUpper->getCoordinate(i));
+		if(ptLower->getCoordinate(i)==ptUpper->getCoordinate(i))
+			glp_set_col_bnds(feas, i, GLP_FX, ptLower->getCoordinate(i), ptUpper->getCoordinate(i));
+		else
+			glp_set_col_bnds(feas, i, GLP_DB, ptLower->getCoordinate(i), ptUpper->getCoordinate(i));
 	}
 
 	for(i=1;i<=numEq;i++){
@@ -428,18 +431,29 @@ int LinearSet::hasIntersection(class Point* ptLower, class Point* ptUpper){
 	glp_term_out(GLP_OFF);
 	glp_simplex(feas, NULL);
 	status = glp_get_status(feas);
-	if(status == GLP_INFEAS || status == GLP_NOFEAS || status == GLP_UNDEF){
-		glp_delete_prob(feas);
-		free(irow);free(icol);free(icoeffs);
-		return 0;
+	// cout << "Status: " << status << endl;
+
+	int has_sol;
+	if(status == GLP_INFEAS || status == GLP_NOFEAS){
+		// glp_delete_prob(feas);
+		// free(irow);free(icol);free(icoeffs);
+		has_sol = 0;
+	}
+	else if(status == GLP_UNDEF){
+		has_sol = -1;
+		cout << "ERROR: MALFORMED GLPK PROBLEM." << endl;
 	}
 	else{
-		double value = glp_get_obj_val(feas);
+		// double value = glp_get_obj_val(feas);
 		// cout << "The value of objective is " << value << endl;
-		glp_delete_prob(feas);
-		free(irow);free(icol);free(icoeffs);
-		return 1;
+		// glp_delete_prob(feas);
+		// free(irow);free(icol);free(icoeffs);
+		has_sol = 1;
 	}
+
+	glp_delete_prob(feas);
+	free(irow);free(icol);free(icoeffs);
+	return has_sol;
 }
 
 
