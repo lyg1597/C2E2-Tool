@@ -52,6 +52,7 @@ using namespace std;
 int hybridSimulationCover(Simulator *simulator, Checker *checker, LinearSet *unsafeSet, LinearSet *initialSet, int dimensions, int mode, char *file);
 int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSet, int dimensions, Point *origin, int mode, char *file);
 vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, int dimensions);
+Point* getPointFromPoly(NNC_Polyhedron poly, int dimensions);
 
 int main(int argc, char* argv[]) {
 	//clock_t begin = clock();
@@ -545,7 +546,8 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 	int isSafe = 1;
 	int traceSafeFlag;
 
-	typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
+	// typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
+	typedef vector<pair<NNC_Polyhedron, int> > (*guard_fn)(int, double *, double *);
 	typedef bool (*inv_fn)(int, double *, double *);
 	
 	guard_fn guards;
@@ -573,15 +575,15 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 		simulationTube->parseInvariantTube("SimuOutput", 0);
 		int size = simulationTube->getSize();
 		double *ptLower, *ptUpper;
-		vector< pair<int, double*> > guards_hit;
+		vector< pair<NNC_Polyhedron, int> > guards_hit;
 		for(int i=0; i<size; i++){
 			ptLower = simulationTube->getLowerBound(i)->getCoordinates();
 			ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
 			guards_hit = guards(mode, ptLower, ptUpper);
 			if(!guards_hit.empty()){
-				pair<int, double *> guard_taken = guards_hit[rand() % guards_hit.size()];
-				mode = guard_taken.first;
-				origin = new Point(dimensions+1, guard_taken.second);
+				pair<NNC_Polyhedron, int> guard_taken = guards_hit[rand() % guards_hit.size()];
+				mode = guard_taken.second;
+				origin = getPointFromPoly(guard_taken.first, dimensions);
 				simulationTube->clear(i+1);
 				break;
 			}
@@ -612,6 +614,32 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 	dlclose ( lib );
 	return isSafe;
 }
+
+Point* getPointFromPoly(NNC_Polyhedron poly, int dimensions){
+	cout << "Get Point" << endl;
+	Point *pt = new Point(dimensions+1);
+
+	Generator_System gs=poly.minimized_generators();
+	Generator_System::const_iterator k;
+	for(k=gs.begin();k!=gs.end();++k)
+	{
+		if(k->is_point())
+		{
+		 	double divisor=mpz_get_d(k->divisor().get_mpz_t());
+		  	int dim=int(k->space_dimension());
+		  	for(int j=0;j<dim;j++)
+		  	{
+		    	double dividend=mpz_get_d(k->coefficient(Variable(j)).get_mpz_t());
+		    	double num = dividend/divisor;
+		    	cout << j << ": " << num << endl;
+	    		pt->setCoordinate(j, num);
+		  	}
+		}
+	}
+	cout << "Return Point" << endl;
+	return pt;
+}
+
 
 vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, int dimensions){
 	int thick_dims = 0;

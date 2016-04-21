@@ -46,10 +46,13 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
         for dai in cur_mode.dais:
             if '_dot' in dai.raw:
                 # Split the equation and get lhs index
-                lhs, rhs = dai.raw.split('=')
+                # lhs, rhs = dai.raw.split('=')
+                lhs, rhs = str(dai.expr.lhs), dai.expr.rhs
                 lhs = lhs.split('_dot')[0] 
                 lhs_idx = vars.index(lhs)
-                rhs = rhs.strip()
+                # rhs = rhs.strip()
+                rhs = str(SymEq.convert_pow(rhs))
+                print 'rhs: ' + rhs
 
                 # Generate jacobian in correct order
                 orig_eqns.insert(lhs_idx,rhs)
@@ -83,7 +86,8 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
     # Include headers
     includes = ('# include <iostream>\n'
                 '# include <vector>\n'
-                '# include <boost/numeric/odeint.hpp>\n')
+                '# include <boost/numeric/odeint.hpp>\n'
+                '# include <math.h>\n')
 
     # Set namespaces
     namespace = ('using namespace std;\n'

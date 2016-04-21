@@ -1,3 +1,6 @@
+import sympy
+import re
+
 class Automaton:
     def __init__(self, name="default_automaton", modes=None, trans=None):
         self.name = name
@@ -130,12 +133,15 @@ class Invariant:
     def __init__(self, parsed=[], raw=""):
         self.parsed = parsed
         self.raw = raw
+        eqns = raw.split('||')
+        self.expr = [SymEq.construct_eqn(eqn, False, True) for eqn in eqns]
         
 class DAI:
     '''Deterministic algebraic inequalities'''
     def __init__(self,parsed,raw=""):
         self.parsed = parsed
         self.raw = raw
+        self.expr = SymEq.construct_eqn(raw, True, False)
         
 class Transition:
     '''guard - node representing the guard for the transition
@@ -165,8 +171,88 @@ class Guard:
     def __init__(self, parsed, raw):
         self.parsed = parsed
         self.raw = raw
+        eqns = raw.split('&&')
+        self.expr = [SymEq.construct_eqn(eqn, False, True) for eqn in eqns]
         
 class Action:
     def __init__(self,parsed, raw):
         self.parsed = parsed
         self.raw = raw
+        self.expr = SymEq.construct_eqn(raw, True, True)
+
+class SymEq:
+    @staticmethod
+    def construct_eqn(eqn, is_eq, rationalize):
+        print 'Raw: ' + eqn
+        try:
+            if is_eq:
+                eqn_split = eqn.split('=')
+                lhs, rhs = eqn_split[0], eqn_split[1]
+                eqn = sympy.Eq(sympy.sympify(lhs), sympy.sympify(rhs))
+            else:
+                eqn = sympy.sympify(eqn)
+        except SyntaxError:
+            print "Invalid expression."
+
+        if rationalize:
+            eqn = SymEq.rationalize(eqn)
+        print 'Eq: ' + str(eqn)
+        return eqn
+
+    def to_str(self):
+        return str(self.eqn)
+
+    @staticmethod
+    def rationalize(expr):
+        if expr.is_Relational:
+            return expr.func(SymEq.rationalize(expr.lhs), SymEq.rationalize(expr.rhs))
+
+        exp = 0
+        if expr.is_Add:
+            terms = expr.args
+        else:
+            terms = [expr]
+
+        for term in terms:
+            for unit in term.args:
+                if unit.is_Number:
+                    term_exp = len(str(float(unit)))-str(float(unit)).index('.')-1
+                    exp = max(term_exp, exp)
+
+        return expr*(10**exp)
+
+    @staticmethod
+    def convert_pow(expr):
+        pow_eq = str(SymEq.convert_pow_helper(expr))
+        pow_l = re.findall('(pow\(([a-zA-Z0-9]*), ([0-9]*)\))', pow_eq)
+        for pow_t, pow_b, pow_e in pow_l:
+            pow_eq = pow_eq.replace(pow_t, '*'.join([pow_b]*int(pow_e)))
+        return pow_eq
+
+    @staticmethod
+    def convert_pow_helper(expr):
+        if not expr.args:
+            return expr
+
+        conv_args = [SymEq.convert_pow_helper(arg) for arg in expr.args]
+        if expr.is_Pow:
+            return sympy.sympify('pow('+str(conv_args[0])+','+str(conv_args[1])+')')
+
+        return expr.func(*conv_args)
+
+    @staticmethod
+    def construct_invariant(guard):
+        inv_eqn = []
+        for eqn in guard.expr:
+            print 'Eqn is: ' + str(eqn)
+            if eqn.func==sympy.LessThan:
+                inv = sympy.GreaterThan(*eqn.args)
+            elif eqn.func==sympy.GreaterThan:
+                inv = sympy.LessThan(*eqn.args)    
+            elif eqn.func==sympy.StrictLessThan:
+                inv = sympy.StrictGreaterThan(*eqn.args)    
+            elif eqn.func==sympy.StrictGreaterThan:
+                inv = sympy.StrictLessThan(*eqn.args)
+            inv_eqn.append(inv)
+        inv_eqn = [str(inv) for inv in inv_eqn]
+        return Invariant(raw='||'.join(inv_eqn))

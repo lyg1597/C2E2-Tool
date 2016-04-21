@@ -323,29 +323,6 @@ void ReachTube::addGuards(vector<pair<NNC_Polyhedron,int> > guards){
 		poly = guards[i].first;
 		tempMode = guards[i].second;
 
-		// Generator_System gs=box.minimized_generators();
-		// Generator_System::const_iterator i;
-
-		// double divisor, dividend;
-		// int dim;
-		// cout << "BOX: " << endl;
-		// for(i=gs.begin();i!=gs.end();++i)
-		// {
-		// 	if((*i).is_point())
-		// 	{
-		// 	  divisor=mpz_get_d((*i).divisor().get_mpz_t());
-		// 	  dim=int((*i).space_dimension());
-		// 	  cout << "POINT: ";
-		// 	  for(int j=0;j<dim;j++)
-		// 	  {
-		// 	    dividend=mpz_get_d((*i).coefficient(Variable(j)).get_mpz_t());
-		// 	    cout<<dividend/divisor<<" ";
-		// 	  }
-		// 	  cout<<endl;
-		// 	}
-		// }
-		// cout << endl;
-
 		ptL = new Point(dimensions+1);
 		ptU = new Point(dimensions+1);
 		

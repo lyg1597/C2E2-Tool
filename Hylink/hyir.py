@@ -94,8 +94,10 @@ class HyIR:
     @staticmethod
     def construct_output_dict(mode, dais, dai_dict):
         for dai in dais:
-            lhs = dai.parsed.children[0].value
-            rhs = collapse(dai.parsed.children[1])
+            # lhs = dai.parsed.children[0].value
+            # rhs = collapse(dai.parsed.children[1])
+            lhs = str(dai.expr.lhs)
+            rhs = str(dai.expr.rhs)
             if not lhs.endswith('_dot'):
                 dai_dict[lhs] = rhs
             mode.add_dai(dai)
@@ -103,22 +105,34 @@ class HyIR:
     @staticmethod
     def replace_dais(mode, dai_dict):
         for dai in mode.dais:
-            lhs = dai.parsed.children[0].value
+            lhs = str(dai.expr.lhs)
             if lhs.endswith('_dot'):
-                HyIR.replace_dais_helper(dai.parsed, dai_dict)
-                dai.raw = collapse(dai.parsed)
-                dai.parsed = parse_action(dai.raw)[0]
+                free_syms = dai.expr.rhs.free_symbols
+                for var in free_syms:
+                    var_name = str(var)
+                    if var_name in dai_dict:
+                        dai.expr = dai.expr.func(dai.expr.lhs, dai.expr.rhs.subs(var, dai_dict[var_name]))
+                dai.raw = str(dai.expr)
 
-    @staticmethod
-    def replace_dais_helper(node, dai_dict):
-        if len(node.children)==0:
-            if str(node.value) in dai_dict:
-                node.value = '('+dai_dict[node.value]+')'
-        elif len(node.children)==1:
-            HyIR.replace_dais_helper(node.children[0], dai_dict)
-        elif len(node.children)==2:
-            HyIR.replace_dais_helper(node.children[0], dai_dict)
-            HyIR.replace_dais_helper(node.children[1], dai_dict)
+    # @staticmethod
+    # def replace_dais(mode, dai_dict):
+    #     for dai in mode.dais:
+    #         lhs = dai.parsed.children[0].value
+    #         if lhs.endswith('_dot'):
+    #             HyIR.replace_dais_helper(dai.parsed, dai_dict)
+    #             dai.raw = collapse(dai.parsed)
+    #             dai.parsed = parse_action(dai.raw)[0]
+
+    # @staticmethod
+    # def replace_dais_helper(node, dai_dict):
+    #     if len(node.children)==0:
+    #         if str(node.value) in dai_dict:
+    #             node.value = '('+dai_dict[node.value]+')'
+    #     elif len(node.children)==1:
+    #         HyIR.replace_dais_helper(node.children[0], dai_dict)
+    #     elif len(node.children)==2:
+    #         HyIR.replace_dais_helper(node.children[0], dai_dict)
+    #         HyIR.replace_dais_helper(node.children[1], dai_dict)
 
     def is_valid(self):
         if not self.variables.input==[]:
@@ -215,8 +229,6 @@ class HyIR:
             inv_vars = [v for v in varList if v in i_vars or v in inv_vars]
           invariants[m.id] = (inv_eqs, inv_vars)
 
-            # invariants[m.id].append(convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, True))
-
         for t in self.automata[0].trans:
           g = t.guard.raw
           print '\n' + 'guard equation: ' + g
@@ -236,13 +248,49 @@ class HyIR:
         print self.guardResets
         print self.invariants
 
-    def printBloatedSimGuardsInvariants(self):
-        print ''
-        print "Invariants: " + str(self.invariants)
-        print "Guard Resets: " + str(self.guardResets)
-        print ''
+    def printHybridSimGuardsInvariants(self):
+        self.printGuardsInvariants("hybridSimGI.cpp", True)
+        # file_name = "hybridSimGI.cpp"
+        # checkFile = open(file_name, "w")
+        # codeString ="#include <ppl.hh>\n"
+        # codeString+="#include <iostream>\n"
+        # codeString+="#include <utility>\n"
+        # codeString+="#include <vector>\n"
+        # codeString+="#include <fstream>\n"
+        # codeString+="#include <typeinfo>\n\n"
+        # codeString+="using namespace std;\n\n"
+        # codeString+=self.printPoly()
+        # codeString+=self.getMultFactorPt()
+        # codeString+=self.getMultFactor()
+        # # codeString+=self.constructBox()
+        # checkFile.write(codeString)
+        # checkFile.close()
 
-        file_name = "bloatedSimGI.cpp"
+        # self.printInvariants(file_name, True)
+        # self.printGuardResets(file_name, True)
+
+    def printBloatedSimGuardsInvariants(self):
+        self.printGuardsInvariants("bloatedSimGI.cpp", False)
+        # file_name = "bloatedSimGI.cpp"
+        # checkFile = open(file_name, "w")
+        # codeString ="#include <ppl.hh>\n"
+        # codeString+="#include <iostream>\n"
+        # codeString+="#include <utility>\n"
+        # codeString+="#include <vector>\n"
+        # codeString+="#include <fstream>\n"
+        # codeString+="#include <typeinfo>\n\n"
+        # codeString+="using namespace std;\n\n"
+        # codeString+=self.printPoly()
+        # codeString+=self.getMultFactorPt()
+        # codeString+=self.getMultFactor()
+        # # codeString+=self.constructBox()
+        # checkFile.write(codeString)
+        # checkFile.close()
+
+        # self.printInvariants(file_name, False)
+        # self.printGuardResets(file_name, False)
+
+    def printGuardsInvariants(self, file_name, is_hybrid):
         checkFile = open(file_name, "w")
         codeString ="#include <ppl.hh>\n"
         codeString+="#include <iostream>\n"
@@ -252,30 +300,25 @@ class HyIR:
         codeString+="#include <typeinfo>\n\n"
         codeString+="using namespace std;\n\n"
         codeString+=self.printPoly()
+        codeString+=self.getMultFactorPt()
         codeString+=self.getMultFactor()
         # codeString+=self.constructBox()
         checkFile.write(codeString)
         checkFile.close()
 
-        self.printInvariants(file_name)
-        self.printGuardResets(file_name)
+        self.printInvariants(file_name, is_hybrid)
+        self.printGuardResets(file_name, is_hybrid)
 
-    def printInvariants(self, file_name):
+
+    def printInvariants(self, file_name, is_hybrid):
         checkFile = open(file_name, "a")
         codeString="extern \"C\" bool invariantSatisfied(int curMode, double *ptLower, double *ptUpper){\n"
-        # varList = ["Simu_time"]+self.varList
-        # for i,var in enumerate(varList):
-        #     codeString+="  Variable "+var+"("+str(i)+");\n"
-        # codeString+="\n"
         codeString+="  NNC_Polyhedron box_poly;\n"
-        codeString+="  double mult_factor = getMultFactor(ptLower, ptUpper);\n"
+        codeString+="  double mult_factor = getMultFactor(" + ("ptUpper" if is_hybrid else "ptLower, ptUpper") + ");\n"
         for mode in self.invariants:
             eqs, varsUsed = self.invariants[mode]
             codeString+="  if(curMode=="+str(mode+1)+"){\n"
-            # for i,var in enumerate(varsUsed):
-            #     codeString+="    Variable "+var+"("+str(i)+");\n"
-            # codeString+="\n"
-            codeString+= self.constructBoxHelper(varsUsed, "", 4)
+            codeString+= self.constructBoxHelper(varsUsed, "", 4, is_hybrid)
             codeString+="    Pointset_Powerset<NNC_Polyhedron> box(box_poly);\n"
             codeString+="    Pointset_Powerset<NNC_Polyhedron> invariant("+str(len(varsUsed))+",UNIVERSE);\n"
             codeString+="    Pointset_Powerset<NNC_Polyhedron> curInv;\n"
@@ -290,14 +333,15 @@ class HyIR:
                     codeString+="    curInv.add_disjunct(curPoly);\n"
                     codeString+="    cs.clear();\n\n"
                 codeString+="    invariant.intersection_assign(curInv);\n\n"
-            codeString+="    return !(invariant.is_disjoint_from(box));\n"
+            if is_hybrid: codeString+="    return invariant.contains(box);\n"
+            else: codeString+="    return !(invariant.is_disjoint_from(box));\n"
             codeString+="  }\n"
         codeString+="  return true;\n"
         codeString+="}\n\n"
         checkFile.write(codeString)
         checkFile.close()
 
-    def printGuardResets(self, file_name):
+    def printGuardResets(self, file_name, is_hybrid):
         varList = ["Simu_time"]+self.varList
         resetVarList = [var+"_new" for var in varList]
         tempVarList = [var+"_temp" for var in varList]
@@ -305,42 +349,31 @@ class HyIR:
         codeString="extern \"C\" vector<pair<NNC_Polyhedron, int> > hitsGuard(int curMode, double *ptLower, double *ptUpper){\n"
         codeString+="  vector<pair<NNC_Polyhedron, int> > toRet;\n"
         codeString+="  NNC_Polyhedron box_poly;\n"
-        codeString+="  double mult_factor = getMultFactor(ptLower, ptUpper);\n"
-        # codeString+="  NNC_Polyhedron box = constructBox(ptLower, ptUpper);\n"
-        # for i,var in enumerate(varList):
-        #     codeString+="  Variable "+var+"("+str(i)+");\n"
-        # codeString+="\n"
+        codeString+="  double mult_factor = getMultFactor(" + ("ptUpper" if is_hybrid else "ptLower, ptUpper") + ");\n"
+        
         for key in self.guardResets:
             init = str(key[0]+1)
             dest = str(key[1]+1)
             for a,b,varsUsed in self.guardResets[key]:
                 codeString+="  if(curMode=="+init+"){\n"
-                codeString+= self.constructBoxHelper(varsUsed, "", 4)
+                codeString+= self.constructBoxHelper(varsUsed, "", 4, is_hybrid)
                 codeString+="    Constraint_System cs;\n"
-                # space_dim = 2*len(varList) if b else len(varList)
-                # codeString+="    cs.set_space_dimension("+str(space_dim)+");\n"
                 codeString+="    cs.set_space_dimension("+str(len(varsUsed))+");\n"    
-                # if b:
-                #     remVars = set(varList)
-                #     for i,var in enumerate(resetVarList):
-                #         codeString+="    Variable "+var+"("+str(len(varList)+i)+");\n"
-                #     codeString+="    box.add_space_dimensions_and_embed("+str(len(varList))+");\n"
-                #     for reset_eq in b:
-                #         if "<=" in reset_eq: delim = "<="
-                #         if ">=" in reset_eq: delim = ">="
-                #         eq_split = reset_eq.split(delim)
-                #         var, eq_rhs = eq_split[0], eq_split[1]
-                #         codeString+="    cs.insert("+var+"_new"+delim+eq_rhs+");\n"
-                #         remVars.discard(var)
-                #     for var in remVars:
-                #         codeString+="    cs.insert("+var+"_new"+"=="+var+");\n"
     
                 for guard_eq in a:
                     codeString+="    cs.insert("+guard_eq+");\n"
                     
                 codeString+="    NNC_Polyhedron guard(cs);\n"
-                codeString+="    if(!guard.is_disjoint_from(box_poly)){\n"
-                codeString+= self.constructBoxHelper(tempVarList, "_temp", 6)
+                if is_hybrid: codeString+="    if(guard.contains(box_poly)){\n"
+                else: codeString+="    if(!guard.is_disjoint_from(box_poly)){\n"
+                codeString+= self.constructBoxHelper(tempVarList, "_temp", 6, is_hybrid)
+
+                if is_hybrid and not b:
+                    codeString+="      toRet.push_back(make_pair(box_poly,"+dest+"));\n"
+                    codeString+="    }\n"
+                    codeString+="  }\n"
+                    continue
+
                 codeString+="      Constraint_System cs_gd;\n"
                 space_dim = 2*len(varList) if b else len(varList)
                 codeString+="      cs_gd.set_space_dimension("+str(space_dim)+");\n"
@@ -362,10 +395,11 @@ class HyIR:
                     for var in remVars:
                         codeString+="      cs_gd.insert("+var+"_new"+"=="+var+"_temp);\n"
                 
-                for guard_eq in a:
-                    for v in self.varList:
-                        guard_eq = guard_eq.replace(v, v+"_temp")
-                    codeString+="      cs_gd.insert("+guard_eq+");\n"
+                if not is_hybrid:
+                    for guard_eq in a:
+                        for v in self.varList:
+                            guard_eq = guard_eq.replace(v, v+"_temp")
+                        codeString+="      cs_gd.insert("+guard_eq+");\n"
                 codeString+="      NNC_Polyhedron guard_reset(cs_gd);\n"
                 codeString+="      guard_reset.intersection_assign(box_poly);\n"
 
@@ -394,8 +428,8 @@ class HyIR:
         codeString+="}\n\n"
         return codeString
 
-    def constructBoxHelper(self, varList, suffix, indentationLevel):
-        indentation = " "*indentationLevel
+    def constructBoxHelper(self, varList, suffix, indent, is_point):
+        indentation = " "*indent
         allVars = ["Simu_time"]+self.varList
 
         codeString=indentation+"Constraint_System cs_box;\n"        
@@ -406,24 +440,27 @@ class HyIR:
         for i,v in enumerate(allVars):
             if v+suffix in varList:
                 var = v+suffix
-                codeString+=indentation+"if(ptLower["+str(i)+"]<ptUpper["+str(i)+"]){\n"
-                codeString+=indentation+"  cs_box.insert(mult_factor*"+var+">=mult_factor*ptLower["+str(i)+"]);\n"
-                codeString+=indentation+"  cs_box.insert(mult_factor*"+var+"<=mult_factor*ptUpper["+str(i)+"]);\n"
-                codeString+=indentation+"}\n"
-                codeString+=indentation+"else{\n"
-                codeString+=indentation+"  cs_box.insert(mult_factor*"+var+"<=mult_factor*ptLower["+str(i)+"]);\n"
-                codeString+=indentation+"  cs_box.insert(mult_factor*"+var+">=mult_factor*ptUpper["+str(i)+"]);\n"
-                codeString+=indentation+"}\n\n"
+                if is_point:
+                    codeString+=indentation+"cs_box.insert(mult_factor*"+var+"==mult_factor*ptUpper["+str(i)+"]);\n"
+                else:
+                    codeString+=indentation+"if(ptLower["+str(i)+"]<ptUpper["+str(i)+"]){\n"
+                    codeString+=indentation+"  cs_box.insert(mult_factor*"+var+">=mult_factor*ptLower["+str(i)+"]);\n"
+                    codeString+=indentation+"  cs_box.insert(mult_factor*"+var+"<=mult_factor*ptUpper["+str(i)+"]);\n"
+                    codeString+=indentation+"}\n"
+                    codeString+=indentation+"else{\n"
+                    codeString+=indentation+"  cs_box.insert(mult_factor*"+var+"<=mult_factor*ptLower["+str(i)+"]);\n"
+                    codeString+=indentation+"  cs_box.insert(mult_factor*"+var+">=mult_factor*ptUpper["+str(i)+"]);\n"
+                    codeString+=indentation+"}\n\n"
         codeString+=indentation+"box_poly = NNC_Polyhedron(cs_box);\n"
         return codeString
 
-    def getMultFactor(self):
-        codeString="double getMultFactor(double *ptLower, double *ptUpper){\n"
+    def getMultFactorPt(self):
+        codeString="double getMultFactor(double *pt){\n"
         codeString+="  int multiplier=0, tmp_mul, str_len;\n"
         codeString+="  char buffer[100];\n"
         codeString+="  char *dot_loc;\n\n"
         mulLoop="  for(int i=0; i<"+str(len(self.varList)+1)+"; i++){\n"
-        mulLoop+="    sprintf(buffer, \"%lf\", ptLower[i]);\n"
+        mulLoop+="    sprintf(buffer, \"%lf\", pt[i]);\n"
         mulLoop+="    str_len = strlen(buffer);\n"
         mulLoop+="    dot_loc = strchr(buffer,'.');\n"
         mulLoop+="    if(dot_loc){\n"
@@ -434,8 +471,16 @@ class HyIR:
         mulLoop+="    }\n"
         mulLoop+="  }\n\n"
         codeString+=mulLoop
-        mulLoop=mulLoop.replace('ptLower','ptUpper')
-        codeString+=mulLoop
+        codeString+="  return multiplier;\n"
+        codeString+="}\n\n"
+        return codeString
+
+
+    def getMultFactor(self):
+        codeString="double getMultFactor(double *ptLower, double *ptUpper){\n"
+        codeString+="  int lowerMult = getMultFactor(ptLower);\n"
+        codeString+="  int upperMult = getMultFactor(ptUpper);\n"
+        codeString+="  int multiplier = lowerMult > upperMult ? lowerMult : upperMult;\n"
         codeString+="  return pow(10,multiplier);\n"
         codeString+="}\n\n"
         return codeString
@@ -463,272 +508,273 @@ class HyIR:
         codeString+="}\n\n"
         return codeString
 
-    def printHybridSimGuardsInvariants(self):
-        file_name = "hybridSimGI.cpp"
-        hybridSimFile = open(file_name,"w")
-        declarationsReqd = '''#include <iostream> \n#include <stdio.h> \n#include <vector> \n#include <utility> \nusing namespace std; \n\n'''
-        hybridSimFile.write(declarationsReqd)
-        hybridSimFile.close()
+    # def printHybridSimGuardsInvariants(self):
+        # file_name = "hybridSimGI.cpp"
+        # hybridSimFile = open(file_name,"w")
+        # declarationsReqd = '''#include <iostream> \n#include <stdio.h> \n#include <vector> \n#include <utility> \nusing namespace std; \n\n'''
+        # hybridSimFile.write(declarationsReqd)
+        # hybridSimFile.close()
 
-        self.printHybridSimInvariants(file_name);
-        self.printHybridSimGuardsResets(file_name);
+        # self.printHybridSimInvariants(file_name);
+        # self.printHybridSimGuardsResets(file_name);
 
-    def printHybridSimInvariants(self, file_name):
-        numVars=0;
-        for j in self.vars:
-            if j.scope == "LOCAL_DATA":
-                numVars = numVars+1
+
+    # def printHybridSimInvariants(self, file_name):
+    #     numVars=0;
+    #     for j in self.vars:
+    #         if j.scope == "LOCAL_DATA":
+    #             numVars = numVars+1
         
-        invariantFile = open(file_name,"a")
+    #     invariantFile = open(file_name,"a")
 
-        declaration = '''extern \"C\" bool invariantSatisfied(int curMode, double* ptLower, double *ptUpper){ \n'''
-        invariantFile.write(declaration)
+    #     declaration = '''extern \"C\" bool invariantSatisfied(int curMode, double* ptLower, double *ptUpper){ \n'''
+    #     invariantFile.write(declaration)
         
-        currentMode = 0;
-        for mode in self.automata[0].modes:
+    #     currentMode = 0;
+    #     for mode in self.automata[0].modes:
 
-            currentMode += 1;
-            numAnds = 0
-            numOrs = 0
-            numMaxOrs = -1;
-            for j in mode.invs:
-                numAnds = numAnds + 1
-                numOrs = numberOfLogicalOper(j.parsed)
-                if numMaxOrs < numOrs:
-                    numMaxOrs = numOrs
+    #         currentMode += 1;
+    #         numAnds = 0
+    #         numOrs = 0
+    #         numMaxOrs = -1;
+    #         for j in mode.invs:
+    #             numAnds = numAnds + 1
+    #             numOrs = numberOfLogicalOper(j.parsed)
+    #             if numMaxOrs < numOrs:
+    #                 numMaxOrs = numOrs
             
-            codeString = "  if(curMode == "+str(currentMode)+"){\n"
+    #         codeString = "  if(curMode == "+str(currentMode)+"){\n"
             
-            '''Here, add the folowing things, the number of stuff you define is max of number of ors in
-            each of the logical operations '''
+    #         '''Here, add the folowing things, the number of stuff you define is max of number of ors in
+    #         each of the logical operations '''
             
-            for j in range(1,numMaxOrs+1):
-                codeString+= "    double RHSGE"+str(j)+";\n"
-                codeString+= "    double LHSGE"+str(j)+";\n"
-                codeString+= "    double evalE"+str(j)+";\n"
-                codeString+= "    bool SATE"+str(j)+";\n"
+    #         for j in range(1,numMaxOrs+1):
+    #             codeString+= "    double RHSGE"+str(j)+";\n"
+    #             codeString+= "    double LHSGE"+str(j)+";\n"
+    #             codeString+= "    double evalE"+str(j)+";\n"
+    #             codeString+= "    bool SATE"+str(j)+";\n"
             
-            for j in range(1,numAnds+1):
-                codeString+= "    bool SATEAND"+str(j)+";\n"
+    #         for j in range(1,numAnds+1):
+    #             codeString+= "    bool SATEAND"+str(j)+";\n"
                 
-            currIndex = 0;
-            numberOfOrs = 0;
-            for j in mode.invs:
-                numberOfOrs = numberOfLogicalOper(j.parsed)
-                currIndex+= 1
-                codeString+= self.generateCAPDInvCode(j.parsed, numberOfOrs)
-                codeString+= "    SATEAND"+str(currIndex)+" = "
-                for j in range(1,numberOfOrs+1):
-                    codeString+= "SATE"+str(j)+" || "
-                codeString+= "false;\n"
+    #         currIndex = 0;
+    #         numberOfOrs = 0;
+    #         for j in mode.invs:
+    #             numberOfOrs = numberOfLogicalOper(j.parsed)
+    #             currIndex+= 1
+    #             codeString+= self.generateCAPDInvCode(j.parsed, numberOfOrs)
+    #             codeString+= "    SATEAND"+str(currIndex)+" = "
+    #             for j in range(1,numberOfOrs+1):
+    #                 codeString+= "SATE"+str(j)+" || "
+    #             codeString+= "false;\n"
 
-            codeString+= "    if("            
-            for j in range(1,numAnds+1):
-                codeString+= " SATEAND"+str(j)+" &&"
-            codeString+= " true){\n"            
-            codeString+= "      return true;\n"
-            codeString+= "    }\n"
-            codeString+= "    else{\n"
-            codeString+= "      return false;\n"    
-            codeString+= "    }\n"
-            codeString+= "  }\n"
-            invariantFile.write(codeString)
+    #         codeString+= "    if("            
+    #         for j in range(1,numAnds+1):
+    #             codeString+= " SATEAND"+str(j)+" &&"
+    #         codeString+= " true){\n"            
+    #         codeString+= "      return true;\n"
+    #         codeString+= "    }\n"
+    #         codeString+= "    else{\n"
+    #         codeString+= "      return false;\n"    
+    #         codeString+= "    }\n"
+    #         codeString+= "  }\n"
+    #         invariantFile.write(codeString)
 
-        codeString+= "  return false;\n"
-        invariantFile.write(codeString)
+    #     codeString+= "  return false;\n"
+    #     invariantFile.write(codeString)
         
-        endmain = '''}\n\n'''
-        invariantFile.write(endmain)
-        invariantFile.close()
+    #     endmain = '''}\n\n'''
+    #     invariantFile.write(endmain)
+    #     invariantFile.close()
         
-    def printHybridSimGuardsResets(self, file_name):
-        numVars=0;
-        for j in self.vars:
-            if j.scope == "LOCAL_DATA":
-                numVars = numVars+1
+    # def printHybridSimGuardsResets(self, file_name):
+    #     numVars=0;
+    #     for j in self.vars:
+    #         if j.scope == "LOCAL_DATA":
+    #             numVars = numVars+1
         
-        guardFile = open(file_name,"a")
+    #     guardFile = open(file_name,"a")
         
-        declaration = '''extern \"C\" vector<pair<int, double *> > hitsGuard(int curMode, double *ptLower, double *ptUpper){ \n'''
-        guardFile.write(declaration)
+    #     declaration = '''extern \"C\" vector<pair<int, double *> > hitsGuard(int curMode, double *ptLower, double *ptUpper){ \n'''
+    #     guardFile.write(declaration)
         
-        codeString = "  vector<pair<int, double*> > toRet;\n"
+    #     codeString = "  vector<pair<int, double*> > toRet;\n"
 
-        guardFile.write(codeString)
+    #     guardFile.write(codeString)
 
-        for i in self.automata[0].trans:
-            guardNode = i.guard.parsed
-            numAnds = numberOfLogicalOper(guardNode)
+    #     for i in self.automata[0].trans:
+    #         guardNode = i.guard.parsed
+    #         numAnds = numberOfLogicalOper(guardNode)
             
-            codeString = "  if(curMode == "+str(i.src+1)+"){\n"
-            for j in range(1,numAnds+1):
-                codeString+= "    double RHSGE"+str(j)+";\n"
-                codeString+= "    double LHSGE"+str(j)+";\n"
-                codeString+= "    double evalE"+str(j)+";\n"
-                codeString+= "    bool SATE"+str(j)+";\n"
+    #         codeString = "  if(curMode == "+str(i.src+1)+"){\n"
+    #         for j in range(1,numAnds+1):
+    #             codeString+= "    double RHSGE"+str(j)+";\n"
+    #             codeString+= "    double LHSGE"+str(j)+";\n"
+    #             codeString+= "    double evalE"+str(j)+";\n"
+    #             codeString+= "    bool SATE"+str(j)+";\n"
             
-            codeString+= self.generateCAPDExpCode(guardNode,numAnds)
-            codeString+= "    if("
-            for j in range(1,numAnds+1):
-                codeString+= " SATE"+str(j)+" &&"
-            codeString+= " true){\n"
+    #         codeString+= self.generateCAPDExpCode(guardNode,numAnds)
+    #         codeString+= "    if("
+    #         for j in range(1,numAnds+1):
+    #             codeString+= " SATE"+str(j)+" &&"
+    #         codeString+= " true){\n"
             
-            resetNode = i.actions
-            for listResetElem in resetNode :
-                parsedVal = listResetElem.parsed
-                l = 1
-                for j in self.vars :
-                    if j.scope=="LOCAL_DATA":
-                        if j.name == parsedVal.children[0].value :
-                            resetString = "      ptUpper["+str(l)+"] = "
-                        l = l+1
+    #         resetNode = i.actions
+    #         for listResetElem in resetNode :
+    #             parsedVal = listResetElem.parsed
+    #             l = 1
+    #             for j in self.vars :
+    #                 if j.scope=="LOCAL_DATA":
+    #                     if j.name == parsedVal.children[0].value :
+    #                         resetString = "      ptUpper["+str(l)+"] = "
+    #                     l = l+1
 
-                resetString+=self.generateCAPDExpCode(parsedVal.children[1], 0)
-                resetString+=";\n"
-                codeString+= resetString
+    #             resetString+=self.generateCAPDExpCode(parsedVal.children[1], 0)
+    #             resetString+=";\n"
+    #             codeString+= resetString
             
-            codeString+= "      toRet.push_back(make_pair(" + str(i.dest+1) + ", ptUpper));\n"
-            codeString+= "    }\n"
-            codeString+= "  }\n"
-            guardFile.write(codeString)
+    #         codeString+= "      toRet.push_back(make_pair(" + str(i.dest+1) + ", ptUpper));\n"
+    #         codeString+= "    }\n"
+    #         codeString+= "  }\n"
+    #         guardFile.write(codeString)
         
-        codeString = "  return toRet;\n"
-        guardFile.write(codeString)
+    #     codeString = "  return toRet;\n"
+    #     guardFile.write(codeString)
         
-        codeString = "}\n\n"
-        guardFile.write(codeString)
+    #     codeString = "}\n\n"
+    #     guardFile.write(codeString)
         
-        guardFile.close()
+    #     guardFile.close()
 
-    def generateCAPDExpCode(self,guardNode,numberOfAnds):
-        if guardNode.type == 'Logical':
-            if len(guardNode.children) == 2:
-                child1 = guardNode.children[0]
-                child2 = guardNode.children[1]
-                if (child1.type != 'Logical') & (child2.type == 'Logical'):
-                    str1 = self.generateExpressionCode(child1,numberOfAnds)
-                    str2 = self.generateCAPDExpCode(child2, numberOfAnds-1)
-                    return str1 + "\n" + str2
+    # def generateCAPDExpCode(self,guardNode,numberOfAnds):
+    #     if guardNode.type == 'Logical':
+    #         if len(guardNode.children) == 2:
+    #             child1 = guardNode.children[0]
+    #             child2 = guardNode.children[1]
+    #             if (child1.type != 'Logical') & (child2.type == 'Logical'):
+    #                 str1 = self.generateExpressionCode(child1,numberOfAnds)
+    #                 str2 = self.generateCAPDExpCode(child2, numberOfAnds-1)
+    #                 return str1 + "\n" + str2
                     
-                if (child1.type != 'Logical') & (child2.type != 'Logical'):
-                    str1 = self.generateExpressionCode(child1,numberOfAnds)
-                    str2 = self.generateExpressionCode(child2,numberOfAnds-1)
-                    return str1 + "\n" + str2
+    #             if (child1.type != 'Logical') & (child2.type != 'Logical'):
+    #                 str1 = self.generateExpressionCode(child1,numberOfAnds)
+    #                 str2 = self.generateExpressionCode(child2,numberOfAnds-1)
+    #                 return str1 + "\n" + str2
                 
-        if guardNode.type != 'Logical':
-            return self.generateExpressionCode(guardNode,numberOfAnds)
+    #     if guardNode.type != 'Logical':
+    #         return self.generateExpressionCode(guardNode,numberOfAnds)
     
-    def generateExpressionCode(self,ExpressionNode,numberOfAnds):
+    # def generateExpressionCode(self,ExpressionNode,numberOfAnds):
         
-        if ExpressionNode.type == 'Relational':
-            child1 = ExpressionNode.children[0]
-            child2 = ExpressionNode.children[1]
+    #     if ExpressionNode.type == 'Relational':
+    #         child1 = ExpressionNode.children[0]
+    #         child2 = ExpressionNode.children[1]
             
-            str1 = "    LHSGE"+str(numberOfAnds)+" = "+self.generateExpressionCode(child1, 0)+";\n"
-            str2 = "    RHSGE"+str(numberOfAnds)+" = "+self.generateExpressionCode(child2, 0)+";\n"
-            str3 = "    evalE"+str(numberOfAnds)+" = LHSGE"+str(numberOfAnds)+" - RHSGE"+str(numberOfAnds)+";\n"
-            str4 = "    SATE"+str(numberOfAnds)+" = (evalE"+str(numberOfAnds)+" "+ExpressionNode.value+" 0);\n"
+    #         str1 = "    LHSGE"+str(numberOfAnds)+" = "+self.generateExpressionCode(child1, 0)+";\n"
+    #         str2 = "    RHSGE"+str(numberOfAnds)+" = "+self.generateExpressionCode(child2, 0)+";\n"
+    #         str3 = "    evalE"+str(numberOfAnds)+" = LHSGE"+str(numberOfAnds)+" - RHSGE"+str(numberOfAnds)+";\n"
+    #         str4 = "    SATE"+str(numberOfAnds)+" = (evalE"+str(numberOfAnds)+" "+ExpressionNode.value+" 0);\n"
             
-            return str1 + str2 + str3 + str4;
+    #         return str1 + str2 + str3 + str4;
         
-        if ExpressionNode.type == 'Identifier' :
-            l = 1
-            for j in self.vars :
-                if j.scope=="LOCAL_DATA":
-                    if j.name == ExpressionNode.value :
-                        return "ptUpper["+str(l)+"]"
-                    l = l+1
-            if ExpressionNode.value == "Simu_time":
-                return "ptUpper[0]"
+    #     if ExpressionNode.type == 'Identifier' :
+    #         l = 1
+    #         for j in self.vars :
+    #             if j.scope=="LOCAL_DATA":
+    #                 if j.name == ExpressionNode.value :
+    #                     return "ptUpper["+str(l)+"]"
+    #                 l = l+1
+    #         if ExpressionNode.value == "Simu_time":
+    #             return "ptUpper[0]"
                     
-            return str(ExpressionNode.value)
+    #         return str(ExpressionNode.value)
             
-        if ExpressionNode.type == 'Negative' :
-            l = 1
-            for j in self.vars :
-                if j.scope =="LOCAL_DATA":
-                    if j.name == ExpressionNode.children[0].value :
-                        return "-ptUpper["+str(l)+"]"
-                    l = l + 1
+    #     if ExpressionNode.type == 'Negative' :
+    #         l = 1
+    #         for j in self.vars :
+    #             if j.scope =="LOCAL_DATA":
+    #                 if j.name == ExpressionNode.children[0].value :
+    #                     return "-ptUpper["+str(l)+"]"
+    #                 l = l + 1
                 
-            return "-"+str(ExpressionNode.children[0].value)
+    #         return "-"+str(ExpressionNode.children[0].value)
         
-        if ExpressionNode.type == 'Expression' :
-            child1 = ExpressionNode.children[0]
-            child2 = ExpressionNode.children[1]
+    #     if ExpressionNode.type == 'Expression' :
+    #         child1 = ExpressionNode.children[0]
+    #         child2 = ExpressionNode.children[1]
             
-            str1 = self.generateExpressionCode(child1, 0)
-            str2 = self.generateExpressionCode(child2, 0)
-            return str1 + " " + ExpressionNode.value + " " + str2                
+    #         str1 = self.generateExpressionCode(child1, 0)
+    #         str2 = self.generateExpressionCode(child2, 0)
+    #         return str1 + " " + ExpressionNode.value + " " + str2                
 
-    def generateCAPDInvCode(self,guardNode,numberOfAnds):
+    # def generateCAPDInvCode(self,guardNode,numberOfAnds):
         
-        if guardNode.type == 'Logical':
-            if len(guardNode.children) == 2:
-                child1 = guardNode.children[0]
-                child2 = guardNode.children[1]
-                if (child1.type != 'Logical') & (child2.type == 'Logical'):
-                    str1 = self.generateInvariantCode(child1,numberOfAnds)
-                    str2 = self.generateCAPDInvCode(child2, numberOfAnds-1)
-                    return str1 + "\n" + str2
+    #     if guardNode.type == 'Logical':
+    #         if len(guardNode.children) == 2:
+    #             child1 = guardNode.children[0]
+    #             child2 = guardNode.children[1]
+    #             if (child1.type != 'Logical') & (child2.type == 'Logical'):
+    #                 str1 = self.generateInvariantCode(child1,numberOfAnds)
+    #                 str2 = self.generateCAPDInvCode(child2, numberOfAnds-1)
+    #                 return str1 + "\n" + str2
                     
-                if (child1.type != 'Logical') & (child2.type != 'Logical'):
-                    str1 = self.generateInvariantCode(child1,numberOfAnds)
-                    str2 = self.generateInvariantCode(child2,numberOfAnds-1)
-                    return str1 + "\n" + str2
+    #             if (child1.type != 'Logical') & (child2.type != 'Logical'):
+    #                 str1 = self.generateInvariantCode(child1,numberOfAnds)
+    #                 str2 = self.generateInvariantCode(child2,numberOfAnds-1)
+    #                 return str1 + "\n" + str2
                 
-        if guardNode.type != 'Logical':
-            return self.generateInvariantCode(guardNode,numberOfAnds)
+    #     if guardNode.type != 'Logical':
+    #         return self.generateInvariantCode(guardNode,numberOfAnds)
     
 
-    def generateInvariantCode(self,ExpressionNode,numberOfAnds):
+    # def generateInvariantCode(self,ExpressionNode,numberOfAnds):
         
-        if ExpressionNode.type == 'Relational':
-            child1 = ExpressionNode.children[0]
-            child2 = ExpressionNode.children[1]
+    #     if ExpressionNode.type == 'Relational':
+    #         child1 = ExpressionNode.children[0]
+    #         child2 = ExpressionNode.children[1]
             
-            str1 = "    LHSGE"+str(numberOfAnds)+" = "+self.generateInvariantCode(child1, 0)+";\n"
-            str2 = "    RHSGE"+str(numberOfAnds)+" = "+self.generateInvariantCode(child2, 0)+";\n"
-            str3 = "    evalE"+str(numberOfAnds)+" = LHSGE"+str(numberOfAnds)+" - RHSGE"+str(numberOfAnds)+";\n"
-            str4 = "    SATE"+str(numberOfAnds)+" = evalE"+str(numberOfAnds)+" "+ExpressionNode.value+" 0;\n"
+    #         str1 = "    LHSGE"+str(numberOfAnds)+" = "+self.generateInvariantCode(child1, 0)+";\n"
+    #         str2 = "    RHSGE"+str(numberOfAnds)+" = "+self.generateInvariantCode(child2, 0)+";\n"
+    #         str3 = "    evalE"+str(numberOfAnds)+" = LHSGE"+str(numberOfAnds)+" - RHSGE"+str(numberOfAnds)+";\n"
+    #         str4 = "    SATE"+str(numberOfAnds)+" = evalE"+str(numberOfAnds)+" "+ExpressionNode.value+" 0;\n"
 
-            # if (ExpressionNode.value == '>=') | (ExpressionNode.value == '>'):
-            #     str4 = "    SATE"+str(numberOfAnds)+" = not (evalE"+str(numberOfAnds)+" < 0);\n"
-            # else:
-            #     str4 = "    SATE"+str(numberOfAnds)+" = not (evalE"+str(numberOfAnds)+" > 0);\n"
-            return str1 + str2 + str3 + str4;
+    #         # if (ExpressionNode.value == '>=') | (ExpressionNode.value == '>'):
+    #         #     str4 = "    SATE"+str(numberOfAnds)+" = not (evalE"+str(numberOfAnds)+" < 0);\n"
+    #         # else:
+    #         #     str4 = "    SATE"+str(numberOfAnds)+" = not (evalE"+str(numberOfAnds)+" > 0);\n"
+    #         return str1 + str2 + str3 + str4;
         
-        if ExpressionNode.type == 'Identifier' :
-            l = 1
-            for j in self.vars :
-                if j.scope=="LOCAL_DATA":
-                    if j.name == ExpressionNode.value :
-                        return "ptUpper["+str(l)+"]"
-                    l = l+1
-            if ExpressionNode.value == "Simu_time":
-                return "ptUpper[0]"
+    #     if ExpressionNode.type == 'Identifier' :
+    #         l = 1
+    #         for j in self.vars :
+    #             if j.scope=="LOCAL_DATA":
+    #                 if j.name == ExpressionNode.value :
+    #                     return "ptUpper["+str(l)+"]"
+    #                 l = l+1
+    #         if ExpressionNode.value == "Simu_time":
+    #             return "ptUpper[0]"
                     
-            return ExpressionNode.value
+    #         return ExpressionNode.value
             
-        if ExpressionNode.type == 'Negative' :
-            l = 1
-            for j in self.vars :
-                if j.scope =="LOCAL_DATA":
-                    if j.name == ExpressionNode.children[0].value :
-                        return "-ptUpper["+str(l)+"]"
-                    l = l + 1
+    #     if ExpressionNode.type == 'Negative' :
+    #         l = 1
+    #         for j in self.vars :
+    #             if j.scope =="LOCAL_DATA":
+    #                 if j.name == ExpressionNode.children[0].value :
+    #                     return "-ptUpper["+str(l)+"]"
+    #                 l = l + 1
                 
-            return "-"+ExpressionNode.children[0].value
+    #         return "-"+ExpressionNode.children[0].value
         
-        if ExpressionNode.type == 'Expression' :
+    #     if ExpressionNode.type == 'Expression' :
             
-            child1 = ExpressionNode.children[0]
-            child2 = ExpressionNode.children[1]
+    #         child1 = ExpressionNode.children[0]
+    #         child2 = ExpressionNode.children[1]
             
-            str1 = self.generateExpressionCode(child1, 0)
-            str2 = self.generateExpressionCode(child2, 0)
+    #         str1 = self.generateExpressionCode(child1, 0)
+    #         str2 = self.generateExpressionCode(child2, 0)
             
-            return str1 + " " + ExpressionNode.value + " " + str2                
+    #         return str1 + " " + ExpressionNode.value + " " + str2                
         
     #The callback to get the modes to auto expand
     def treeExpandCallback(self,treeview,it,path):
@@ -805,7 +851,7 @@ class HyIR:
         declarationsReqd = "\nint getNextMode(int curMode, interval curModeTime);\n"
         file.write(declarationsReqd)
         
-        out_vars = []
+        # out_vars = []
         countVars = 0
         cont_vars = []
         
@@ -816,8 +862,8 @@ class HyIR:
             if vars.scope == 'LOCAL_DATA' and vars.name.find("dot") == -1 and vars.name.find("clock") == -1:
                 countVars = countVars+1
                 cont_vars+=[vars.name]
-            if vars.scope == 'OUTPUT_DATA':
-                out_vars+= [vars.name]        
+            # if vars.scope == 'OUTPUT_DATA':
+            #     out_vars+= [vars.name]        
         
         varCount = 0
         for varnames in cont_vars:
@@ -857,19 +903,20 @@ class HyIR:
                     varstring = varstring + ","
                     difvarstring = difvarstring + ","
                 for dai in curMode.dais:
-                    flag = 0
-                    for v in out_vars:
-                        if dai.raw.count(v) > 0:
-                            flag = 1
-                    if flag == 0:
-                        if collapse(dai.parsed.children[0]) == variable+"_dot":
-                            funstring = funstring + collapse(dai.parsed.children[1])
-                            diffunstring = diffunstring + collapse(dai.parsed.children[1])
-                            if index == lenVars:
-                                funstring = funstring + ";"
-                            else:
-                                funstring = funstring + ","
-                                diffunstring = diffunstring +","
+                    # flag = 0
+                    # if flag == 0:
+                    # if collapse(dai.parsed.children[0]) == variable+"_dot":
+                    if str(dai.expr.lhs) == variable+'_dot':
+                        funstring += str(SymEq.convert_pow(dai.expr.rhs))
+                        diffunstring += str(SymEq.convert_pow(dai.expr.rhs))
+                        # funstring = funstring + collapse(dai.parsed.children[1])
+                        # diffunstring = diffunstring + collapse(dai.parsed.children[1])
+                                                    
+                        if index == lenVars:
+                            funstring = funstring + ";"
+                        else:
+                            funstring = funstring + ","
+                            diffunstring = diffunstring +","
             
             modeString = "    IMap mode"+str(numModes)+"(\""+varstring+funstring+"\");\n"
             delete_element =jacobian(difvarstring,diffunstring,loop)
@@ -1088,7 +1135,8 @@ def hyirMdl(sftree, file_name):
                             actions.append(Action(k,collapseAction(k)))
 
             if not initialFlag: 
-                hybrid.automata[0].modes[srid].add_inv(build_invariant(guard.parsed))
+                hybrid.automata[0].modes[srid].add_inv(SymEq.construct_invariant(guard))
+                # hybrid.automata[0].modes[srid].add_inv(build_invariant(guard.parsed))
                 t = Transition(guard,actions,tid,srid,dsid)
                 hybrid.automata[0].add_trans(t)
             else:
@@ -1297,34 +1345,34 @@ def separateAutomata(hyir):
         for tran in needsDestChange.keys():
             tran.dest = mapID_List[needsDestChange[tran]][tran.dest]
 
-def build_invariant(guard):
-    '''creates a deep copy of a parsed guard (ie Node tree) and calls the 
-    negate method on that copy and returns the result as an Invariant object'''
-    x = copy.deepcopy(guard)
-    negate(x)
-    return Invariant(x, collapse2(x))
+# def build_invariant(guard):
+#     '''creates a deep copy of a parsed guard (ie Node tree) and calls the 
+#     negate method on that copy and returns the result as an Invariant object'''
+#     x = copy.deepcopy(guard)
+#     negate(x)
+#     return Invariant(x, collapse2(x))
 
-def negate(node):
-    '''assumes this method is being used to create deterministic transitions
-    by altering mode invariances'''
-    if node.value == 'or':
-        node.value = 'and'
-    elif node.value == 'and':
-        node.value = 'or'
-    elif node.value == '>':
-        node.value = '<='
-    elif node.value == '<':
-        node.value = '>='
-    elif node.value == '>=' or node.value == '=>':
-        node.value = '<'
-    elif node.value == '<=' or node.value == '=<':
-        node.value = '>'
-    elif node.value == '==':
-        node.value = '!='
-    if len(node.children) > 0:
-        for i in node.children:
-            negate(i)
-    return node
+# def negate(node):
+#     '''assumes this method is being used to create deterministic transitions
+#     by altering mode invariances'''
+#     if node.value == 'or':
+#         node.value = 'and'
+#     elif node.value == 'and':
+#         node.value = 'or'
+#     elif node.value == '>':
+#         node.value = '<='
+#     elif node.value == '<':
+#         node.value = '>='
+#     elif node.value == '>=' or node.value == '=>':
+#         node.value = '<'
+#     elif node.value == '<=' or node.value == '=<':
+#         node.value = '>'
+#     elif node.value == '==':
+#         node.value = '!='
+#     if len(node.children) > 0:
+#         for i in node.children:
+#             negate(i)
+#     return node
 
 def collapseAction(node):
     '''There exists an implicit assumption due to the parsing of the tree 
