@@ -1,9 +1,0 @@
-C2E2 TEST FILE
-LinThermo.mdl
-0.2
-0.01
-10.0
-10
-Property1
-heating: x>=68&&x<=69
-x<=66

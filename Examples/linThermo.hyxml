@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <!DOCTYPE hyxml>
 <hyxml>
-  <variable scope="LOCAL_DATA" type="Real" name="x"/>
   <automaton name="default_automaton">
+    <variable scope="LOCAL_DATA" type="Real" name="x"/>
     <mode initial="True" id="0" name="heating">
       <dai equation="x_dot = 40-0.5*x"/>
       <dai equation="x_out = x"/>
@@ -30,6 +30,7 @@
       <guard equation="x&lt;=65"/>
     </transition>
   </automaton>
+  <composition automata="default_automaton"/>
   <property unsafeSet="x&lt;=66" type="0" name="Property1" initialSet="heating: x&gt;=68&amp;&amp;x&lt;=69">
     <parameters taylororder="10.0" timestep="0.01" timehorizon="10.0" delta="0.2"/>
   </property>
