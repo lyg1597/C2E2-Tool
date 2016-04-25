@@ -14,6 +14,7 @@ import ply.yacc as yacc
 import ply.lex as lex
 import numpy as np
 import numpy.linalg as la
+from genSimulator import *
 Lineararg = 0
 
 def printprop(prop):
@@ -82,22 +83,23 @@ def loadfile(fileChoosen):
 		sys.exit()
 
 	dupHybridRep = hybridRep
-	dupHybridRep.printGuardsResets()
-	print("guard file Generated")
-	dupHybridRep.printInvariants()
-	print("invariant file Generated")
-	dupHybridRep.convertToCAPD("simulator")
-	print("simulator file Generated")
+	dupHybridRep.printHybridSimGuardsInvariants()
+	dupHybridRep.printBloatedSimGuardsInvariants()
+	st = 'constant'
+	path = '../Hylink/simulator.cpp'
+	gen_simulator(path, dupHybridRep, step_type=st)
+
+
 
 	parseTree,vList,mList=hybridRep.display_system("System")
 
-	arg1 = ['mv','guardGen.cpp','Invcheck.cpp','simulator.cpp','../wd/']
-	subp1 = subprocess.Popen(arg1)
-	arg = ['sh','./compileAndExecute']
-	subp2 = subprocess.Popen(arg,cwd="../wd/")
-	while subp2.poll() == None:
-		if not subp2.poll()==None:
-			break
+	arguments1 = ['mv', 'bloatedSimGI.cpp', 'hybridSimGI.cpp', 'simulator.cpp', '../wd/']
+	subp1 = subprocess.Popen(arguments1)
+	subp1.wait()
+
+	arguments = ['sh', './compileAndExecute', "0"]
+	subp = subprocess.Popen(arguments,cwd="../wd/")
+	subp.wait()
 	print("---------------model load success-------------------")
 
 	return vList,mList,hybridRep,propList,paramList,typeInput
@@ -110,6 +112,7 @@ def verification(hybridRep,paramData,modeList,varList,propList):
 		pathString="../wd/ReachSet"+prop.name
 		prop.reachSetPath = pathString
 		c2e2String=""
+
 		c2e2String+= "dimensions=\""+str(len(varList))+"\"\n"
 		c2e2String+= "modes=\""+str(len(modeList))+"\"\n"
 		c2e2String+= "simulator=\"simu\"\n"
@@ -134,21 +137,25 @@ def verification(hybridRep,paramData,modeList,varList,propList):
 
 		c2e2String+= "init-mode=\""+str(initModeC2E2Rep)+"\"\n"
 		taylor = paramData[3][1]
-		relerr = "0.0001"
-		abserr = "0.00001"
+		relerr = "0.000000001"
+		abserr = "0.0000000001"
 		thoriz = paramData[2][1]
 		tstep = paramData[1][1]
-		delta = paramData[0][1]
+		refine = "0"
+		delta = "0"
+		flag = 0
+
 		#print(delta)
 		prop.paramData[0]=float(delta)
 		prop.paramData[1]=float(tstep)
 		prop.paramData[2]=float(thoriz)
 		prop.paramData[3]=float(taylor)
-		c2e2String+= "delta=\""+delta+"\"\n"
+		c2e2String+= "refine=\""+refine+"\"\n"
 		c2e2String+= "time-step=\""+tstep+"\"\n"
 		c2e2String+= "abs-error=\""+abserr+"\"\n"
 		c2e2String+= "rel-error=\""+relerr+"\"\n"
 		c2e2String+= "time-horizon=\""+thoriz+"\"\n"
+		c2e2String+= 'simuflag = "'+str(flag)+'"'
 
 		numInitEqns = len(initialIneqs)
 		c2e2String+= "init-eqns=\""+str(numInitEqns)+"\"\n"
@@ -216,6 +223,7 @@ def verification(hybridRep,paramData,modeList,varList,propList):
 
 			if rowDir == '>=':
 				multiplicity = -1
+
 			if commaCount == 0:
 				c2e2String += str(multiplicity*number)
 				commaCount+=1
@@ -223,73 +231,60 @@ def verification(hybridRep,paramData,modeList,varList,propList):
 				c2e2String += ","+str(multiplicity*number)
 
 		c2e2String += "]\n"
-		mode_num  = 1
-		if len(hybridRep.annotationsParsed) == len(modeList) :
-			for array in hybridRep.annotationsParsed :
-				c2e2String+= "annotation-mode=\""+str(array[0])+"\"\n"
-				if array[3] == 1 or array[3] == 3 :
-					c2e2String+= "annotation-type=\"contraction\"\n"
-				if array[3] == 2 :
-					c2e2String+= "annotation-type=\"linear\"\n"
-				c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
-				c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-				if (Lineararg):
-					filename = ""
-					filename +="../wd/jacobiannature"
-					filename += str(mode_num)
-					filename +=".txt"
-					fid = open(filename,'r').read().split('\n')
-					numofvar = int(fid[0])
-					#print numofvar
-					listofvar = []
-					for i in range (numofvar):
-						listofvar.append(fid[i+1])
-					#rint listofvar
-					equationpos = 1+numofvar
-					numofeq = int(fid[equationpos])
-					equationpos+=1
-					listofeq = []
-					for i in range (numofeq):
-						listofeq.append(fid[equationpos+i])
-					#print listofeq
-					codestring = "def jcalc("
-					codestring += "listofvar, "
-					codestring += "listvalue"
-					codestring+='):\n'
-					codestring+=" for i in range (len(listofvar)):\n"
-					codestring+="   temp = listofvar[i]\n"
-					codestring+="   rightside = '='+str(listvalue[i])\n"
-					codestring+="   exec(temp+rightside)\n"
-					codestring+=" ret = []\n"
-					for i in range (numofeq):
-						codestring+=" "
-						codestring+=listofeq[i]
-						codestring+='\n'
-						codestring+=' ret.append(Entry)\n'
-					codestring+=' return ret'
-					#print(codestring)
-					exec(codestring)
-					Constant_Jacobian = jcalc(listofvar,np.ones((1,numofvar))[0])
-					Constant_Jacobian = np.reshape(Constant_Jacobian,(numofvar,numofvar))
-					gamma_rate = la.eigvals(Constant_Jacobian).real
-					array[2] = max(gamma_rate)
-					array[1] = la.norm(Constant_Jacobian)
-				c2e2String+= "k=\""+str(array[1])+"\"\n"
-				c2e2String+= "gamma=\""+str(array[2])+"\"\n"
-				c2e2String+= "is_linear=\""+str(Lineararg)+"\"\n"
-				mode_num = mode_num+1
 
-		else:
-			i = 0
-			while i < len(modeList) :
-				c2e2String+= "annotation-mode=\""+str(i+1)+"\"\n"
-				c2e2String+= "annotation-type=\"contraction\"\n"
-				c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
-				c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-				c2e2String+= "k=\"1.1\"\n"
-				c2e2String+= "gamma=\"0.0\"\n"
-				i+=1   
-
+		for mode_num in range(1, len(modeList)+1):
+			c2e2String+= "annotation-mode=\""+str(mode_num)+"\"\n"
+			c2e2String+= "annotation-type=\"contraction\"\n"
+			c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
+			c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
+			# print(Lineararg)
+			# print(HAHA)
+			if (Lineararg==1):
+				print("haha")
+				filename = ""
+				filename +="../wd/jacobiannature"
+				filename += str(mode_num)
+				filename +=".txt"
+				fid = open(filename,'r').read().split('\n')
+				numofvar = int(fid[0])
+				listofvar = []
+				for i in range (numofvar):
+					listofvar.append(fid[i+1])
+				equationpos = 1+numofvar
+				numofeq = int(fid[equationpos])
+				equationpos+=1
+				listofeq = []
+				for i in range (numofeq):
+					listofeq.append(fid[equationpos+i])
+				codestring = "def jcalc("
+				codestring += "listofvar, "
+				codestring += "listvalue"
+				codestring+='):\n'
+				codestring+=" for i in range (len(listofvar)):\n"
+				codestring+="   temp = listofvar[i]\n"
+				codestring+="   rightside = '='+str(listvalue[i])\n"
+				codestring+="   exec(temp+rightside)\n"
+				codestring+=" ret = []\n"
+				for i in range (numofeq):
+					codestring+=" "
+					codestring+=listofeq[i]
+					codestring+='\n'
+					codestring+=' ret.append(Entry)\n'
+				codestring+=' return ret'
+				exec(codestring)
+				Constant_Jacobian = jcalc(listofvar,np.ones((1,numofvar))[0])
+				Constant_Jacobian = np.reshape(Constant_Jacobian,(numofvar,numofvar))
+				gamma_rate = la.eigvals(Constant_Jacobian).real
+				gamma = max(gamma_rate)
+				if abs(max(gamma_rate)) < 0.00001:
+				  gamma = 0                   
+				k = la.norm(Constant_Jacobian)
+			else:
+				gamma = 0
+				k = 2000
+			c2e2String+= "k=\""+str(k)+"\"\n"
+			c2e2String+= "gamma=\""+str(gamma)+"\"\n"
+			c2e2String+= "is_linear=\""+str(Lineararg)+"\"\n"
 
 
 		c2e2String+= "visualize all to ReachSet"+prop.name+"\n"
@@ -312,7 +307,7 @@ def verification(hybridRep,paramData,modeList,varList,propList):
 		fileHandle = open ( '../wd/log',"r" )
 		lineList = fileHandle.readlines()
 		fileHandle.close()
-		print lineList[-1]
+		print lineList[-2]
 
 def checkBound(inputSet,varList):
 	aMatrix=inputSet[1]
@@ -441,13 +436,13 @@ def changepara(paramData):
 	timehorizonpass=0
 	taylorpass=0
 	while partpass==0:
-		Partitioning = raw_input('Please enter Partitioning:')
+		Kval = raw_input('Please enter K Value:')
 		try:
 			partpass=1
-			float(Partitioning)
+			float(Kval)
 		except ValueError:
 			partpass=0
-			print("Invaild Partitioning value")
+			print("Invaild K Value")
 	while timesteppass==0:	
 		Time_step= raw_input('Please enter Time-step:')
 		try:
@@ -472,7 +467,7 @@ def changepara(paramData):
 		except ValueError:
 			taylorpass=0
 			print("Invaild Time-horizon value")
-	return Partitioning, Time_step,Time_horizon,Taylor			
+	return Kval, Time_step,Time_horizon,Taylor			
 	
 
 def printallprop(propList):
@@ -554,7 +549,7 @@ def autotest(model):
 def autotest2(model):
 	print(Lineararg)
 	vList,mList,hybridRep,propList,paramsData,typeInput = loadfile("../Examples/"+model)
-	paramData=[["Partitioning:",paramsData[0],1],["Time-step:",paramsData[1],1],["Time horizon:",paramsData[2],1],["Taylor model order:",paramsData[3],1]]
+	paramData=[["Partitioning:",2000,1],["Time-step:",paramsData[1],1],["Time horizon:",paramsData[2],1],["Taylor model order:",paramsData[3],1]]
 	verification(hybridRep,paramData,mList,vList,propList)
  	sys.exit()
 
@@ -571,7 +566,10 @@ print("First, enter filename to get start")
 print("================================================================================")
 '''
 filename = sys.argv[-1]
-Lineararg = int(sys.argv[-2])
+
+if len(sys.argv)!=1:
+	Lineararg = sys.argv[-2]
+
 #print(filename)
 if filename != "terminal.py":
 	#autotest(filename)
@@ -604,19 +602,31 @@ print("your module have variable:")
 print(vList)
 print("your module have mode:")
 print(mList)
+answer = 0
+while answer!=1:
+	a = raw_input("Is this a linear model? Y/N")
+	if a=="Y" or a=="y" or a=="yes":
+		Lineararg = 1
+		answer = 1
+	if a=="N" or a=='n' or a=='no':
+		Lineararg = 0
+		answer = 1
+
+
+
 proplen = 0
 for prop in propList:
 	proplen+=1
 
 if paramsData == None or paramsData == []:
-	Partitioning = "0.2"
+	Partitioning = "2000"
 	Time_step = "0.01"
 	Time_horizon = "10.0"
 	Taylor = "10"
 	paramData=[["Partitioning:",Partitioning,1],["Time-step:",Time_step,1],["Time horizon:",Time_horizon,1],["Taylor model order:",Taylor,1]]
 	print("----------------------------------------------------")
 elif paramsData != None and paramsData != []:
-	paramData=[["Partitioning:",paramsData[0],1],["Time-step:",paramsData[1],1],["Time horizon:",paramsData[2],1],["Taylor model order:",paramsData[3],1]]
+	paramData=[["Partitioning:",2000,1],["Time-step:",paramsData[1],1],["Time horizon:",paramsData[2],1],["Taylor model order:",paramsData[3],1]]
 
 
 while True:
@@ -628,10 +638,7 @@ while True:
 		proplen+=1
 	elif command == "parameter":
 		Partitioning, Time_step,Time_horizon,Taylor = changepara(paramData)
-		#print(Partitioning)
-		#print(Time_step)
-		#print(Time_horizon)
-		#print(Taylor)
+	
 		paramData=[["Partitioning:",Partitioning,1],["Time-step:",Time_step,1],["Time horizon:",Time_horizon,1],["Taylor model order:",Taylor,1]]
 	elif command == "help":
 		helper()
@@ -656,7 +663,6 @@ while True:
 			proplen -=1
 	else:
 		print("No such command")
-
 
 
 

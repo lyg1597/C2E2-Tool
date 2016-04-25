@@ -194,7 +194,7 @@ def plotMultipleVars(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,disp
             plotstring+=lowerbound[i][varPlotTuple[0]][j]+','+lowerbound[i][varPlotTuple[k+1]][j]+' to '+upperbound[i][varPlotTuple[0]][j+1]+','+str(float(lowerbound[i][varPlotTuple[k+1]][j])+Min_display_range)+' fc rgb '
 
           plotstring+='"'
-          plotstring+=colors[k]
+          plotstring+=colors[k%10]
           plotstring+='"'
           plotstring+='\n'
           blocknum+=1
@@ -205,7 +205,7 @@ def plotMultipleVars(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,disp
   #print xmin,ymin,xmax,ymax
   plotstring+= "set key center bottom Left title '"
   for i in range (len(varPlotTuple)-1):
-    plotstring+= varlist[varPlotTuple[i+1]]+':'+colors[i]+' '
+    plotstring+= varlist[varPlotTuple[i+1]]+':'+colors[i%10]+' '
   #print varlist
   #print varPlotTuple
     
@@ -233,7 +233,7 @@ def plotMultipleVars(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,disp
 
 def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlotTuple,dispMode,
                       timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist):
-  colors=('blue','green','red','yellow','brown','orange','cyan','pink','magenta')
+  colors=('blue','green','red','yellow','black','brown','orange','cyan','pink','magenta')
   plotStatus.set_label("Status: Reading Data")
 
 
@@ -424,7 +424,7 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
         else:
           plotstring+=lowerbound[i][varPlotTuple[0]][j]+','+lowerbound[i][varPlotTuple[1]][j]+' to '+upperbound[i][varPlotTuple[0]][j+1]+','+str(float(lowerbound[i][varPlotTuple[1]][j])+Min_display_range)+' fc rgb '
         plotstring+='"'
-        plotstring+=colors[i]
+        plotstring+=colors[i%10]
         plotstring+='"'
         plotstring+="\n"
         blocknum+=1
@@ -444,7 +444,7 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
     plotstring+= unsafestring
     plotstring+= "set key center bottom Left title '"
     for i in range (len(modelist)):
-      plotstring+= modelist[i]+':'+colors[i]+' '
+      plotstring+= modelist[i]+':'+colors[i%10]+' '
     plotstring+='Unsafe:pink'
     plotstring+="' font 'Helvetica, 10'"
     plotstring+="\n"
@@ -452,7 +452,7 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
   else:
     plotstring+= "set key center bottom Left title '"
     for i in range (len(modelist)):
-      plotstring+= modelist[i]+':'+colors[i]+' '
+      plotstring+= modelist[i]+':'+colors[i%10]+' '
     plotstring+="'\n"
 
   plotstring+="plot ["
@@ -477,7 +477,7 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
 
 def plotMultipleModesV2(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlotTuple,dispMode,
       timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist):
-  colors=('blue','green','red','yellow','brown','orange','cyan','pink','magenta')
+  colors=('blue','green','red','yellow','black','brown','orange','cyan','pink','magenta')
   plotStatus.set_label("Status: Reading Data")
   reachData=open(reachSetPath,'r')
  
@@ -644,7 +644,7 @@ def plotMultipleModesV2(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
       else:
         plotstring+=lowerbound[i][varPlotTuple[0]][j]+','+lowerbound[i][varPlotTuple[1]][j]+' to '+upperbound[i][varPlotTuple[0]][j]+','+str(float(lowerbound[i][varPlotTuple[1]][j])+Min_display_range)+' fc rgb '
       plotstring+='"'
-      plotstring+=colors[i]
+      plotstring+=colors[i%10]
       plotstring+='"'
       plotstring+="\n"
       blocknum+=1
@@ -661,7 +661,7 @@ def plotMultipleModesV2(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
     plotstring+= unsafestring
     plotstring+= "set key center bottom Left title '"
     for i in range (len(modelist)):
-      plotstring+= modelist[i]+':'+colors[i]+' '
+      plotstring+= modelist[i]+':'+colors[i%10]+' '
     plotstring+='Unsafe:pink'
     plotstring+="' font 'Helvetica, 10'"
     plotstring+="\n"
@@ -669,7 +669,7 @@ def plotMultipleModesV2(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
   else:
     plotstring+= "set key center bottom Left title '"
     for i in range (len(modelist)):
-      plotstring+= modelist[i]+':'+colors[i]+' '
+      plotstring+= modelist[i]+':'+colors[i%10]+' '
     plotstring+="'\n"
 
   plotstring+="plot ["
@@ -795,7 +795,7 @@ def plotMultipleVarsV2(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,di
           plotstring+=lowerbound[i][varPlotTuple[0]][j]+','+lowerbound[i][varPlotTuple[k+1]][j]+' to '+upperbound[i][varPlotTuple[0]][j]+','+str(float(lowerbound[i][varPlotTuple[k+1]][j])+Min_display_range)+' fc rgb '
 
         plotstring+='"'
-        plotstring+=colors[k]
+        plotstring+=colors[k%10]
         plotstring+='"'
         plotstring+='\n'
         blocknum+=1
@@ -806,7 +806,7 @@ def plotMultipleVarsV2(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,di
   #print xmin,ymin,xmax,ymax
   plotstring+= "set key center bottom Left title '"
   for i in range (len(varPlotTuple)-1):
-    plotstring+= varlist[varPlotTuple[i+1]]+':'+colors[i]+' '
+    plotstring+= varlist[varPlotTuple[i+1]]+':'+colors[i%10]+' '
   #print varlist
   #print varPlotTuple
     
@@ -835,7 +835,7 @@ def plotMultipleVarsV2(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,di
 
 def plotMultipleModesV3(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlotTuple,dispMode,
       timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist):
-  colors=('blue','green','red','yellow','brown','orange','cyan','pink','magenta')
+  colors=('blue','green','red','yellow','black','brown','orange','cyan','pink','magenta')
   reachData=open(reachSetPath,'r')
  
   listofsafetube=[]
@@ -986,7 +986,7 @@ def plotMultipleModesV3(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
     plotstring+= unsafestring
     plotstring+= "set key center bottom Left title '"
     for i in range (len(modelist)):
-      plotstring+= modelist[i]+':'+colors[i]+' '
+      plotstring+= modelist[i]+':'+colors[i%10]+' '
       plotstring+='Unsafe:pink'
     plotstring+="' font 'Helvetica, 10'"
     plotstring+="\n"
@@ -994,7 +994,7 @@ def plotMultipleModesV3(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
   else:
     plotstring+= "set key center bottom Left title '"
     for i in range (len(modelist)):
-      plotstring+= modelist[i]+':'+colors[i]+' '
+      plotstring+= modelist[i]+':'+colors[i%10]+' '
     plotstring+="'\n"
   
   for i in range (len(tubeorder)):
@@ -1009,7 +1009,7 @@ def plotMultipleModesV3(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
 
     plotstring+=" notitle smooth bezier lc rgb "
     plotstring+='"'
-    plotstring+=colors[tubeorder[i]]
+    plotstring+=colors[tubeorder[i]%10]
     plotstring+='"'
 
     if i!=len(tubeorder)-1:
