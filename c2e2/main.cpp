@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
 	else{
 		cout<<"refineorder file detected, scan refine order file"<<endl;
 		while( fscanf(tRFile,"%d",&bufferReader) != EOF ){
-			if(bufferReader<=dimensions){
+			if(bufferReader<=dimensions&&bufferReader>0){
 				refineorder.push_back(bufferReader);
 			}
 		}
@@ -435,7 +435,7 @@ int main(int argc, char* argv[]) {
 				cout<<"using method written in file for refinement"<<endl;
 				int refineidx = curItrRepPoint->getRefineTime();
 
-				ItrStack->refine(curItrRepPoint,refineorder[refineidx%refineorder.size()]);
+				ItrStack->refine(curItrRepPoint,refineorder[refineidx%refineorder.size()]-1);
 			}
 			delete curItrRepPoint;
 		}
