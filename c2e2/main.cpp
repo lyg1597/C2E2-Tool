@@ -434,7 +434,8 @@ int main(int argc, char* argv[]) {
 			else{
 				cout<<"using method written in file for refinement"<<endl;
 				int refineidx = curItrRepPoint->getRefineTime();
-				ItrStack->refine(curItrRepPoint,refineidx%dimensions);
+
+				ItrStack->refine(curItrRepPoint,refineorder[refineidx%refineorder.size()]);
 			}
 			delete curItrRepPoint;
 		}
