@@ -216,9 +216,9 @@ def plotMultipleVars(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,disp
   plotstring+=':'
   plotstring+=str(xmax)
   plotstring+='] ['
-  plotstring+=str(ymin-ymin*0.1)
+  plotstring+=str(float(ymin)-float(ymin)*0.1)
   plotstring+=':'
-  plotstring+=str(ymax*1.1)
+  plotstring+=str(float(ymax)*1.1)
   plotstring+='] '
   plotstring+='NaN notitle'
 
@@ -460,9 +460,9 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
   plotstring+=':'
   plotstring+=str(xmax)
   plotstring+='] ['
-  plotstring+=str(ymin-0.1*ymin)
+  plotstring+=str(float(ymin)-0.1*float(ymin))
   plotstring+=':'
-  plotstring+=str(ymax*1.1)
+  plotstring+=str(float(ymax)*1.1)
   plotstring+='] '
   plotstring+='NaN notitle'
 
@@ -677,9 +677,9 @@ def plotMultipleModesV2(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
   plotstring+=':'
   plotstring+=str(xmax)
   plotstring+='] ['
-  plotstring+=str(ymin-0.1*ymin)
+  plotstring+=str(float(ymin)-0.1*float(ymin))
   plotstring+=':'
-  plotstring+=str(ymax*1.1)
+  plotstring+=str(float(ymax)*1.1)
   plotstring+='] '
   plotstring+='NaN notitle'
 
@@ -817,9 +817,9 @@ def plotMultipleVarsV2(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,di
   plotstring+=':'
   plotstring+=str(xmax)
   plotstring+='] ['
-  plotstring+=str(ymin-0.1*ymin)
+  plotstring+=str(float(ymin)-0.1*float(ymin))
   plotstring+=':'
-  plotstring+=str(ymax*1.1)
+  plotstring+=str(float(ymax)*1.1)
   plotstring+='] '
   plotstring+='NaN notitle'
 
