@@ -1,15 +1,15 @@
 import pygtk
 pygtk.require('2.0')
-import gtk,math, itertools, copy, re, os
+import gtk, math, itertools, copy, re, os
 from lxml import etree
-from parse_modes import extract_dais
-from tree import show_tree, clear_tree
-from EdgeParse import lstring3
-from ModeParse import parse_action
-from guardParse import parse_guardExp
-from guardLogicalParse import parse_guardLogicalExp
-from fractions import Fraction
-from node import Node
+# from parse_modes import extract_dais
+# from tree import show_tree, clear_tree
+# from EdgeParse import lstring3
+# from ModeParse import parse_action
+# from guardParse import parse_guardExp
+# from guardLogicalParse import parse_guardLogicalExp
+# from fractions import Fraction
+# from node import Node
 from automaton import *
 from propDialog import *
 from jacobiancalc import jacobian
@@ -94,8 +94,6 @@ class HyIR:
     @staticmethod
     def construct_output_dict(mode, dais, dai_dict):
         for dai in dais:
-            # lhs = dai.parsed.children[0].value
-            # rhs = collapse(dai.parsed.children[1])
             lhs = str(dai.expr.lhs)
             rhs = str(dai.expr.rhs)
             if not lhs.endswith('_dot'):
@@ -114,25 +112,40 @@ class HyIR:
                         dai.expr = dai.expr.func(dai.expr.lhs, dai.expr.rhs.subs(var, dai_dict[var_name]))
                 dai.raw = str(dai.expr)
 
-    # @staticmethod
-    # def replace_dais(mode, dai_dict):
-    #     for dai in mode.dais:
-    #         lhs = dai.parsed.children[0].value
-    #         if lhs.endswith('_dot'):
-    #             HyIR.replace_dais_helper(dai.parsed, dai_dict)
-    #             dai.raw = collapse(dai.parsed)
-    #             dai.parsed = parse_action(dai.raw)[0]
+    def populateInvGuards(self):
+        guardResets = defaultdict(list)
+        invariants = defaultdict(list)
+        varList = self.varList
 
-    # @staticmethod
-    # def replace_dais_helper(node, dai_dict):
-    #     if len(node.children)==0:
-    #         if str(node.value) in dai_dict:
-    #             node.value = '('+dai_dict[node.value]+')'
-    #     elif len(node.children)==1:
-    #         HyIR.replace_dais_helper(node.children[0], dai_dict)
-    #     elif len(node.children)==2:
-    #         HyIR.replace_dais_helper(node.children[0], dai_dict)
-    #         HyIR.replace_dais_helper(node.children[1], dai_dict)
+        for m in self.automata[0].modes:
+          inv_eqs = []
+          inv_vars = set()
+          for inv in m.invs:
+            print '\n' + 'invariant equation: ' + inv.raw
+            i = Invariant(raw=inv.raw)
+            inv_eqs.append(i.expr)
+            inv_vars = inv_vars.union(SymEq.vars_used(i.expr))
+          invariants[m.id] = (inv_eqs, inv_vars)
+
+        for t in self.automata[0].trans:
+          print '\n' + 'guard equation: ' + t.guard.raw
+          g = Guard(raw=t.guard.raw)
+          g_eqs = g.expr
+          g_vars = SymEq.vars_used(g.expr)
+          action_eqs = []
+          for act in t.actions:
+            # a_eq = act.raw.replace('=','==')
+            print '\n' + 'action equation: ' + act.raw
+            a = Action(raw=act.raw)
+            action_eqs.extend(a.expr)
+          guardResets[(t.src,t.dest)].append((g_eqs, action_eqs, g_vars))
+
+        self.guardResets = dict(guardResets)
+        self.invariants = dict(invariants)
+
+        print self.guardResets
+        print self.invariants
+
 
     def is_valid(self):
         if not self.variables.input==[]:
@@ -158,7 +171,7 @@ class HyIR:
     def modesnumber(self):
         return len(self.automata[0].modes)
 
-    def display_system(self,system_name):
+    def display_system(self):
         varList=[]
         for i in self.vars:
           if i.scope=="LOCAL_DATA":
@@ -167,10 +180,12 @@ class HyIR:
         self.treestore.append(var,[", ".join(varList)])
 
         modeList=[]
+        mode_dict = {}
         modes=self.treestore.append(None,["Modes"])
         for i in self.automata[0].modes:
+          mode_dict[i.id] = i.name
           modeList.append(i.name)
-          m=self.treestore.append(modes,[i.name])      
+          m=self.treestore.append(modes,[i.name+' ('+str(i.id)+')'])      
           flows=self.treestore.append(m,["Flows"])
           for j in i.dais:
             if "_dot" in j.raw:
@@ -181,9 +196,10 @@ class HyIR:
 
         trans=self.treestore.append(None,["Transitions"])
         for i in self.automata[0].trans:
-          t=self.treestore.append(trans,[i.id])
-          self.treestore.append(t,["Source: "+str(i.src)])
-          self.treestore.append(t,["Destination: "+str(i.dest)])
+          src, dest = mode_dict[i.src], mode_dict[i.dest]
+          t=self.treestore.append(trans,[src+' -> '+dest])
+          self.treestore.append(t,["Source: "+src+' ('+str(i.src)+')'])
+          self.treestore.append(t,["Destination: "+dest+' ('+str(i.dest)+')'])
           self.treestore.append(t,["Guards: "+i.guard.raw])
           acts=self.treestore.append(t,["Actions"])
           for j in i.actions:
@@ -211,84 +227,11 @@ class HyIR:
         swindow.add(modelTree)
         return swindow,varList,modeList
 
-    def populateInvGuards(self):
-        exprParser=ExprParser()
-        guardResets = defaultdict(list)
-        invariants = defaultdict(list)
-        varList = self.varList
-
-        for m in self.automata[0].modes:
-          inv_eqs = []
-          inv_vars = []
-          for inv in m.invs:
-            i = inv.raw
-            print '\n' + 'invariant equation: ' + i
-            aMatrix, bMatrix, eqMatrix = exprParser.parseSet(varList,i,2)
-            i_eqs, i_vars = convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, True)
-            inv_eqs.append(i_eqs)
-            inv_vars = [v for v in varList if v in i_vars or v in inv_vars]
-          invariants[m.id] = (inv_eqs, inv_vars)
-
-        for t in self.automata[0].trans:
-          g = t.guard.raw
-          print '\n' + 'guard equation: ' + g
-          aMatrix, bMatrix, eqMatrix = exprParser.parseSet(varList,g,1)
-          g_eqs, g_vars = convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, True)
-          action_eqs = []
-          for act in t.actions:
-            a = act.raw.replace('=','==')
-            print '\n' + 'action equation: ' + a
-            aMatrix, bMatrix, eqMatrix = exprParser.parseSet(varList,a,1)
-            action_eqs.extend(convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, False))
-          guardResets[(t.src,t.dest)].append((g_eqs, action_eqs, g_vars))
-
-        self.guardResets = dict(guardResets)
-        self.invariants = dict(invariants)
-
-        print self.guardResets
-        print self.invariants
-
     def printHybridSimGuardsInvariants(self):
-        self.printGuardsInvariants("hybridSimGI.cpp", True)
-        # file_name = "hybridSimGI.cpp"
-        # checkFile = open(file_name, "w")
-        # codeString ="#include <ppl.hh>\n"
-        # codeString+="#include <iostream>\n"
-        # codeString+="#include <utility>\n"
-        # codeString+="#include <vector>\n"
-        # codeString+="#include <fstream>\n"
-        # codeString+="#include <typeinfo>\n\n"
-        # codeString+="using namespace std;\n\n"
-        # codeString+=self.printPoly()
-        # codeString+=self.getMultFactorPt()
-        # codeString+=self.getMultFactor()
-        # # codeString+=self.constructBox()
-        # checkFile.write(codeString)
-        # checkFile.close()
-
-        # self.printInvariants(file_name, True)
-        # self.printGuardResets(file_name, True)
+        self.printGuardsInvariants("../wd/hybridSimGI.cpp", True)
 
     def printBloatedSimGuardsInvariants(self):
-        self.printGuardsInvariants("bloatedSimGI.cpp", False)
-        # file_name = "bloatedSimGI.cpp"
-        # checkFile = open(file_name, "w")
-        # codeString ="#include <ppl.hh>\n"
-        # codeString+="#include <iostream>\n"
-        # codeString+="#include <utility>\n"
-        # codeString+="#include <vector>\n"
-        # codeString+="#include <fstream>\n"
-        # codeString+="#include <typeinfo>\n\n"
-        # codeString+="using namespace std;\n\n"
-        # codeString+=self.printPoly()
-        # codeString+=self.getMultFactorPt()
-        # codeString+=self.getMultFactor()
-        # # codeString+=self.constructBox()
-        # checkFile.write(codeString)
-        # checkFile.close()
-
-        # self.printInvariants(file_name, False)
-        # self.printGuardResets(file_name, False)
+        self.printGuardsInvariants("../wd/bloatedSimGI.cpp", False)
 
     def printGuardsInvariants(self, file_name, is_hybrid):
         checkFile = open(file_name, "w")
@@ -317,6 +260,8 @@ class HyIR:
         codeString+="  double mult_factor = getMultFactor(" + ("ptUpper" if is_hybrid else "ptLower, ptUpper") + ");\n"
         for mode in self.invariants:
             eqs, varsUsed = self.invariants[mode]
+            if not eqs:
+                continue
             codeString+="  if(curMode=="+str(mode+1)+"){\n"
             codeString+= self.constructBoxHelper(varsUsed, "", 4, is_hybrid)
             codeString+="    Pointset_Powerset<NNC_Polyhedron> box(box_poly);\n"
@@ -328,7 +273,7 @@ class HyIR:
                 codeString+="    curInv = Pointset_Powerset<NNC_Polyhedron>("+str(len(varsUsed))+",EMPTY);\n\n"
                 for i,disjunct in enumerate(eq):
                     codeString+="    cs.set_space_dimension("+str(len(varsUsed))+");\n"
-                    codeString+="    cs.insert("+disjunct+");\n"
+                    codeString+="    cs.insert("+str(disjunct)+");\n"
                     codeString+="    curPoly = NNC_Polyhedron(cs);\n"
                     codeString+="    curInv.add_disjunct(curPoly);\n"
                     codeString+="    cs.clear();\n\n"
@@ -361,7 +306,7 @@ class HyIR:
                 codeString+="    cs.set_space_dimension("+str(len(varsUsed))+");\n"    
     
                 for guard_eq in a:
-                    codeString+="    cs.insert("+guard_eq+");\n"
+                    codeString+="    cs.insert("+str(guard_eq)+");\n"
                     
                 codeString+="    NNC_Polyhedron guard(cs);\n"
                 if is_hybrid: codeString+="    if(guard.contains(box_poly)){\n"
@@ -384,22 +329,23 @@ class HyIR:
                         codeString+="      Variable "+var+"("+str(len(varList)+i)+");\n"
                     codeString+="      box_poly.add_space_dimensions_and_embed("+str(len(varList))+");\n"
                     for reset_eq in b:
-                        if "<=" in reset_eq: delim = "<="
-                        if ">=" in reset_eq: delim = ">="
-                        eq_split = reset_eq.split(delim)
-                        var, eq_rhs = eq_split[0], eq_split[1]
+                        lhs, rhs = reset_eq.lhs, reset_eq.rhs
+                        free_vars = list(lhs.free_symbols)
+                        assert len(free_vars)==1
+                        var = str(free_vars[0])
+                        lhs = lhs.subs(var, var+'_new')
                         for v in self.varList:
-                            eq_rhs = eq_rhs.replace(v, v+"_temp")
-                        codeString+="      cs_gd.insert("+var+"_new"+delim+eq_rhs+");\n"
+                            rhs = rhs.subs(v, v+'_temp')
+                        codeString+="      cs_gd.insert("+str(reset_eq.func(lhs,rhs))+");\n"
                         remVars.discard(var)
                     for var in remVars:
-                        codeString+="      cs_gd.insert("+var+"_new"+"=="+var+"_temp);\n"
+                        codeString+="      cs_gd.insert("+var+'_new'+'=='+var+"_temp);\n"
                 
                 if not is_hybrid:
                     for guard_eq in a:
                         for v in self.varList:
-                            guard_eq = guard_eq.replace(v, v+"_temp")
-                        codeString+="      cs_gd.insert("+guard_eq+");\n"
+                            guard_eq = guard_eq.subs(v, v+'_temp')
+                        codeString+="      cs_gd.insert("+str(guard_eq)+");\n"
                 codeString+="      NNC_Polyhedron guard_reset(cs_gd);\n"
                 codeString+="      guard_reset.intersection_assign(box_poly);\n"
 
@@ -471,7 +417,7 @@ class HyIR:
         mulLoop+="    }\n"
         mulLoop+="  }\n\n"
         codeString+=mulLoop
-        codeString+="  return multiplier;\n"
+        codeString+="  return pow(10, multiplier);\n"
         codeString+="}\n\n"
         return codeString
 
@@ -481,7 +427,7 @@ class HyIR:
         codeString+="  int lowerMult = getMultFactor(ptLower);\n"
         codeString+="  int upperMult = getMultFactor(ptUpper);\n"
         codeString+="  int multiplier = lowerMult > upperMult ? lowerMult : upperMult;\n"
-        codeString+="  return pow(10,multiplier);\n"
+        codeString+="  return multiplier;\n"
         codeString+="}\n\n"
         return codeString
 
@@ -507,275 +453,7 @@ class HyIR:
         codeString+="  cout << endl;\n"
         codeString+="}\n\n"
         return codeString
-
-    # def printHybridSimGuardsInvariants(self):
-        # file_name = "hybridSimGI.cpp"
-        # hybridSimFile = open(file_name,"w")
-        # declarationsReqd = '''#include <iostream> \n#include <stdio.h> \n#include <vector> \n#include <utility> \nusing namespace std; \n\n'''
-        # hybridSimFile.write(declarationsReqd)
-        # hybridSimFile.close()
-
-        # self.printHybridSimInvariants(file_name);
-        # self.printHybridSimGuardsResets(file_name);
-
-
-    # def printHybridSimInvariants(self, file_name):
-    #     numVars=0;
-    #     for j in self.vars:
-    #         if j.scope == "LOCAL_DATA":
-    #             numVars = numVars+1
-        
-    #     invariantFile = open(file_name,"a")
-
-    #     declaration = '''extern \"C\" bool invariantSatisfied(int curMode, double* ptLower, double *ptUpper){ \n'''
-    #     invariantFile.write(declaration)
-        
-    #     currentMode = 0;
-    #     for mode in self.automata[0].modes:
-
-    #         currentMode += 1;
-    #         numAnds = 0
-    #         numOrs = 0
-    #         numMaxOrs = -1;
-    #         for j in mode.invs:
-    #             numAnds = numAnds + 1
-    #             numOrs = numberOfLogicalOper(j.parsed)
-    #             if numMaxOrs < numOrs:
-    #                 numMaxOrs = numOrs
-            
-    #         codeString = "  if(curMode == "+str(currentMode)+"){\n"
-            
-    #         '''Here, add the folowing things, the number of stuff you define is max of number of ors in
-    #         each of the logical operations '''
-            
-    #         for j in range(1,numMaxOrs+1):
-    #             codeString+= "    double RHSGE"+str(j)+";\n"
-    #             codeString+= "    double LHSGE"+str(j)+";\n"
-    #             codeString+= "    double evalE"+str(j)+";\n"
-    #             codeString+= "    bool SATE"+str(j)+";\n"
-            
-    #         for j in range(1,numAnds+1):
-    #             codeString+= "    bool SATEAND"+str(j)+";\n"
-                
-    #         currIndex = 0;
-    #         numberOfOrs = 0;
-    #         for j in mode.invs:
-    #             numberOfOrs = numberOfLogicalOper(j.parsed)
-    #             currIndex+= 1
-    #             codeString+= self.generateCAPDInvCode(j.parsed, numberOfOrs)
-    #             codeString+= "    SATEAND"+str(currIndex)+" = "
-    #             for j in range(1,numberOfOrs+1):
-    #                 codeString+= "SATE"+str(j)+" || "
-    #             codeString+= "false;\n"
-
-    #         codeString+= "    if("            
-    #         for j in range(1,numAnds+1):
-    #             codeString+= " SATEAND"+str(j)+" &&"
-    #         codeString+= " true){\n"            
-    #         codeString+= "      return true;\n"
-    #         codeString+= "    }\n"
-    #         codeString+= "    else{\n"
-    #         codeString+= "      return false;\n"    
-    #         codeString+= "    }\n"
-    #         codeString+= "  }\n"
-    #         invariantFile.write(codeString)
-
-    #     codeString+= "  return false;\n"
-    #     invariantFile.write(codeString)
-        
-    #     endmain = '''}\n\n'''
-    #     invariantFile.write(endmain)
-    #     invariantFile.close()
-        
-    # def printHybridSimGuardsResets(self, file_name):
-    #     numVars=0;
-    #     for j in self.vars:
-    #         if j.scope == "LOCAL_DATA":
-    #             numVars = numVars+1
-        
-    #     guardFile = open(file_name,"a")
-        
-    #     declaration = '''extern \"C\" vector<pair<int, double *> > hitsGuard(int curMode, double *ptLower, double *ptUpper){ \n'''
-    #     guardFile.write(declaration)
-        
-    #     codeString = "  vector<pair<int, double*> > toRet;\n"
-
-    #     guardFile.write(codeString)
-
-    #     for i in self.automata[0].trans:
-    #         guardNode = i.guard.parsed
-    #         numAnds = numberOfLogicalOper(guardNode)
-            
-    #         codeString = "  if(curMode == "+str(i.src+1)+"){\n"
-    #         for j in range(1,numAnds+1):
-    #             codeString+= "    double RHSGE"+str(j)+";\n"
-    #             codeString+= "    double LHSGE"+str(j)+";\n"
-    #             codeString+= "    double evalE"+str(j)+";\n"
-    #             codeString+= "    bool SATE"+str(j)+";\n"
-            
-    #         codeString+= self.generateCAPDExpCode(guardNode,numAnds)
-    #         codeString+= "    if("
-    #         for j in range(1,numAnds+1):
-    #             codeString+= " SATE"+str(j)+" &&"
-    #         codeString+= " true){\n"
-            
-    #         resetNode = i.actions
-    #         for listResetElem in resetNode :
-    #             parsedVal = listResetElem.parsed
-    #             l = 1
-    #             for j in self.vars :
-    #                 if j.scope=="LOCAL_DATA":
-    #                     if j.name == parsedVal.children[0].value :
-    #                         resetString = "      ptUpper["+str(l)+"] = "
-    #                     l = l+1
-
-    #             resetString+=self.generateCAPDExpCode(parsedVal.children[1], 0)
-    #             resetString+=";\n"
-    #             codeString+= resetString
-            
-    #         codeString+= "      toRet.push_back(make_pair(" + str(i.dest+1) + ", ptUpper));\n"
-    #         codeString+= "    }\n"
-    #         codeString+= "  }\n"
-    #         guardFile.write(codeString)
-        
-    #     codeString = "  return toRet;\n"
-    #     guardFile.write(codeString)
-        
-    #     codeString = "}\n\n"
-    #     guardFile.write(codeString)
-        
-    #     guardFile.close()
-
-    # def generateCAPDExpCode(self,guardNode,numberOfAnds):
-    #     if guardNode.type == 'Logical':
-    #         if len(guardNode.children) == 2:
-    #             child1 = guardNode.children[0]
-    #             child2 = guardNode.children[1]
-    #             if (child1.type != 'Logical') & (child2.type == 'Logical'):
-    #                 str1 = self.generateExpressionCode(child1,numberOfAnds)
-    #                 str2 = self.generateCAPDExpCode(child2, numberOfAnds-1)
-    #                 return str1 + "\n" + str2
-                    
-    #             if (child1.type != 'Logical') & (child2.type != 'Logical'):
-    #                 str1 = self.generateExpressionCode(child1,numberOfAnds)
-    #                 str2 = self.generateExpressionCode(child2,numberOfAnds-1)
-    #                 return str1 + "\n" + str2
-                
-    #     if guardNode.type != 'Logical':
-    #         return self.generateExpressionCode(guardNode,numberOfAnds)
-    
-    # def generateExpressionCode(self,ExpressionNode,numberOfAnds):
-        
-    #     if ExpressionNode.type == 'Relational':
-    #         child1 = ExpressionNode.children[0]
-    #         child2 = ExpressionNode.children[1]
-            
-    #         str1 = "    LHSGE"+str(numberOfAnds)+" = "+self.generateExpressionCode(child1, 0)+";\n"
-    #         str2 = "    RHSGE"+str(numberOfAnds)+" = "+self.generateExpressionCode(child2, 0)+";\n"
-    #         str3 = "    evalE"+str(numberOfAnds)+" = LHSGE"+str(numberOfAnds)+" - RHSGE"+str(numberOfAnds)+";\n"
-    #         str4 = "    SATE"+str(numberOfAnds)+" = (evalE"+str(numberOfAnds)+" "+ExpressionNode.value+" 0);\n"
-            
-    #         return str1 + str2 + str3 + str4;
-        
-    #     if ExpressionNode.type == 'Identifier' :
-    #         l = 1
-    #         for j in self.vars :
-    #             if j.scope=="LOCAL_DATA":
-    #                 if j.name == ExpressionNode.value :
-    #                     return "ptUpper["+str(l)+"]"
-    #                 l = l+1
-    #         if ExpressionNode.value == "Simu_time":
-    #             return "ptUpper[0]"
-                    
-    #         return str(ExpressionNode.value)
-            
-    #     if ExpressionNode.type == 'Negative' :
-    #         l = 1
-    #         for j in self.vars :
-    #             if j.scope =="LOCAL_DATA":
-    #                 if j.name == ExpressionNode.children[0].value :
-    #                     return "-ptUpper["+str(l)+"]"
-    #                 l = l + 1
-                
-    #         return "-"+str(ExpressionNode.children[0].value)
-        
-    #     if ExpressionNode.type == 'Expression' :
-    #         child1 = ExpressionNode.children[0]
-    #         child2 = ExpressionNode.children[1]
-            
-    #         str1 = self.generateExpressionCode(child1, 0)
-    #         str2 = self.generateExpressionCode(child2, 0)
-    #         return str1 + " " + ExpressionNode.value + " " + str2                
-
-    # def generateCAPDInvCode(self,guardNode,numberOfAnds):
-        
-    #     if guardNode.type == 'Logical':
-    #         if len(guardNode.children) == 2:
-    #             child1 = guardNode.children[0]
-    #             child2 = guardNode.children[1]
-    #             if (child1.type != 'Logical') & (child2.type == 'Logical'):
-    #                 str1 = self.generateInvariantCode(child1,numberOfAnds)
-    #                 str2 = self.generateCAPDInvCode(child2, numberOfAnds-1)
-    #                 return str1 + "\n" + str2
-                    
-    #             if (child1.type != 'Logical') & (child2.type != 'Logical'):
-    #                 str1 = self.generateInvariantCode(child1,numberOfAnds)
-    #                 str2 = self.generateInvariantCode(child2,numberOfAnds-1)
-    #                 return str1 + "\n" + str2
-                
-    #     if guardNode.type != 'Logical':
-    #         return self.generateInvariantCode(guardNode,numberOfAnds)
-    
-
-    # def generateInvariantCode(self,ExpressionNode,numberOfAnds):
-        
-    #     if ExpressionNode.type == 'Relational':
-    #         child1 = ExpressionNode.children[0]
-    #         child2 = ExpressionNode.children[1]
-            
-    #         str1 = "    LHSGE"+str(numberOfAnds)+" = "+self.generateInvariantCode(child1, 0)+";\n"
-    #         str2 = "    RHSGE"+str(numberOfAnds)+" = "+self.generateInvariantCode(child2, 0)+";\n"
-    #         str3 = "    evalE"+str(numberOfAnds)+" = LHSGE"+str(numberOfAnds)+" - RHSGE"+str(numberOfAnds)+";\n"
-    #         str4 = "    SATE"+str(numberOfAnds)+" = evalE"+str(numberOfAnds)+" "+ExpressionNode.value+" 0;\n"
-
-    #         # if (ExpressionNode.value == '>=') | (ExpressionNode.value == '>'):
-    #         #     str4 = "    SATE"+str(numberOfAnds)+" = not (evalE"+str(numberOfAnds)+" < 0);\n"
-    #         # else:
-    #         #     str4 = "    SATE"+str(numberOfAnds)+" = not (evalE"+str(numberOfAnds)+" > 0);\n"
-    #         return str1 + str2 + str3 + str4;
-        
-    #     if ExpressionNode.type == 'Identifier' :
-    #         l = 1
-    #         for j in self.vars :
-    #             if j.scope=="LOCAL_DATA":
-    #                 if j.name == ExpressionNode.value :
-    #                     return "ptUpper["+str(l)+"]"
-    #                 l = l+1
-    #         if ExpressionNode.value == "Simu_time":
-    #             return "ptUpper[0]"
-                    
-    #         return ExpressionNode.value
-            
-    #     if ExpressionNode.type == 'Negative' :
-    #         l = 1
-    #         for j in self.vars :
-    #             if j.scope =="LOCAL_DATA":
-    #                 if j.name == ExpressionNode.children[0].value :
-    #                     return "-ptUpper["+str(l)+"]"
-    #                 l = l + 1
-                
-    #         return "-"+ExpressionNode.children[0].value
-        
-    #     if ExpressionNode.type == 'Expression' :
-            
-    #         child1 = ExpressionNode.children[0]
-    #         child2 = ExpressionNode.children[1]
-            
-    #         str1 = self.generateExpressionCode(child1, 0)
-    #         str2 = self.generateExpressionCode(child2, 0)
-            
-    #         return str1 + " " + ExpressionNode.value + " " + str2                
-        
+       
     #The callback to get the modes to auto expand
     def treeExpandCallback(self,treeview,it,path):
       parIter=self.treestore.iter_parent(it)
@@ -851,7 +529,6 @@ class HyIR:
         declarationsReqd = "\nint getNextMode(int curMode, interval curModeTime);\n"
         file.write(declarationsReqd)
         
-        # out_vars = []
         countVars = 0
         cont_vars = []
         
@@ -862,8 +539,6 @@ class HyIR:
             if vars.scope == 'LOCAL_DATA' and vars.name.find("dot") == -1 and vars.name.find("clock") == -1:
                 countVars = countVars+1
                 cont_vars+=[vars.name]
-            # if vars.scope == 'OUTPUT_DATA':
-            #     out_vars+= [vars.name]        
         
         varCount = 0
         for varnames in cont_vars:
@@ -903,15 +578,10 @@ class HyIR:
                     varstring = varstring + ","
                     difvarstring = difvarstring + ","
                 for dai in curMode.dais:
-                    # flag = 0
-                    # if flag == 0:
-                    # if collapse(dai.parsed.children[0]) == variable+"_dot":
                     if str(dai.expr.lhs) == variable+'_dot':
                         funstring += str(SymEq.convert_pow(dai.expr.rhs))
                         diffunstring += str(SymEq.convert_pow(dai.expr.rhs))
-                        # funstring = funstring + collapse(dai.parsed.children[1])
-                        # diffunstring = diffunstring + collapse(dai.parsed.children[1])
-                                                    
+
                         if index == lenVars:
                             funstring = funstring + ";"
                         else:
@@ -995,7 +665,7 @@ class HyIR:
         file.write(switchingString)
         file.close()
         
-    def convertToXML(self,propertyList):
+    def convertToXML(self, propertyList):
       hyxml=etree.Element("hyxml")
 
       auto=etree.SubElement(hyxml,"automaton",{"name":self.automata[0].name})
@@ -1028,6 +698,125 @@ class HyIR:
                         "timehorizon":str(prop.paramData[2]), "taylororder":str(prop.paramData[3])})
       
       return etree.tostring(hyxml,pretty_print=True,xml_declaration=True,encoding="utf-8",doctype="<!DOCTYPE hyxml>")
+
+
+def hyirXML(fileName):
+  parser=etree.XMLParser(remove_blank_text=True)
+  tree=etree.parse(fileName,parser)
+  root=tree.getroot()
+
+  hybrid_automata = {}
+  
+  for automata in root.iterfind("automaton"):
+    hybrid = HyIR(file_name=fileName)
+    name = automata.get("name")
+    hybrid_automata[name] = hybrid
+
+    for var in automata.iterfind("variable"):
+      v_name = var.get("name")
+      v_scope = var.get("scope")
+      v_type = var.get("type")
+      v = Variable(name=v_name,type=v_type,scope=v_scope)
+      hybrid.add_var(v)
+
+    modeIndex=0
+    for mode in automata.iterfind("mode"):
+      modeIndex+=1  
+      m=Mode()
+      m.name=mode.get("name")
+      m.id=int(mode.get("id"))
+      m.initial=(mode.get("initial")=="True")
+      for dai in mode.iterfind("dai"):
+        v1 = dai.get("equation")
+        # m.add_dai(DAI(parse_action(v1)[0],v1))
+        m.add_dai(DAI(raw=v1))
+      for inv in mode.iterfind("invariant"):
+        i = clean_eq(inv.get("equation"))
+        # i=inv.get("equation").replace("&lt;","<").replace("&gt;",">").replace("&amp;","&").replace("and","&&").replace("or","||")
+        # m.add_inv(Invariant(parse_guardLogicalExp(i)[0],i))
+        m.add_inv(Invariant(raw=i))
+      hybrid.automata.add_mode(m)  
+
+    for tran in automata.iterfind("transition"):
+      guard=tran.find("guard")
+      g_id = int(tran.get("id"))
+      g_src = int(tran.get("source"))
+      g_dest = int(tran.get("destination"))  
+
+      g = clean_eq(guard.get("equation"))
+      # g=guard.get("equation").replace("&lt","<").replace("&gt",">").replace("&amp;","&").replace("and","&&").replace("or","||")
+      actions=[]
+      for act in tran.iterfind("action"):
+        a = clean_eq(act.get("equation"))
+        # a=act.get("equation").replace("&lt","<").replace("&gt",">").replace("&amp;","&").replace("and","&&").replace("or","||")
+        # actions.append(Action(parse_action(a)[0],a))
+        actions.append(Action(raw=a))
+      # t=Transition(Guard(parse_guardLogicalExp(g)[0],g),actions,g_id,g_src,g_dest)
+      t=Transition(Guard(raw=g),actions,g_id,g_src,g_dest)
+      hybrid.automata.add_trans(t)
+  
+  composition = root.find("composition")
+  automata_list = map(lambda x: hybrid_automata[x], composition.get("automata").split(";"))
+  automata_list.reverse()
+  while len(automata_list)>1:
+    hyir1 = automata_list.pop()
+    hyir2 = automata_list.pop()
+    automata_list.append(HyIR.compose(hyir1, hyir2))
+
+  hybrid = automata_list[0]
+  hybrid.automata = [hybrid.automata]
+  hybrid.populateInvGuards()
+  varList = hybrid.varList
+
+  propertyList=[]
+  for prop in root.iterfind("property"):
+    p=PropertyDatum(len(propertyList))
+    p.name=prop.get("name")
+    p.type=int(prop.get("type"))    
+
+    p.initialSetStr = clean_eq(prop.get("initialSet"))
+    print '\n' + 'initial set equation: ' + p.initialSetStr
+    initialSetSplit = p.initialSetStr.split(':')
+    p.initialSetParsed = [initialSetSplit[0]] + SymEq.get_eqn_matrix(initialSetSplit[1], varList)
+    # print exprParser.parseSet(varList,p.initialSetStr,0)
+    # print SymEq.get_eqn_matrix(p.initialSetStr.split(':')[1], varList)
+    # p.initialSetParsed=exprParser.parseSet(varList,p.initialSetStr,0)
+    
+    p.unsafeSetStr = clean_eq(prop.get("unsafeSet"))
+    print '\n' + 'unsafe set equation: ' + p.unsafeSetStr
+    p.unsafeSetParsed = SymEq.get_eqn_matrix(p.unsafeSetStr, varList)    
+    # p.unsafeSetParsed=exprParser.parseSet(varList,p.unsafeSetStr,1)    
+
+    for paramSubTree in prop.iterfind("parameters"):
+        p.paramData[0] = float(paramSubTree.get("delta"))
+        p.paramData[1] = float(paramSubTree.get("timestep"))
+        p.paramData[2] = float(paramSubTree.get("timehorizon"))
+        p.paramData[3] = float(paramSubTree.get("taylororder"))
+    propertyList.append(p)
+
+  return hybrid,propertyList
+
+#Return varsUsed if flag is True
+# def convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, varsUsedFlag):
+#     eqs = []
+#     if varsUsedFlag:
+#         varsUsed = []
+#     for a,b,eq in zip(aMatrix, bMatrix, eqMatrix):
+#         lhs = []
+#         for i,coeff in enumerate(a):
+#             if coeff==1:
+#                 lhs.append(varList[i])
+#             elif coeff!=0:
+#                 lhs.append(str(coeff)+'*'+varList[i])
+#         eqs.append('+'.join(lhs)+str(eq[0])+str(b[0]))
+#         if varsUsedFlag:
+#             varsUsed = [varList[i] for i,coeff in enumerate(a) if varList[i] in varsUsed or coeff!=0 ]
+#     print eqs
+#     if varsUsedFlag:
+#         print varsUsed
+#         return eqs, varsUsed
+#     else:
+#         return eqs
 
 def hyirMdl(sftree, file_name):
     '''From a given parse tree, returns the hybrid intermediate 
@@ -1156,112 +945,7 @@ def hyirMdl(sftree, file_name):
     hybrid.populateInvGuards()
     return hybrid
 
-def hyirXML(fileName):
-  exprParser=ExprParser()
-  parser=etree.XMLParser(remove_blank_text=True)
-  tree=etree.parse(fileName,parser)
-  root=tree.getroot()
-
-  hybrid_automata = {}
-  
-  for automata in root.iterfind("automaton"):
-    hybrid = HyIR(file_name=fileName)
-    name = automata.get("name")
-    hybrid_automata[name] = hybrid
-
-    for var in automata.iterfind("variable"):
-      v_name = var.get("name")
-      v_scope = var.get("scope")
-      v_type = var.get("type")
-      v = Variable(name=v_name,type=v_type,scope=v_scope)
-      hybrid.add_var(v)
-
-    modeIndex=0
-    for mode in automata.iterfind("mode"):
-      modeIndex+=1  
-      m=Mode()
-      m.name=mode.get("name")
-      m.id=int(mode.get("id"))
-      m.initial=(mode.get("initial")=="True")
-      for dai in mode.iterfind("dai"):
-        v1 = dai.get("equation")
-        m.add_dai(DAI(parse_action(v1)[0],v1))
-      for inv in mode.iterfind("invariant"):
-        i=inv.get("equation").replace("&lt;","<").replace("&gt;",">").replace("&amp;","&").replace("and","&&").replace("or","||")
-        m.add_inv(Invariant(parse_guardLogicalExp(i)[0],i))
-      hybrid.automata.add_mode(m)  
-
-    for tran in automata.iterfind("transition"):
-      guard=tran.find("guard")
-      g_id = int(tran.get("id"))
-      g_src = int(tran.get("source"))
-      g_dest = int(tran.get("destination"))  
-
-      g=guard.get("equation").replace("&lt","<").replace("&gt",">").replace("&amp;","&").replace("and","&&").replace("or","||")
-      actions=[]
-      for act in tran.iterfind("action"):
-        a=act.get("equation").replace("&lt","<").replace("&gt",">").replace("&amp;","&").replace("and","&&").replace("or","||")
-        actions.append(Action(parse_action(a)[0],a))
-      t=Transition(Guard(parse_guardLogicalExp(g)[0],g),actions,g_id,g_src,g_dest)
-      hybrid.automata.add_trans(t)
-  
-  composition = root.find("composition")
-  automata_list = map(lambda x: hybrid_automata[x], composition.get("automata").split(";"))
-  while len(automata_list)>1:
-    hyir1 = automata_list.pop()
-    hyir2 = automata_list.pop()
-    automata_list.append(HyIR.compose(hyir1, hyir2))
-
-  hybrid = automata_list[0]
-  hybrid.automata = [hybrid.automata]
-  hybrid.populateInvGuards()
-  varList = hybrid.varList
-
-  propertyList=[]
-  for prop in root.iterfind("property"):
-    p=PropertyDatum(len(propertyList))
-    p.name=prop.get("name")
-    p.type=int(prop.get("type"))    
-
-    p.initialSetStr=str(prop.get("initialSet").replace("&lt","<").replace("&gt",">").replace("&amp;","&"))
-    print '\n' + 'initial set equation: ' + p.initialSetStr
-    p.initialSetParsed=exprParser.parseSet(varList,p.initialSetStr,0)
-    
-    p.unsafeSetStr=str(prop.get("unsafeSet")).replace("&lt","<").replace("&gt",">").replace("&amp;","&")
-    print '\n' + 'unsafe set equation: ' + p.unsafeSetStr
-    p.unsafeSetParsed=exprParser.parseSet(varList,p.unsafeSetStr,1)    
-
-    for paramSubTree in prop.iterfind("parameters"):
-        p.paramData[0] = float(paramSubTree.get("delta"))
-        p.paramData[1] = float(paramSubTree.get("timestep"))
-        p.paramData[2] = float(paramSubTree.get("timehorizon"))
-        p.paramData[3] = float(paramSubTree.get("taylororder"))
-    propertyList.append(p)
-
-  return hybrid,propertyList
-
-#Return varsUsed if flag is True
-def convertMatrixToStrEqn(varList, aMatrix, bMatrix, eqMatrix, varsUsedFlag):
-    eqs = []
-    if varsUsedFlag:
-        varsUsed = []
-    for a,b,eq in zip(aMatrix, bMatrix, eqMatrix):
-        lhs = []
-        for i,coeff in enumerate(a):
-            if coeff==1:
-                lhs.append(varList[i])
-            elif coeff!=0:
-                lhs.append(str(coeff)+'*'+varList[i])
-        eqs.append('+'.join(lhs)+str(eq[0])+str(b[0]))
-        if varsUsedFlag:
-            varsUsed = [varList[i] for i,coeff in enumerate(a) if varList[i] in varsUsed or coeff!=0 ]
-    print eqs
-    if varsUsedFlag:
-        print varsUsed
-        return eqs, varsUsed
-    else:
-        return eqs
-        
+     
 def separateAutomata(hyir):
     '''For a given hybrid intermediate representation (hyir), this function
     separates all modes into distinct automata whose composition represents
@@ -1429,19 +1113,8 @@ def collapse2(node):
     elif len(node.children) == 1:
         return node.value + collapse2(node.children[0])
 
-def numberOfLogicalOper(guardNode):
-    
-    if guardNode.type == 'Logical':
-        if len(guardNode.children) == 2:
-            child1 = guardNode.children[0]
-            child2 = guardNode.children[1]
-            if (child1.type != 'Logical') & (child2.type == 'Logical'):
-                return 1 + numberOfLogicalOper(child2)
-            if (child1.type != 'Logical') & (child2.type != 'Logical'):
-                return 2
-            
-    if guardNode.type != 'Logical':
-        return 1;
-
-
-
+def clean_eq(eq):
+    r_dict = {'&lt;':'<', '&gt;':'>', '&amp;':'&', 'and':'&&', 'or':'||'}
+    for term in r_dict:
+        eq = eq.replace(term, r_dict[term])
+    return eq

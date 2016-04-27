@@ -16,10 +16,7 @@ from propDialog import *
 from genSimulator import *
 
 verifLog = logging.getLogger('c2e2VerificationLog') 
-
-#verifLog.setLevel()
-
-F1 = logging.FileHandler('../wd/.c2e2verification.log')
+F1 = logging.FileHandler('../wd/.c2e2verification.log', mode='w')
 F1.setLevel(logging.DEBUG)
 verifLog.setLevel(logging.DEBUG)
 F1.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -29,9 +26,6 @@ verifLog.info('Launching the logger')
 Global_Linear = 0
 Global_Refine = 0
 Global_Simulator = 0
-
-#verifLog.basicConfig(filename='../wd/.c2e2verification.log', level=verifLog.DEBUG, format='%(asctime)s %(message)s')  
-
 
 """
   Main
@@ -47,9 +41,7 @@ class Main(gtk.Window):
   """
   def __init__(self):
     gtk.Window.__init__(self)
-    
-    #verifLog.info('Started!')
-    
+        
     self.fileSaved=""
     self.fileOpened=False
 
@@ -95,71 +87,6 @@ class Main(gtk.Window):
     menuVBox.pack_start(menuBar,False,False,0)
     return menuVBox
 
-
-  """
-    loadFileChosen
-    Description: loads the selected file and displays the model
-    Inputs: fileChosen - the path to the chosenFile
-    Outputs: none
-    Return: none
-  """
-  def loadFileChoosen(self,fileChoosen):
-    os.system("./DeleteEX.sh")
-    if self.fileOpened:
-      self.modelNotebook.destroy()
-    global Global_Linear
-    Global_Linear = 0
-    global Global_Simulator
-    Global_Simulator = 0
-
-    fileName,fileExtension=os.path.splitext(os.path.basename(fileChoosen))
-    self.set_title("C2E2: "+fileName)
-    propList=[]
-    typeInput = 0
-    paramList = None
-    if fileExtension==".hyxml":
-      typeInput = 1
-      hybridRep,propList=hyirXML(fileChoosen)
-      for prop in propList:
-          if all(param!=0 for param in prop.paramData):
-            paramList = [str(param) for param in prop.paramData]
-          # if prop.paramData[0] != 0 and prop.paramData[1] != 0 and prop.paramData[2] != 0 and prop.paramData[3] != 0 :
-              # paramList = [str(prop.paramData[0]),str(prop.paramData[1]),str(prop.paramData[2]),str(prop.paramData[3])]
-    else:
-      typeInput = 2  
-      model=open(fileChoosen,"r")
-      rawModel=model.read()
-      x=re.search(r"Stateflow {",rawModel)
-      sf_data=rawModel[x.start():]
-      sf_tree=extract_sf(sf_data)
-      if IsHierarchical(sf_tree):
-        sf_tree=RemoveHierarchy(sf_tree)
-      hybridRep=hyirMdl(sf_tree,fileChoosen)
-
-    dupHybridRep = hybridRep
-    verifLog.info('Model is \n' + hybridRep.convertToXML([]))
-    dupHybridRep.printHybridSimGuardsInvariants();
-    dupHybridRep.printBloatedSimGuardsInvariants()
-    st = 'constant'
-    path = '../Hylink/simulator.cpp'
-    gen_simulator(path, dupHybridRep, step_type=st)
-
-    parseTree,vList,mList=hybridRep.display_system("System")
-    self.modelNotebook=ModelNotebook(parseTree,hybridRep,propList,vList,mList,paramList)
-
-    #self.ModelNotebook.propertiesFrame.disableAllButtons()
-    arguments1 = ['mv', 'bloatedSimGI.cpp', 'hybridSimGI.cpp', 'simulator.cpp', '../wd/']
-    subp1 = subprocess.Popen(arguments1)
-    subp1.wait()
-
-    arguments = ['sh', './compileAndExecute', "0"]
-    subp = subprocess.Popen(arguments,cwd="../wd/")
-    subp.wait()
-
-    self.fileLabel.hide()
-    self.windowVBox.pack_start(self.modelNotebook)
-    #print("displayed")
-
   """
     openFileCallback
     Description: creates an open file dialog with which the user can select a model to open
@@ -179,10 +106,69 @@ class Main(gtk.Window):
     response=openDialog.run()
     if response==gtk.RESPONSE_OK:
       fileName = openDialog.get_filename()
-      verifLog.info(' File opened ' + fileName)
+      verifLog.info('File opened: ' + fileName)
       self.loadFileChoosen(fileName)
       self.fileOpened=True
     openDialog.destroy()
+
+  """
+    loadFileChosen
+    Description: loads the selected file and displays the model
+    Inputs: fileChosen - the path to the chosenFile
+    Outputs: none
+    Return: none
+  """
+  def loadFileChoosen(self,fileChoosen):
+    os.system("./DeleteEX.sh")
+    if self.fileOpened:
+      self.modelNotebook.destroy()
+    
+    global Global_Linear
+    global Global_Simulator
+    Global_Linear = 0
+    Global_Simulator = 0
+
+    fileName, extension = os.path.splitext(os.path.basename(fileChoosen))
+    self.set_title("C2E2: " + fileName)
+    propList=[]
+    paramList = None
+    if extension=='.hyxml':
+      hyir, propList = hyirXML(fileChoosen)
+      for prop in propList:
+          if all(param!=0 for param in prop.paramData):
+            paramList = [str(param) for param in prop.paramData]
+    elif extension=='.mdl':
+      model=open(fileChoosen,"r")
+      rawModel=model.read()
+      x=re.search(r"Stateflow {",rawModel)
+      sf_data=rawModel[x.start():]
+      sf_tree=extract_sf(sf_data)
+      if IsHierarchical(sf_tree):
+        sf_tree=RemoveHierarchy(sf_tree)
+      hyir = hyirMdl(sf_tree, fileChoosen)
+
+    verifLog.info('Model is \n' + hyir.convertToXML([]))
+    hyir.printHybridSimGuardsInvariants();
+    hyir.printBloatedSimGuardsInvariants()
+    
+    st = 'constant'
+    path = '../wd/simulator.cpp'
+    gen_simulator(path, hyir, step_type=st)
+
+    parseTree,vList,mList = hyir.display_system()
+    self.modelNotebook=ModelNotebook(parseTree,hyir,propList,vList,mList,paramList)
+
+    #self.ModelNotebook.propertiesFrame.disableAllButtons()
+    # arguments = ['mv', 'bloatedSimGI.cpp', 'hybridSimGI.cpp', 'simulator.cpp', '../wd/']
+    # subp = subprocess.Popen(arguments)
+    # subp.wait()
+
+    arguments = ['sh', './compileAndExecute', "0"]
+    subp = subprocess.Popen(arguments,cwd="../wd/")
+    subp.wait()
+
+    self.fileLabel.hide()
+    self.windowVBox.pack_start(self.modelNotebook)
     
   """
     saveFileCallback
@@ -194,7 +180,7 @@ class Main(gtk.Window):
   """
   def saveFileCallback(self,value,widget):
     if self.fileOpened:
-      if not value and self.fileSaved=="" or value:
+      if (value==0 and self.fileSaved=='') or value==1:
         saveDialog=gtk.FileChooserDialog("Save File",self,gtk.FILE_CHOOSER_ACTION_SAVE,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_SAVE,gtk.RESPONSE_OK)) 
         filter=gtk.FileFilter()
         filter.set_name("Models")
@@ -204,7 +190,8 @@ class Main(gtk.Window):
         response=saveDialog.run()
         if response==gtk.RESPONSE_OK:
           self.fileSaved=saveDialog.get_filename()
-          if not ".hyxml" in self.fileSaved:
+          if not self.fileSaved.endswith(".hyxml"):
+          # if not ".hyxml" in self.fileSaved:
             self.fileSaved+=".hyxml"
           self.modelNotebook.saveModel(self.fileSaved)
         saveDialog.destroy()
@@ -245,7 +232,6 @@ class ModelNotebook(gtk.Notebook):
     self.propertyList=gtk.ListStore(gobject.TYPE_PYOBJECT)
     self.propertyListFilter=self.propertyList.filter_new()
     self.propertyListFilter.set_visible_func(self.showRow)
-    self.propertyListLen=0
     self.editListLen=0
     self.varList=varList
     self.modeList=modeList
@@ -261,9 +247,9 @@ class ModelNotebook(gtk.Notebook):
     self.verifyingPlotting=[False]
     self.hybridRep=hybridRep
 
+    self.propertyListLen = len(propList)
     for prop in propList:
       self.propertyList.append([prop])
-      self.propertyListLen+=1
 
     self.modelTable=gtk.Table(1,10,True)
     self.modelTable.set_col_spacing(6,5)
@@ -356,8 +342,7 @@ class ParameterFrame(gtk.Frame):
     self.rendererStatus=rendererStatus
     self.initParameterFrame()
     self.hybridRep = hybridRep
-    
-    
+ 
   """
     initParameterFrame
     Description: initializes the contents of the frame
@@ -391,10 +376,6 @@ class ParameterFrame(gtk.Frame):
     linearbutton.connect("toggled", self.linearCallback, "Linear Model")
     paramHBox1.pack_start(linearbutton,True,True,2)
 
-    # SimulationButton = gtk.CheckButton("Simulation")
-    # SimulationButton.connect("toggled", self.simulationcallback, "Simulation")
-    # paramHBox1.pack_start(SimulationButton,True,True,2)
-
     self.paramVBox.pack_start(paramHBox1,True,True,0)
 
     combobox = gtk.combo_box_new_text()
@@ -412,51 +393,64 @@ class ParameterFrame(gtk.Frame):
     refinecombobox.append_text('USER DEFINE STRATEGY')
     refinecombobox.set_active(0)
 
-
-    #linearbutton.show()
-
     self.add(self.paramVBox)
-
 
   def changed_refine_cb(self,combobox):
     index = combobox.get_active()
     global Global_Refine
     Global_Refine = index
 
-
   def changed_cb(self,combobox):
     index = combobox.get_active()
     if index != self.prevSimuIndex:
       self.prevSimuIndex = index
-      if index == 2:
-        self.hybridRep.convertToCAPD("simulator")
-        arguments1 = ['mv','simulator.cpp', '../wd/']
-        subp1 = subprocess.Popen(arguments1)
-        subp1.wait()
-        arguments = ['sh', './compileSimulator', "2"]
-        subp = subprocess.Popen(arguments,cwd="../wd/")
-        subp.wait()
       if index == 0:
         st = 'constant'
         path = '../Hylink/simulator.cpp'
         gen_simulator(path, self.hybridRep, step_type=st)
-        arguments1 = ['mv','simulator.cpp', '../wd/']
-        subp1 = subprocess.Popen(arguments1)
-        subp1.wait()
-        arguments = ['sh', './compileSimulator', "0"]
-        subp = subprocess.Popen(arguments,cwd="../wd/")
-        subp.wait()
-
       if index == 1:
         st = 'adaptive'
         path = '../Hylink/simulator.cpp'
         gen_simulator(path, self.hybridRep, step_type=st)
-        arguments1 = ['mv','simulator.cpp', '../wd/']
-        subp1 = subprocess.Popen(arguments1)
-        subp1.wait()
-        arguments = ['sh', './compileSimulator', "1"]
-        subp = subprocess.Popen(arguments,cwd="../wd/")
-        subp.wait()
+      if index == 2:
+        self.hybridRep.convertToCAPD("simulator")
+      
+      arguments = ['mv','simulator.cpp', '../wd/']
+      subp = subprocess.Popen(arguments)
+      subp.wait()
+
+      arguments = ['sh', './compileSimulator', str(index)]
+      subp = subprocess.Popen(arguments,cwd="../wd/")
+      subp.wait()
+      # if index == 0:
+      #   st = 'constant'
+      #   path = '../Hylink/simulator.cpp'
+      #   gen_simulator(path, self.hybridRep, step_type=st)
+      #   arguments1 = ['mv','simulator.cpp', '../wd/']
+      #   subp1 = subprocess.Popen(arguments1)
+      #   subp1.wait()
+      #   arguments = ['sh', './compileSimulator', "0"]
+      #   subp = subprocess.Popen(arguments,cwd="../wd/")
+      #   subp.wait()
+      # if index == 1:
+      #   st = 'adaptive'
+      #   path = '../Hylink/simulator.cpp'
+      #   gen_simulator(path, self.hybridRep, step_type=st)
+      #   arguments1 = ['mv','simulator.cpp', '../wd/']
+      #   subp1 = subprocess.Popen(arguments1)
+      #   subp1.wait()
+      #   arguments = ['sh', './compileSimulator', "1"]
+      #   subp = subprocess.Popen(arguments,cwd="../wd/")
+      #   subp.wait()
+      # if index == 2:
+      #   self.hybridRep.convertToCAPD("simulator")
+      #   arguments1 = ['mv','simulator.cpp', '../wd/']
+      #   subp1 = subprocess.Popen(arguments1)
+      #   subp1.wait()
+      #   arguments = ['sh', './compileSimulator', "2"]
+      #   subp = subprocess.Popen(arguments,cwd="../wd/")
+      #   subp.wait()
+
     global Global_Simulator
     Global_Simulator = index    
 
@@ -464,8 +458,6 @@ class ParameterFrame(gtk.Frame):
   def linearCallback(self, widget, data):
     global Global_Linear
     Global_Linear = 1- Global_Linear
-
-
 
   """
     entryCallback
@@ -537,6 +529,7 @@ class FloatEntry(gtk.Entry):
       entry.set_text(validInput[0])
     else:
       entry.set_text("")
+
 gobject.type_register(FloatEntry)
 
 """
@@ -567,9 +560,8 @@ class NumberEntry(gtk.Entry):
       entry.set_text(validInput[0])
     else:
       entry.set_text("")
+
 gobject.type_register(NumberEntry)
-
-
 
 """
   PropertiesFrame
@@ -786,36 +778,6 @@ class PropertiesFrame(gtk.Frame):
       currBtn.set_label(task_str)
     else:
       currBtn.set_label("Abort")
-
-  # def enableWidgets(self,val):
-  #   self.verifyingPlotting[0]=not val
-  #   self.rendererToggle.set_activatable(val)
-  #   self.columnToggle.set_property("clickable",val)
-  #   self.propToggleAll.set_sensitive(val)
-  #   self.addBtn.set_sensitive(val)
-  #   self.editBtn.set_sensitive(val)
-  #   self.copyBtn.set_sensitive(val)
-  #   self.removeBtn.set_sensitive(val)
-  #   self.simulateAbortBtn.set_sensitive(val)
-  #   if val:
-  #     self.verifyAbortBtn.set_label("Verify")
-  #   else:
-  #     self.verifyAbortBtn.set_label("Abort")
-     
-  # def enableWidgetsSimulate(self,val):
-  #   self.verifyingPlotting[0]=not val
-  #   self.rendererToggle.set_activatable(val)
-  #   self.columnToggle.set_property("clickable",val)
-  #   self.propToggleAll.set_sensitive(val)
-  #   self.addBtn.set_sensitive(val)
-  #   self.editBtn.set_sensitive(val)
-  #   self.copyBtn.set_sensitive(val)
-  #   self.removeBtn.set_sensitive(val)
-  #   self.verifyAbortBtn.set_sensitive(val)
-  #   if val:
-  #     self.simulateAbortBtn.set_label("Simulate")
-  #   else:
-  #     self.simulateAbortBtn.set_label("Abort")
 
   """
     propToggleCallback
@@ -1113,81 +1075,20 @@ class PropertiesFrame(gtk.Frame):
 
           verifLog.info(' Partition - ' + delta + ' - Time step - ' + tstep + ' - Time horizon - ' + thoriz + ' - ')
           
-          numInitEqns = len(initialIneqs)
-          c2e2String+= "init-eqns=\""+str(numInitEqns)+"\"\n"
+          c2e2String+= "init-eqns=\""+str(len(initialIneqs))+"\"\n"
           c2e2String+= "init-matrix=["
-          commaCount = 0;
-          for j in range(0,numInitEqns):
-              multiplicity = 1;
-              rowMatrix = initialMatrix[j]
-              rowDir = initialIneqs[j][0]
-              
-              if rowDir == '>=':
-                  multiplicity = -1
-                  
-              for number in rowMatrix:
-                  if commaCount == 0:
-                      c2e2String += str(multiplicity*number)
-                      commaCount+=1
-                  else:
-                      c2e2String += ","+str(multiplicity*number)
-          
-          c2e2String += "]\n"
-          c2e2String += "init-b=["
-          commaCount = 0
-          for j in range(0,numInitEqns):
-              multiplicity = 1;
-              number = initialB[j][0]
-              rowDir = initialIneqs[j][0]
-              
-              if rowDir == '>=':
-                  multiplicity = -1
-              
-              if commaCount == 0:
-                  c2e2String += str(multiplicity*number)
-                  commaCount+=1
-              else:
-                  c2e2String += ","+str(multiplicity*number)
-          
-          c2e2String += "]\n"        
-              
-          numUnsafeEqns = len(unsafeIneqs)
-          c2e2String+= "unsafe-eqns=\""+str(numUnsafeEqns)+"\"\n"
+          c2e2String+= self.getMatrixStr(initialMatrix, initialIneqs)
+          c2e2String+= "]\n"
+          c2e2String+= "init-b=["
+          c2e2String+= self.getMatrixStr(initialB, initialIneqs)
+          c2e2String+= "]\n"        
+          c2e2String+= "unsafe-eqns=\""+str(len(unsafeIneqs))+"\"\n"
           c2e2String+= "unsafe-matrix=["
-          commaCount = 0;
-          for j in range(0,numUnsafeEqns):
-              multiplicity = 1;
-              rowMatrix = unsafeMatrix[j]
-              rowDir = unsafeIneqs[j][0]
-              
-              if rowDir == '>=':
-                  multiplicity = -1
-                  
-              for number in rowMatrix:
-                  if commaCount == 0:
-                      c2e2String += str(multiplicity*number)
-                      commaCount+=1
-                  else:
-                      c2e2String += ","+str(multiplicity*number)
-          
-          c2e2String += "]\n"
-          c2e2String += "unsafe-b=["
-          commaCount = 0
-          for j in range(0,numUnsafeEqns):
-              multiplicity = 1;
-              number = unsafeB[j][0]
-              rowDir = unsafeIneqs[j][0]
-              
-              if rowDir == '>=':
-                  multiplicity = -1
-              
-              if commaCount == 0:
-                  c2e2String += str(multiplicity*number)
-                  commaCount+=1
-              else:
-                  c2e2String += ","+str(multiplicity*number)
-          
-          c2e2String += "]\n"
+          c2e2String+= self.getMatrixStr(unsafeMatrix, unsafeIneqs)
+          c2e2String+= "]\n"
+          c2e2String+= "unsafe-b=["
+          c2e2String+= self.getMatrixStr(unsafeB, unsafeIneqs)
+          c2e2String+= "]\n"
        
           for mode_num in range(1, len(self.modeList)+1):
             c2e2String+= "annotation-mode=\""+str(mode_num)+"\"\n"
@@ -1257,60 +1158,32 @@ class PropertiesFrame(gtk.Frame):
 
           #Might need a variable here to check if the process was aborted
           while self.subp.poll() == None:
-              prop.status=status_str
+            for i in range(4):
+              prop.status = status_str + '.'*i
               self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
               while gtk.events_pending():
                 gtk.main_iteration()
               time.sleep(0.5) 
-              if not self.subp.poll()==None:
+              if self.subp.poll():
                 break
-
-              prop.status=status_str+'.'
-              self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-              while gtk.events_pending():
-                gtk.main_iteration()
-              time.sleep(0.5) 
-              if not self.subp.poll()==None:
-                break
-
-              prop.status=status_str+'..'
-              self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-              while gtk.events_pending():
-                gtk.main_iteration()
-              time.sleep(0.5) 
-              if not self.subp.poll()==None:
-                break
-
-              prop.status=status_str+'...'
-              self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
-              while gtk.events_pending():
-                gtk.main_iteration()
-              time.sleep(0.5)
-              if not self.subp.poll()==None:
-                break
-
-    
+      
           checkfilename = "../wd/ReachSet"+prop.name
 
           self.subp=None
           if self.abortedVerifying==False:
             prop.status=completed_str
+            if os.stat(checkfilename).st_size == 0:
+              prop.verifResult = "ERROR"
             with open("../wd/Result.dat",'r') as f:
-              res=f.readline()
-              print "This is the result read " + res
-              res = int(res)
-              print "This is the result read " + str(res)
+              res = int(f.readline())
               if res<0:
-                prop.verifResult="Unsafe"
+                prop.verifResult = "Unsafe"
               elif res==0:
-                prop.verifResult="Unknown"
+                prop.verifResult = "Unknown"
               else:
-                if os.stat(checkfilename).st_size == 0:
-                  prop.verifResult="ERROR"
-                else:
-                  prop.verifResult="Safe"
-            prop.newTabPixbuf=gtk.gdk.pixbuf_new_from_file("./Resources/newTab.png").scale_simple(16,16,
-                                                           gtk.gdk.INTERP_HYPER)
+                prop.verifResult = "Safe"
+
+            prop.newTabPixbuf=gtk.gdk.pixbuf_new_from_file("./Resources/newTab.png").scale_simple(16,16,gtk.gdk.INTERP_HYPER)
             prop.reachSetPath=pathString
             
             verifLog.info(task_str+' Result Returned - ' + prop.verifResult + ' - ')
@@ -1319,12 +1192,10 @@ class PropertiesFrame(gtk.Frame):
           else:
             self.abortedVerifying=False
             prop.status='Not verified'
-   
             verifLog.info(task_str+ ' Aborted ')
-
             self.propertyList.row_changed(prop.index,self.propertyList.get_iter(prop.index))
             print("Breaking")
-            break;
+            break
 
       self.enableWidgets(True, flag, task_str)
       self.notebook.set_current_page(self.notebook.get_current_page())
@@ -1339,7 +1210,15 @@ class PropertiesFrame(gtk.Frame):
         parent.kill()
       self.abortedVerifying=True
       verifLog.info(task_str+' completely aborted ')
-    
+  
+  def getMatrixStr(self, row_matrix, eq_matrix):
+    matrix = []
+    for row, eq in zip(row_matrix, eq_matrix):
+      if eq[0]=='>=': row = [str(-x) for x in row]
+      else: row = [str(x) for x in row]
+      matrix.extend(row)
+    return ','.join(matrix)
+
 if __name__=="__main__":
   c2e2=Main()
   c2e2.main()

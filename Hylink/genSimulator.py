@@ -1,6 +1,7 @@
 from hyir import *
 from jacobiancalc import *
-import re
+import sympy
+# import re
 
 def gen_simulator(file_path, hybrid_rep, **kwargs):
     # Get kwargs
@@ -50,16 +51,18 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
                 lhs, rhs = str(dai.expr.lhs), dai.expr.rhs
                 lhs = lhs.split('_dot')[0] 
                 lhs_idx = vars.index(lhs)
-                # rhs = rhs.strip()
-                rhs = str(SymEq.convert_pow(rhs))
-                print 'rhs: ' + rhs
+                rhs = SymEq.convert_pow(rhs)
 
                 # Generate jacobian in correct order
                 orig_eqns.insert(lhs_idx,rhs)
 
                 # Replace variables with 'x[i]'
+                rhs = dai.expr.rhs
                 for j, var in enumerate(vars):
-                    rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
+                    rhs = rhs.subs(var, sympy.Symbol('x['+str(j)+']'))
+                    # rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
+                print 'rhs: ' + str(rhs)
+                rhs = SymEq.convert_pow(rhs)
 
                 # Generate dxdt in correct order
                 dxdt[i].insert(lhs_idx, rhs) 

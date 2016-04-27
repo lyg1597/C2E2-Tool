@@ -132,14 +132,8 @@ int main(int argc, char* argv[]) {
     annotVerify->setGamma(gammaValue); annotVerify->setKConst(kConstValue); annotVerify->setType(annotationTypeValue);
     annotVerify->setKConst(KConstArray); annotVerify->setGamma(gammaValueArray);
 
-    // Generating an object for checker
     class Checker* checkVerify = new Checker();
 
-    // Visualizer for generating the reachset text files
-    // Might be removed - not used anymore.
-    /*class Visualizer* simuVisualize = new Visualizer();
-    simuVisualize->setDim1(visu1); simuVisualize->setDim2(visu2);
-*/
 	int numberRefinements = 0;
 	int refinementcounter = 0;
 
@@ -374,7 +368,7 @@ int main(int argc, char* argv[]) {
        //          gettimeofday(&inv_end, NULL);
 		    	// cout << "INVARIANT TIME: "<< inv_end.tv_usec - inv_start.tv_usec << endl;
                 if(!inv_true){
-                	// cout << "INVARIANT NOT SATISFIED: " << i << endl << endl;
+                	cout << "INVARIANT NOT SATISFIED: " << i << endl << endl;
                     simulationTube->clear(i);
                     break;
                 }
@@ -384,7 +378,7 @@ int main(int argc, char* argv[]) {
                 // gettimeofday(&guard_end, NULL);
             	// cout << "GUARD TIME: "<< guard_end.tv_usec - guard_start.tv_usec << endl;
                 if(!guards_hit.empty()){
-                	// cout << "GUARD SATISFIED: " << i << endl;
+                	cout << "GUARD SATISFIED: " << i << endl;
                     guardSet->addGuards(guards_hit);
                     hitGuard = true;
                 }
@@ -483,9 +477,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	class ReachTube* InvTube = NULL;
-	int ResultTubeLength = 0;
-	for(ResultTubeLength=0;ResultTubeLength<resultTube.size();ResultTubeLength++){
-		InvTube = resultTube.at(ResultTubeLength);
+	cout << "Size: " << resultTube.size() << endl;
+	for(int i=0; i<resultTube.size();i++){
+		InvTube = resultTube.at(i);
 		InvTube->printReachTube(visuFileName,1);
 		delete InvTube;
 	}
@@ -514,9 +508,10 @@ int hybridSimulationCover(Simulator *simulator, Checker *checker, LinearSet *uns
 		ptLower->setCoordinate(i+1, initialSet->getMin(i));
 		ptUpper->setCoordinate(i+1, initialSet->getMax(i));
 	}
-
 	int isSafe = 1;
+
 	vector<Point *> pts = getRepresentativeCover(ptLower, ptUpper, 3, dimensions);
+
 	for(int i=0; i<pts.size(); i++){
 		cout << "Hybrid Simulation " << i+1 << " -> ";
 		pts[i]->print();
@@ -567,8 +562,6 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 
 		simulator->Simulate(origin, mode);
 
-		// cout << "SIMULATED" << endl;
-
 		ReachTube* simulationTube = new ReachTube();
 		simulationTube->setDimensions(dimensions);
 		simulationTube->setMode(mode);
@@ -579,6 +572,9 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 		for(int i=0; i<size; i++){
 			ptLower = simulationTube->getLowerBound(i)->getCoordinates();
 			ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
+    		// cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+			// cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
+
 			guards_hit = guards(mode, ptLower, ptUpper);
 			if(!guards_hit.empty()){
 				pair<NNC_Polyhedron, int> guard_taken = guards_hit[rand() % guards_hit.size()];
@@ -616,7 +612,7 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 }
 
 Point* getPointFromPoly(NNC_Polyhedron poly, int dimensions){
-	cout << "Get Point" << endl;
+	// cout << "Get Point" << endl;
 	Point *pt = new Point(dimensions+1);
 
 	Generator_System gs=poly.minimized_generators();
@@ -631,12 +627,12 @@ Point* getPointFromPoly(NNC_Polyhedron poly, int dimensions){
 		  	{
 		    	double dividend=mpz_get_d(k->coefficient(Variable(j)).get_mpz_t());
 		    	double num = dividend/divisor;
-		    	cout << j << ": " << num << endl;
+		    	// cout << j << ": " << num << endl;
 	    		pt->setCoordinate(j, num);
 		  	}
 		}
 	}
-	cout << "Return Point" << endl;
+	// cout << "Return Point" << endl;
 	return pt;
 }
 
@@ -671,7 +667,6 @@ vector<Point *> getRepresentativeCover(Point *ptLower, Point *ptUpper, int n, in
 		else{
 			start = ptLower->getCoordinate(i);
 			step_size = (ptUpper->getCoordinate(i)-ptLower->getCoordinate(i))/(n-1);
-			// block_size = (int) pow(n, i-1);
 			block_size = (int) pow(n, num_thick_dim);
 			for(int j=0, pt_i=0; j<num_pts; pt_i++){
 				val = start + (pt_i%n)*step_size;
