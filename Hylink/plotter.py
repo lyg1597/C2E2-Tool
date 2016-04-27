@@ -28,20 +28,10 @@ from math import floor as floor
 def plotGraph(threadEvent,reachSetPath,unsafeSet,varList,modeList,varPlotTuple,dispMode,
               timeStep,timeHoriz,plotStatus,title,filename,xindex,yindexlist,plotterversion):
 
-  # print (reachSetPath)
-  # print (unsafeSet)
-  # print (varList)
-  # print (modeList)
-  # print (varPlotTuple)
-  # print (timeStep)
-  # print (timeHoriz)
-  # print (plotStatus)
-  # print (title)
-  # print (filename)
-  # print (xindex)
-  # print (yindexlist)
+  
 
   type_simulation = open(reachSetPath,'r').readline().rstrip()
+  
   if type_simulation=="hybrid simulation" or plotterversion==3:
     if len(varPlotTuple)>2:
       return plotMultipleVarsV2(threadEvent,reachSetPath,varList,modeList,varPlotTuple,dispMode,timeStep,timeHoriz,
@@ -96,7 +86,7 @@ def plotMultipleVars(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,disp
   #store the result to upperbound or lowerbound in order
   #if there are few values for same time-step(because of multiple execution)
   #check the old value and over-write old value if needed
-  for line in reachData.readlines()[1:]:
+  for line in reachData.readlines():
     if line.rstrip():
       dataLine=line.rstrip().split()
       if dataLine[0]=="%":
@@ -241,6 +231,7 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
   #the list looks like upperbound[mode][var][time_step]
   #we also create 3D list for unsafe execution for plot multiple modes
   numberofstep = timeHoriz/timeStep
+  #print reachSetPath
   reachData=open(reachSetPath,'r')
   upperbound = [[[-float("Inf") for w in xrange(int(numberofstep)+1)] for i in xrange(len(varlist))] for j in xrange(len(modelist))]
   lowerbound = [[[float("Inf") for w in xrange(int(numberofstep)+1)] for i in xrange(len(varlist))] for j in xrange(len(modelist))]
@@ -263,11 +254,12 @@ def plotMultipleModes(threadEvent,reachSetPath,unsafeset,varlist,modelist,varPlo
   #if there are few values for same time-step(because of multiple execution)
   #check the old value and over-write old value if needed
   #if it is unsafe excution, just store it since there will be only one unsafe execution.
-  for line in reachData.readlines()[1:]:
+  for line in reachData.readlines():
     if line.rstrip():
       dataLine=line.rstrip().split()
       if dataLine[0]=="%":
         mode=int(dataLine[2])-1
+        #print 'the mode is ', mode
         linecounter=0
         #print(len(dataLine))
         if len(dataLine)==4:
@@ -501,7 +493,7 @@ def plotMultipleModesV2(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
   
   print lowerbound
  
-  for line in reachData.readlines()[1:]:
+  for line in reachData.readlines():
     if line.rstrip():
       dataLine=line.rstrip().split()
       if dataLine[0]=="%":
@@ -710,12 +702,17 @@ def plotMultipleVarsV2(threadEvent,reachSetPath,varlist,modelist,varPlotTuple,di
   ymin = float("Inf")
   xmax = -float("Inf")
   ymax = -float("Inf")
-  
+
+  type_simulation = open(reachSetPath,'r').readline().rstrip()
+  skip = 0
+  if type_simulation=="hybrid simulation":
+    skip = 1
+
 
   #store the result to upperbound or lowerbound in order
   #if there are few values for same time-step(because of multiple execution)
   #check the old value and over-write old value if needed
-  for line in reachData.readlines()[1:]:
+  for line in reachData.readlines()[skip:]:
     if line.rstrip():
       dataLine=line.rstrip().split()
       if dataLine[0]=="%":
