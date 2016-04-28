@@ -237,10 +237,10 @@ def verification(hybridRep,paramData,modeList,varList,propList):
 			c2e2String+= "annotation-type=\"contraction\"\n"
 			c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
 			c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-			# print(Lineararg)
-			# print(HAHA)
-			if (Lineararg==1):
-				print("haha")
+			#print(Lineararg)
+			#print('HAHA')
+			if Lineararg == '1':
+				#print("haha")
 				filename = ""
 				filename +="../wd/jacobiannature"
 				filename += str(mode_num)
@@ -548,7 +548,7 @@ def autotest(model):
 
 def autotest2(model):
 	print(Lineararg)
-	vList,mList,hybridRep,propList,paramsData,typeInput = loadfile("../Examples/"+model)
+	vList,mList,hybridRep,propList,paramsData,typeInput = loadfile("../NewExamples/"+model)
 	paramData=[["Partitioning:",2000,1],["Time-step:",paramsData[1],1],["Time horizon:",paramsData[2],1],["Taylor model order:",paramsData[3],1]]
 	verification(hybridRep,paramData,mList,vList,propList)
  	sys.exit()
@@ -570,6 +570,7 @@ filename = sys.argv[-1]
 if len(sys.argv)!=1:
 	Lineararg = sys.argv[-2]
 
+#print Lineararg
 #print(filename)
 if filename != "terminal.py":
 	#autotest(filename)
@@ -606,10 +607,10 @@ answer = 0
 while answer!=1:
 	a = raw_input("Is this a linear model? Y/N")
 	if a=="Y" or a=="y" or a=="yes":
-		Lineararg = 1
+		Lineararg = '1'
 		answer = 1
 	if a=="N" or a=='n' or a=='no':
-		Lineararg = 0
+		Lineararg = '0'
 		answer = 1
 
 
@@ -663,6 +664,7 @@ while True:
 			proplen -=1
 	else:
 		print("No such command")
+
 
 
 
