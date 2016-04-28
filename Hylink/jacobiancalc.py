@@ -41,7 +41,7 @@ def jacobian(difvar,diffun,loop):
     dvl = [x.strip() for x in difvar.split(',')]
     dfl = [x.strip() for x in diffun.split(',')]
     #print (dvl)
-    
+
     varlen = len(dvl)
     funlen = len(dfl)
     
@@ -72,11 +72,6 @@ def jacobian(difvar,diffun,loop):
     print(len(X))
     jac = X.jacobian(Y)
     Ljac = jac.tolist()
-    # print(Ljac[0])
-    # print(len(Ljac))
-    # print(len(Ljac[0]))
-    # print varlen
-    
    
     deleterow = []
     deletecol = []
@@ -108,12 +103,10 @@ def jacobian(difvar,diffun,loop):
     funlen -= len(delete_element)
     varlen -= len(delete_element)
 
-
     for i in range (funlen):
         for j in range (varlen):
             Ljac[i][j] = "Entry"+"="+str(Ljac[i][j])
 
-    
     naturestirng = ""
     naturestirng+=str(len(dvl))
     naturestirng+='\n'

@@ -1,6 +1,7 @@
 from hyir import *
 from jacobiancalc import *
-import re
+import sympy
+# import re
 
 def gen_simulator(file_path, hybrid_rep, **kwargs):
     # Get kwargs
@@ -46,17 +47,21 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
         for dai in cur_mode.dais:
             if '_dot' in dai.raw:
                 # Split the equation and get lhs index
-                lhs, rhs = dai.raw.split('=')
+                # lhs, rhs = dai.raw.split('=')
+                lhs, rhs = str(dai.expr.lhs), dai.expr.rhs
                 lhs = lhs.split('_dot')[0] 
                 lhs_idx = vars.index(lhs)
-                rhs = rhs.strip()
+                rhs = SymEq.convert_pow(rhs)
 
                 # Generate jacobian in correct order
                 orig_eqns.insert(lhs_idx,rhs)
 
                 # Replace variables with 'x[i]'
+                rhs = dai.expr.rhs
                 for j, var in enumerate(vars):
-                    rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
+                    rhs = rhs.subs(var, sympy.Symbol('x['+str(j)+']'))
+                    # rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
+                rhs = SymEq.convert_pow(rhs)
 
                 # Generate dxdt in correct order
                 dxdt[i].insert(lhs_idx, rhs) 
@@ -83,7 +88,8 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
     # Include headers
     includes = ('# include <iostream>\n'
                 '# include <vector>\n'
-                '# include <boost/numeric/odeint.hpp>\n')
+                '# include <boost/numeric/odeint.hpp>\n'
+                '# include <math.h>\n')
 
     # Set namespaces
     namespace = ('using namespace std;\n'

@@ -2,12 +2,12 @@
 <!DOCTYPE hyxml>
 <hyxml>
   <automaton name="default_automaton">
-    <variable name="p" scope="LOCAL_DATA" type="Real"/>
-    <variable name="lam" scope="LOCAL_DATA" type="Real"/>
-    <variable name="pe" scope="LOCAL_DATA" type="Real"/>
-    <variable name="ivalue" scope="LOCAL_DATA" type="Real"/>
-    <variable name="t" scope="LOCAL_DATA" type="Real"/>
-    <mode id="0" initial="True" name="Mode0">
+  <variable name="p" scope="LOCAL_DATA" type="Real"/>
+  <variable name="lam" scope="LOCAL_DATA" type="Real"/>
+  <variable name="pe" scope="LOCAL_DATA" type="Real"/>
+  <variable name="ivalue" scope="LOCAL_DATA" type="Real"/>
+  <variable name="t" scope="LOCAL_DATA" type="Real"/>
+  <mode id="0" initial="True" name="Mode0">
       <dai equation="p_dot = 0.41328*(2*247*(-2.3421*p*p+2.7799*p-0.3273)-0.9*(-3.66+0.08979*104.71975511*p-0.0337*104.71975511*p*p+0.0001*104.71975511*104.71975511*p))"/>
       <dai equation="lam_dot = 4*(13.893-35.2518*1*((1/14.7)*(-3.66+0.08979*104.71975511*pe-0.0337*104.71975511*pe*pe+0.0001*pe*104.71975511*104.71975511))+20.7364*1*1*((1/14.7)*(-3.66+0.08979*104.71975511*pe-0.0337*104.71975511*pe*pe+0.0001*pe*104.71975511*104.71975511))*((1/14.7)*(-3.66+0.08979*104.71975511*pe-0.0337*104.71975511*pe*pe+0.0001*pe*104.71975511*104.71975511))+2.6287*(0.9*(-3.66+0.08979*104.71975511*p-0.0337*104.71975511*p*p+0.0001*p*104.71975511*104.71975511))-1.592*(0.9*(-3.66+0.08979*104.71975511*p-0.0337*104.71975511*p*p+0.0001*p*104.71975511*104.71975511))*1*((1/14.7)*(-3.66+0.08979*104.71975511*pe-0.0337*104.71975511*pe*pe+0.0001*pe*104.71975511*104.71975511))-lam)"/>
       <dai equation="pe_dot = 0.41328*(2*1*(247)*(-2.3421*p*p+2.7799*p-0.3273)-(-3.66+0.08979*104.71975511*pe-0.0337*104.71975511*pe*pe+0.0001*pe*104.71975511*104.71975511))"/>

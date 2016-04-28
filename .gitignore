@@ -23,14 +23,13 @@ wd/*
 C2E2
 
 #Miscellaneous files
-Hylink/form.gp
+Hylink/form*.gp
 Hylink/parselog.txt
 Hylink/parser.out
 Hylink/parsetab.py
 Hylink/simulatorannot
-Hylink/Invcheck.cpp
-Hylink/guardGen.cpp
 Hylink/simulator.cpp
-
+c2e2/lex.yy.cc
 #Temporary directory
 Temp/
+Parsing/
