@@ -61,7 +61,6 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
                 for j, var in enumerate(vars):
                     rhs = rhs.subs(var, sympy.Symbol('x['+str(j)+']'))
                     # rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
-                print 'rhs: ' + str(rhs)
                 rhs = SymEq.convert_pow(rhs)
 
                 # Generate dxdt in correct order

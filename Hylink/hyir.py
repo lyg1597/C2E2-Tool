@@ -744,14 +744,10 @@ def hyirXML(fileName):
       g_dest = int(tran.get("destination"))  
 
       g = clean_eq(guard.get("equation"))
-      # g=guard.get("equation").replace("&lt","<").replace("&gt",">").replace("&amp;","&").replace("and","&&").replace("or","||")
       actions=[]
       for act in tran.iterfind("action"):
         a = clean_eq(act.get("equation"))
-        # a=act.get("equation").replace("&lt","<").replace("&gt",">").replace("&amp;","&").replace("and","&&").replace("or","||")
-        # actions.append(Action(parse_action(a)[0],a))
         actions.append(Action(raw=a))
-      # t=Transition(Guard(parse_guardLogicalExp(g)[0],g),actions,g_id,g_src,g_dest)
       t=Transition(Guard(raw=g),actions,g_id,g_src,g_dest)
       hybrid.automata.add_trans(t)
   
@@ -778,14 +774,10 @@ def hyirXML(fileName):
     print '\n' + 'initial set equation: ' + p.initialSetStr
     initialSetSplit = p.initialSetStr.split(':')
     p.initialSetParsed = [initialSetSplit[0]] + SymEq.get_eqn_matrix(initialSetSplit[1], varList)
-    # print exprParser.parseSet(varList,p.initialSetStr,0)
-    # print SymEq.get_eqn_matrix(p.initialSetStr.split(':')[1], varList)
-    # p.initialSetParsed=exprParser.parseSet(varList,p.initialSetStr,0)
     
     p.unsafeSetStr = clean_eq(prop.get("unsafeSet"))
     print '\n' + 'unsafe set equation: ' + p.unsafeSetStr
     p.unsafeSetParsed = SymEq.get_eqn_matrix(p.unsafeSetStr, varList)    
-    # p.unsafeSetParsed=exprParser.parseSet(varList,p.unsafeSetStr,1)    
 
     for paramSubTree in prop.iterfind("parameters"):
         p.paramData[0] = float(paramSubTree.get("delta"))
@@ -944,6 +936,176 @@ def hyirMdl(sftree, file_name):
     separateAutomata(hybrid)
     hybrid.populateInvGuards()
     return hybrid
+
+# def hyirMdl(mdl_dict, file_name):
+#     '''From a given parse tree, returns the hybrid intermediate 
+#     representation as an hyir object, consisting of variables and 
+#     automata, which are comprised of modes and transitions.
+    
+#     Maps id's used in the parse tree so that for a given
+#     automaton a mode's id corresponds to its location in the mode list
+    
+#     This function also identifies states of the type AND_STATE as 
+#     separate automata and creates a corresponding automaton in hyir.automata
+#     by calling the function separateAutomata(hyir)
+#     '''
+#     hybrid = HyIR()
+#     hybrid.file_name = file_name
+#     automaton = Automaton()
+#     hybrid.automata = [automaton]
+    
+#     mapIDs = {} #maps ID's so that modes can have incremental id's
+#     f_tran_list = []
+#     model = mdl_dict['Stateflow'][0]:
+#     for attr_dict in model['state']:
+#         m = Mode()
+#         acceptableMode = True
+#         f_tran_id = 0
+#         if attr_dict['type'][0]=='AND_STATE':
+#             acceptableMode = False
+#         if 'id' in attr_dict:
+#             m.id = automaton.new_mode_id()
+#             mapIDs[attr_dict['id'][0]] = m.id
+#         # if j.type == "labelString":
+#         #     m.name = j.children[0].value
+#         #     for k in j.children[2].children:
+#         #         rate = (str)(k.children[1].value)
+#         #         if not re.search(r'^begin', rate) is None and \
+#         #         not re.search(r'end$', rate) is None:
+#         #             rate = rate[5:-3]
+#         #             rate = re.sub('_',',',rate)
+#         #             rate = re.sub('neg', lambda x: '-', rate)
+#         #             k.children[1].value = "[%s]" % rate
+#         #             k.value = " in "
+#         #         m.add_dai(DAI(k,collapse(k)))
+#         if 'labelString' in attr_dict:
+#             state_eq = attr_dict['labelString'][0].replace('"','').split('\\n')
+#             m.name = state_eq[0]
+#             for eq in state_eq[2:]:
+#                 m.add_dai(Dai(raw=eq[:-1]))
+#         if 'firstTransition' in attr_dict:
+#             f_tran_id = attr_dict['firstTransition'][0]
+#         if 'position' in attr_dict:
+#             pos_arr = filter(lambda x: x not in ['[',']'], attr_dict['position'][0])
+#             pos_arr = map(lambda x: float(x), pos_arr.split())
+#             xp = int(pos_arr[0]+pos_arr[2])
+#             yp = int(pos_arr[1]+pos_arr[3])
+#             m.xpos = xp
+#             m.ypos = yp
+
+#         if acceptableMode:
+#             hybrid.automata[0].add_mode(m)
+#         else:
+#             hybrid.automata.append(Automaton(m.name))
+#             automaton.next_mode_id -= 1
+#             f_tran_list.append(f_tran_id)
+#             print '\t'.join([str(item) for item in f_tran_list])
+
+#     for i in sftree.children[1].children:
+#         if i.type == "SFState":
+#             m = Mode()
+#             acceptableMode = True
+#             f_tran_id = 0
+#             for j in i.children:
+#                 if j.type == "type" and j.value == "AND_STATE":
+#                     acceptableMode = False
+#                 if j.type == "id":
+#                     m.id = automaton.new_mode_id()
+#                     mapIDs[j.value] = m.id
+#                 if j.type == "labelString":
+#                     m.name = j.children[0].value
+#                     for k in j.children[2].children:
+#                         rate = (str)(k.children[1].value)
+#                         if not re.search(r'^begin', rate) is None and \
+#                         not re.search(r'end$', rate) is None:
+#                             rate = rate[5:-3]
+#                             rate = re.sub('_',',',rate)
+#                             rate = re.sub('neg', lambda x: '-', rate)
+#                             k.children[1].value = "[%s]" % rate
+#                             k.value = " in "
+#                         m.add_dai(DAI(k,collapse(k)))
+#                 if j.type == "firstTransition":
+#                     f_tran_id = j.value
+#                 if j.type == "position":
+#                     tmp3 = j.value
+#                     xp = int((tmp3[0]+tmp3[2]))
+#                     yp = int((tmp3[1]+tmp3[3]))
+#                     m.xpos = xp
+#                     m.ypos = yp
+#             if acceptableMode:
+#                 hybrid.automata[0].add_mode(m)
+#             else:
+#                 hybrid.automata.append(Automaton(m.name))
+#                 automaton.next_mode_id -= 1
+#                 f_tran_list.append(f_tran_id)
+#                 print "\t".join([str(item) for item in f_tran_list])
+
+#         if i.type == "SFAnnot":
+#             for j in i.children:
+#                 if j.type == "labelString":
+#                     bufferString = j.value.replace("@","")
+#                     hybrid.annotationsRaw += [bufferString]
+#                     hybrid.annotations += bufferString + "\n"
+            
+#         if i.type == "SFData":
+#             v = Variable()
+#             for j in i.children:
+#                 if j.type == "name":
+#                     v.name = j.value
+#                 if j.type == "scope":
+#                     v.scope = j.value
+#                 if j.type == "props": 
+#                     if j.children[0].value == "SF_CONTINUOUS_TIME_DATA":
+#                         v.update_type = "Continuous"
+#                         v.type = "Real"
+#                     else:
+#                         v.update_type = "Discrete"
+#                         v.type = ""
+#             if v.scope != "INPUT_DATA":
+#                 hybrid.add_var(v)
+
+#         if i.type == "SFTransition":
+#             actions = []
+#             initialFlag = False;
+#             for j in i.children:
+#                 if j.type == "id":
+#                     tid = automaton.new_transition_id()
+#                     sl_id = j.value #used for determining initial modes
+#                 elif j.type == "Source Block":
+#                     if j.children[0].value != 'None' and j.children[0].value !='':
+#                         srid = mapIDs[j.children[0].value]
+#                     else:
+#                         initialFlag = True
+#                 elif j.type == "Dest Block":
+#                         dsid = mapIDs[j.children[0].value]                           
+#                 elif j.type == "labelString":
+#                     for k in j.children:
+#                         if k.type == 'Logical' or k.type == 'Relational':
+#                             guard = Guard(k,collapse2(k))
+#                         elif k.type == 'Assignment':
+#                             actions.append(Action(k,collapseAction(k)))
+
+#             if not initialFlag: 
+#                 hybrid.automata[0].modes[srid].add_inv(SymEq.construct_invariant(guard))
+#                 # hybrid.automata[0].modes[srid].add_inv(build_invariant(guard.parsed))
+#                 t = Transition(guard,actions,tid,srid,dsid)
+#                 hybrid.automata[0].add_trans(t)
+#             else:
+#                 hybrid.automata[0].modes[dsid].initial = True
+#                 for action in actions:
+#                     hybrid.automata[0].modes[dsid].initialConditions.append(re.sub(r"'", lambda x: '', action.raw)) 
+#                 initialFlag = False
+                
+#                 #This tells the translator which modes are initial for each automata
+#                 #Thus giving allowing further modes in the automata to be deduced
+#                 for x in range(0, len(f_tran_list)):
+#                     if sl_id == f_tran_list[x]:
+#                         print dsid                   
+#                         hybrid.automata[x+1].initial_mode_id = dsid
+   
+#     separateAutomata(hybrid)
+#     hybrid.populateInvGuards()
+#     return hybrid
 
      
 def separateAutomata(hyir):

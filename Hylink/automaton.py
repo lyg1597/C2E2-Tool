@@ -258,11 +258,7 @@ class SymEq:
 
     @staticmethod
     def convert_pow(expr):
-        pow_eq = str(SymEq.convert_pow_helper(expr))
-        pow_l = re.findall('(pow\(([a-zA-Z0-9\[\]]*), ([0-9]*)\))', pow_eq)
-        for pow_t, pow_b, pow_e in pow_l:
-            pow_eq = pow_eq.replace(pow_t, '*'.join([pow_b]*int(pow_e)))
-        return pow_eq
+        return str(SymEq.convert_pow_helper(expr))
 
     @staticmethod
     def convert_pow_helper(expr):
@@ -271,8 +267,26 @@ class SymEq:
 
         conv_args = [SymEq.convert_pow_helper(arg) for arg in expr.args]
         if expr.is_Pow:
-            return sympy.sympify(sympy.Function('pow')(conv_args[0],conv_args[1]))
+            return sympy.Symbol('*'.join(['('+str(conv_args[0])+')']*int(conv_args[1])))
         return expr.func(*conv_args)
+
+    # @staticmethod
+    # def convert_pow(expr):
+    #     pow_eq = str(SymEq.convert_pow_helper(expr))
+    #     pow_l = re.findall('(pow\(([a-zA-Z0-9\[\]]*), ([0-9]*)\))', pow_eq)
+    #     for pow_t, pow_b, pow_e in pow_l:
+    #         pow_eq = pow_eq.replace(pow_t, '*'.join([pow_b]*int(pow_e)))
+    #     return pow_eq
+
+    # @staticmethod
+    # def convert_pow_helper(expr):
+    #     if not expr.args:
+    #         return expr
+
+    #     conv_args = [SymEq.convert_pow_helper(arg) for arg in expr.args]
+    #     if expr.is_Pow:
+    #         return sympy.sympify(sympy.Function('pow')(conv_args[0],conv_args[1]))
+    #     return expr.func(*conv_args)
 
     @staticmethod
     def construct_invariant(guard):

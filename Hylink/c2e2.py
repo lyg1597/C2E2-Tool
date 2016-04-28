@@ -457,7 +457,7 @@ class ParameterFrame(gtk.Frame):
 
   def linearCallback(self, widget, data):
     global Global_Linear
-    Global_Linear = 1- Global_Linear
+    Global_Linear = 1-Global_Linear
 
   """
     entryCallback
@@ -1015,7 +1015,9 @@ class PropertiesFrame(gtk.Frame):
       self.enableWidgets(False, flag, task_str)
       for prop in self.propertyList:
         prop=prop[0]
-        if prop.checked and prop.status=='Not verified':
+        if prop.checked and (prop.status=='Not verified' or prop.status=='Verified*' or prop.status=='Simulated*'):
+          prop.verifResult=""
+          prop.newTabPixbuf=None
           global Global_Simulator
           prop.simulator = Global_Simulator
           prop.simulation  = flag
