@@ -60,5 +60,6 @@ sudo -u $SUDO_USER unzip -q pyglpk
 cd pyglpk && make && make install
 
 #Removes compressed files
+cd ../
 rm *.tar.gz
 rm *.zip
