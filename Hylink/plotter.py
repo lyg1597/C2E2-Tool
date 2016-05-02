@@ -984,7 +984,7 @@ def plotMultipleModesV3(threadEvent,reachSetPath,unsafeset,varlist,modelist,varP
     plotstring+= "set key center bottom Left title '"
     for i in range (len(modelist)):
       plotstring+= modelist[i]+':'+colors[i%10]+' '
-      plotstring+='Unsafe:pink'
+    plotstring+='Unsafe:pink'
     plotstring+="' font 'Helvetica, 10'"
     plotstring+="\n"
 
