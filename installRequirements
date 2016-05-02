@@ -49,7 +49,7 @@ apt-get install -y gnuplot
 apt-get install -y python-gnuplot
 $APT_IN_NR python-sympy
 apt-get install -y libxslt1-dev
-apt-get install libboost1.58-all-dev 
+apt-get install libboost1.54-dev 
 
 apt-get install python-lxml
 pip install lxml
@@ -60,5 +60,6 @@ sudo -u $SUDO_USER unzip -q pyglpk
 cd pyglpk && make && make install
 
 #Removes compressed files
+cd ../
 rm *.tar.gz
 rm *.zip
