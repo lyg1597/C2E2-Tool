@@ -268,7 +268,6 @@ int main(int argc, char* argv[]) {
     guards = (guard_fn) dlsym (lib, "hitsGuard");
     invs = (inv_fn) dlsym(lib, "invariantSatisfied"); 
 
-
     cout << "Stack size: " << ItrStack->size() << endl;
 
     int refine_threshold = 10;

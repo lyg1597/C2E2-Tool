@@ -140,8 +140,8 @@ class DAI:
     '''Deterministic algebraic inequalities'''
     def __init__(self, parsed=[], raw=""):
         self.parsed = parsed
-        self.raw = raw
         self.expr = SymEq.construct_eqn(raw, True, False)
+        self.raw = str(self.expr)
         
 class Transition:
     '''guard - node representing the guard for the transition

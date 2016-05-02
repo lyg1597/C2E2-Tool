@@ -122,22 +122,27 @@ class HyIR:
           inv_vars = set()
           for inv in m.invs:
             print '\n' + 'invariant equation: ' + inv.raw
-            i = Invariant(raw=inv.raw)
-            inv_eqs.append(i.expr)
-            inv_vars = inv_vars.union(SymEq.vars_used(i.expr))
+            inv_eqs.append(inv.expr)
+            inv_vars = inv_vars.union(SymEq.vars_used(inv.expr))
+            # print '\n' + 'invariant equation: ' + inv.raw
+            # i = Invariant(raw=inv.raw)
+            # inv_eqs.append(i.expr)
+            # inv_vars = inv_vars.union(SymEq.vars_used(i.expr))
           invariants[m.id] = (inv_eqs, inv_vars)
 
         for t in self.automata[0].trans:
           print '\n' + 'guard equation: ' + t.guard.raw
-          g = Guard(raw=t.guard.raw)
-          g_eqs = g.expr
-          g_vars = SymEq.vars_used(g.expr)
+          g_eqs = t.guard.expr
+          g_vars = SymEq.vars_used(t.guard.expr)
+          # g = Guard(raw=t.guard.raw)
+          # g_eqs = g.expr
+          # g_vars = SymEq.vars_used(g.expr)
           action_eqs = []
           for act in t.actions:
             # a_eq = act.raw.replace('=','==')
             print '\n' + 'action equation: ' + act.raw
-            a = Action(raw=act.raw)
-            action_eqs.extend(a.expr)
+            # a = Action(raw=act.raw)
+            action_eqs.extend(act.expr)
           guardResets[(t.src,t.dest)].append((g_eqs, action_eqs, g_vars))
 
         self.guardResets = dict(guardResets)
@@ -145,7 +150,6 @@ class HyIR:
 
         print self.guardResets
         print self.invariants
-
 
     def is_valid(self):
         if not self.variables.input==[]:
@@ -189,7 +193,7 @@ class HyIR:
           flows=self.treestore.append(m,["Flows"])
           for j in i.dais:
             if "_dot" in j.raw:
-              self.treestore.append(flows,[j.raw])
+              self.treestore.append(flows,[j.raw.replace('==','=')])
           inv=self.treestore.append(m,["Invariants"])
           for j in i.invs:
             self.treestore.append(inv,[j.raw])
@@ -677,7 +681,7 @@ class HyIR:
         # annotationFound=0
         m=etree.SubElement(auto,"mode",{"id":str(mode.id),"initial":str(mode.initial),"name":mode.name})
         for dai in mode.dais:
-          etree.SubElement(m,"dai",{"equation":dai.raw})
+          etree.SubElement(m,"dai",{"equation":dai.raw.replace('==','=')})
         for inv in mode.invs:
           etree.SubElement(m,"invariant",{"equation":inv.raw})
 
