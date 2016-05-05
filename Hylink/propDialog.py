@@ -3,8 +3,8 @@ pygtk.require('2.0')
 import gtk,gobject,re,sys,glpk
 import ply.yacc as yacc
 import ply.lex as lex
-
 import logging
+from symEq import SymEq
 
 propertyLog = logging.getLogger('c2e2VerificationLog')
 
@@ -255,7 +255,11 @@ class PropDialog(gtk.Dialog):
         image.set_from_stock(gtk.STOCK_CANCEL,gtk.ICON_SIZE_MENU)
         errorLabel.set_text("Incorrect Mode/Variables")
       else:
-        initialSet=self.exprParser.parseSet(self.varList,inputText,0)
+        # initialSet=self.exprParser.parseSet(self.varList,inputText,0)
+        initialSetSplit = inputText.split(':')
+        initialSet = [initialSetSplit[0]] + SymEq.get_eqn_matrix(initialSetSplit[1], self.varList)
+        # print 'initialSet: ' + str(initialSet)
+        # print 'initialSet1: ' + str(initialSet1)
         if self.checkBoundness(initialSet):
           self.newPropNames[index][2]=1
           image.set_from_stock(gtk.STOCK_APPLY,gtk.ICON_SIZE_MENU)
@@ -328,9 +332,18 @@ class PropDialog(gtk.Dialog):
       elif not prop.status=="Not verified" and not prop.name==new[0]:
         self.editPropList.append((new[0],prop.index))
 
-      initialSet=self.exprParser.parseSet(self.varList,initial,0)
+      # initialSet=self.exprParser.parseSet(self.varList,initial,0)
+      initialSetSplit = initial.split(':')
+      initialSet = [initialSetSplit[0]] + SymEq.get_eqn_matrix(initialSetSplit[1], self.varList)
+      # print 'initialSet: ' + str(initialSet)
+      # print 'initialSet1: ' + str(initialSet1)
+
       print "This is before calling the parse set of the unsafe set"
-      unsafeSet=self.exprParser.parseSet(self.varList,unsafe,1)
+      # unsafeSet=self.exprParser.parseSet(self.varList,unsafe,1)
+      unsafeSet = SymEq.get_eqn_matrix(unsafe, self.varList)
+      # print 'unsafeSet: ' + str(unsafeSet)
+      # print 'unsafeSet1: ' + str(unsafeSet1)
+
       prop.name=new[0]
       prop.initialSetStr=initial
       prop.initialSetParsed=initialSet

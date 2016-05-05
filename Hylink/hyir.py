@@ -2,14 +2,6 @@ import pygtk
 pygtk.require('2.0')
 import gtk, math, itertools, copy, re, os
 from lxml import etree
-# from parse_modes import extract_dais
-# from tree import show_tree, clear_tree
-# from EdgeParse import lstring3
-# from ModeParse import parse_action
-# from guardParse import parse_guardExp
-# from guardLogicalParse import parse_guardLogicalExp
-# from fractions import Fraction
-# from node import Node
 from automaton import *
 from propDialog import *
 from jacobiancalc import jacobian
@@ -124,24 +116,15 @@ class HyIR:
             print '\n' + 'invariant equation: ' + inv.raw
             inv_eqs.append(inv.expr)
             inv_vars = inv_vars.union(SymEq.vars_used(inv.expr))
-            # print '\n' + 'invariant equation: ' + inv.raw
-            # i = Invariant(raw=inv.raw)
-            # inv_eqs.append(i.expr)
-            # inv_vars = inv_vars.union(SymEq.vars_used(i.expr))
           invariants[m.id] = (inv_eqs, inv_vars)
 
         for t in self.automata[0].trans:
           print '\n' + 'guard equation: ' + t.guard.raw
           g_eqs = t.guard.expr
           g_vars = SymEq.vars_used(t.guard.expr)
-          # g = Guard(raw=t.guard.raw)
-          # g_eqs = g.expr
-          # g_vars = SymEq.vars_used(g.expr)
           action_eqs = []
           for act in t.actions:
-            # a_eq = act.raw.replace('=','==')
             print '\n' + 'action equation: ' + act.raw
-            # a = Action(raw=act.raw)
             action_eqs.extend(act.expr)
           guardResets[(t.src,t.dest)].append((g_eqs, action_eqs, g_vars))
 
@@ -733,28 +716,25 @@ def hyirXML(fileName):
       m.initial=(mode.get("initial")=="True")
       for dai in mode.iterfind("dai"):
         v1 = dai.get("equation")
-        # m.add_dai(DAI(parse_action(v1)[0],v1))
-        m.add_dai(DAI(raw=v1))
+        m.add_dai(DAI(v1))
       for inv in mode.iterfind("invariant"):
-        i = clean_eq(inv.get("equation"))
-        # i=inv.get("equation").replace("&lt;","<").replace("&gt;",">").replace("&amp;","&").replace("and","&&").replace("or","||")
-        # m.add_inv(Invariant(parse_guardLogicalExp(i)[0],i))
-        m.add_inv(Invariant(raw=i))
+        i = Invariant(clean_eq(inv.get("equation")))
+        if i.expr: m.add_inv(i)
       hybrid.automata.add_mode(m)  
 
     for tran in automata.iterfind("transition"):
-      guard=tran.find("guard")
+      guard = tran.find("guard")
+      g = Guard(clean_eq(guard.get("equation")))
       g_id = int(tran.get("id"))
       g_src = int(tran.get("source"))
-      g_dest = int(tran.get("destination"))  
-
-      g = clean_eq(guard.get("equation"))
-      actions=[]
-      for act in tran.iterfind("action"):
-        a = clean_eq(act.get("equation"))
-        actions.append(Action(raw=a))
-      t=Transition(Guard(raw=g),actions,g_id,g_src,g_dest)
-      hybrid.automata.add_trans(t)
+      g_dest = int(tran.get("destination"))
+      if g.expr:
+        actions=[]
+        for act in tran.iterfind("action"):
+          a = clean_eq(act.get("equation"))
+          actions.append(Action(a))
+        t=Transition(g,actions,g_id,g_src,g_dest)
+        hybrid.automata.add_trans(t)
   
   composition = root.find("composition")
   automata_list = map(lambda x: hybrid_automata[x], composition.get("automata").split(";"))
@@ -1282,7 +1262,7 @@ def collapse2(node):
         return node.value + collapse2(node.children[0])
 
 def clean_eq(eq):
-    r_dict = {'&lt;':'<', '&gt;':'>', '&amp;':'&', 'and':'&&', 'or':'||'}
+    r_dict = {'&lt;':'<', '&gt;':'>', '&amp;':'&', ' and ':'&&', ' or ':'||'}
     for term in r_dict:
         eq = eq.replace(term, r_dict[term])
     return eq

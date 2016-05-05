@@ -1,6 +1,7 @@
 from hyir import *
 from jacobiancalc import *
 import sympy
+from symEq import SymEq
 # import re
 
 def gen_simulator(file_path, hybrid_rep, **kwargs):
