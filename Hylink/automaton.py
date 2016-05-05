@@ -20,20 +20,18 @@ class Automaton:
     def print_trans(self):
         print "--- Transitions ---"
         for i in self.trans:
-            if i.extraG is None:
-                extraG = ""
-            else:
-                extraG = "and %s " % i.extraG.raw
-            print "%s: %s %s %s %sActions: %s" % \
-            (i.id, i.src, i.dest, i.guard.raw, extraG, 
+            print "%s: %s %s %s Actions: %s" % \
+            (i.id, i.src, i.dest, i.guard.raw, 
             ", ".join(action.raw for action in i.actions))
     
     def print_modes(self):
         print "--- Modes ---"
         for i in self.modes:
-            print str(i.id)+": "+i.name+" "+str(i.initial)
-            print "\n".join(dai.raw for dai in i.dais)
-            print " and ".join(inv.raw for inv in i.invs)
+            print 'DAIs:'
+            print str(i.id)+": "+i.name+" Initial: "+str(i.initial)+" Linear: "+str(i.linear)
+            print '\n'.join(dai.raw for dai in i.dais)
+            print 'Invariants:'
+            print '\n'.join(inv.raw for inv in i.invs)
     
     def print_all(self):
         print "%s:" % self.name
@@ -92,33 +90,15 @@ class Mode:
     initial - True if this is the starting mode of the hybrid automata, false otherwise
     invs - list of Invariant objects representing the mode's invariants
     dais - list of DAI objects representing the mode's governing differential equations
-    dummyIdx - strictly used in converting the HyIR into a hybrid automata that hytech 
-               can handle.  A positive id indicates the mode's dummy mode. -1 indicates
-               that a dummy mode has not been created for this mode yet.
-    needDummyTran - strictly used in converting to representable automata for hytech.
-                    this field is set to false when a dummy mode has already created transitions due to 
-                    the fact that it has an outgoing transition with a deterministic conjunction of guard
-                    conditions.  This field ensures that this process is not replicated in further 
-                    iterations of the loop.
-    xpos, ypos - The graphical information required to place the modes in UPPAAL
     '''
-    def __init__(self,name="",id=-1,initial=False,invs=None,dais=None,dummyIdx=-1,needDummyTran=True,xpos=-1,ypos=-1):
+    def __init__(self,name='',id=-1,initial=False):
         self.name = name
         self.id = id
         self.initial = initial
         self.initialConditions = []
-        if invs is None:
-            self.invs = []
-        else:
-            self.invs = invs
-        if dais is None:
-            self.dais = []
-        else:
-            self.dais = dais
-        self.dummyIdx = dummyIdx
-        self.needDummyTran = needDummyTran
-        self.xpos = xpos
-        self.ypos = ypos
+        self.invs = []
+        self.dais = []
+        self.linear = True
             
     def add_inv(self,inv):
         self.invs.append(inv)
@@ -128,6 +108,7 @@ class Mode:
     
     def add_dai(self,dai):
         self.dais.append(dai)
+        if self.linear: self.linear = SymEq.is_linear(dai.expr.rhs)
         
 class Invariant:
     def __init__(self, parsed=[], raw=""):
@@ -149,23 +130,13 @@ class Transition:
     id - unique identifier for the transition
     src - the source of the transition
     dest - the destination of the transition
-    fac - NO IDEA
-    nd - 0 indicates a deterministic transition, otherwise non-deterministic
-    ap - "already parsed" - this is strictly used during the translation 
-         stage to indicate that a transition has already been accounted for
-         to avoid infinite loops
-    extraG - 
     ''' 
-    def __init__(self,guard,actions,id=-1,src=-1,dest=-1,fac=0,nd=0, ap=False, extraG=None):
+    def __init__(self,guard,actions,id=-1,src=-1,dest=-1):
         self.guard = guard
         self.actions = actions
         self.id = id
         self.src = src
         self.dest = dest
-        self.fac = fac
-        self.nd = nd
-        self.ap = ap
-        self.extraG = extraG
         
 class Guard:
     def __init__(self, parsed=[], raw=""):
@@ -311,3 +282,15 @@ class SymEq:
         for eqn in exprs:
             var_set = var_set.union(eqn.free_symbols)
         return [str(v) for v in var_set]
+
+    @staticmethod
+    def is_linear(expr):
+        syms = expr.free_symbols
+        for x in syms:
+            for y in syms:
+                try:
+                    if not sympy.Eq(sympy.diff(expr, x, y), 0):
+                        return False
+                except TypeError:
+                    return False
+        return True

@@ -49,7 +49,7 @@ class LSLexer:
 
     def t_LAND(self,t):
         r'&& | and | &'
-        t.value = "and"
+        t.value = "&&"
         return t
         
     def t_LOR(self,t):

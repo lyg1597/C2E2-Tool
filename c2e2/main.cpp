@@ -357,8 +357,8 @@ int main(int argc, char* argv[]) {
         bool hitGuard = false;
         struct timeval inv_start, inv_end, guard_start, guard_end;
         for(int i=0; i<size; i++){
-        		// cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
-        		// cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
+        		cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+        		cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
                 ptLower = simulationTube->getLowerBound(i)->getCoordinates();
                 ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
                 
@@ -572,8 +572,8 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 		for(int i=0; i<size; i++){
 			ptLower = simulationTube->getLowerBound(i)->getCoordinates();
 			ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
-    		// cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
-			// cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
+    		cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+			cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
 
 			guards_hit = guards(mode, ptLower, ptUpper);
 			if(!guards_hit.empty()){

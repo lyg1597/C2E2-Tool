@@ -23,7 +23,7 @@ F1.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 verifLog.addHandler(F1)
 
 verifLog.info('Launching the logger')
-Global_Linear = 0
+# Global_Linear = 0
 Global_Refine = 0
 Global_Simulator = 0
 
@@ -123,9 +123,9 @@ class Main(gtk.Window):
     if self.fileOpened:
       self.modelNotebook.destroy()
     
-    global Global_Linear
+    # global Global_Linear
+    # Global_Linear = 0
     global Global_Simulator
-    Global_Linear = 0
     Global_Simulator = 0
 
     fileName, extension = os.path.splitext(os.path.basename(fileChoosen))
@@ -155,8 +155,8 @@ class Main(gtk.Window):
     path = '../wd/simulator.cpp'
     gen_simulator(path, hyir, step_type=st)
 
-    parseTree,vList,mList = hyir.display_system()
-    self.modelNotebook=ModelNotebook(parseTree,hyir,propList,vList,mList,paramList)
+    parseTree,vList = hyir.display_system()
+    self.modelNotebook=ModelNotebook(parseTree,hyir,propList,vList,paramList)
 
     #self.ModelNotebook.propertiesFrame.disableAllButtons()
     # arguments = ['mv', 'bloatedSimGI.cpp', 'hybridSimGI.cpp', 'simulator.cpp', '../wd/']
@@ -225,16 +225,15 @@ class Main(gtk.Window):
     gobject.threads_init()
     gtk.main()
 
-#Comment this sectionI
+#Comment this section
 class ModelNotebook(gtk.Notebook):
-  def __init__(self,parseTree,hybridRep,propList,varList,modeList,paramsData):
+  def __init__(self,parseTree,hybridRep,propList,varList,paramsData):
     gtk.Notebook.__init__(self)
     self.propertyList=gtk.ListStore(gobject.TYPE_PYOBJECT)
     self.propertyListFilter=self.propertyList.filter_new()
     self.propertyListFilter.set_visible_func(self.showRow)
     self.editListLen=0
     self.varList=varList
-    self.modeList=modeList
     self.paramData=[["Partitioning:","0.2",1], \
                     ["Time-step:","0.01",1], \
                     ["Time horizon:","10.0",1], \
@@ -259,7 +258,7 @@ class ModelNotebook(gtk.Notebook):
     
     self.propertiesFrame=PropertiesFrame(self,self.propertyList,self.propertyListFilter,
                                          self.propertyListLen,self.editListLen,self.varList,
-                                         self.modeList,self.paramData,self.hybridRep,self.verifyingPlotting)
+                                         self.paramData,self.hybridRep,self.verifyingPlotting)
     self.parameterFrame=ParameterFrame(self.paramData,self.propertyList,self.propertiesFrame.listView,
                                        self.propertiesFrame.rendererStatus,self.hybridRep)
 
@@ -371,12 +370,12 @@ class ParameterFrame(gtk.Frame):
       entry.connect("changed",self.entryCallback,i,checkImage)
       self.paramVBox.pack_start(paramHBox,True,True,0)
 
-    paramHBox1 = gtk.HBox(False,0)
-    linearbutton = gtk.CheckButton("Linear Model")
-    linearbutton.connect("toggled", self.linearCallback, "Linear Model")
-    paramHBox1.pack_start(linearbutton,True,True,2)
+    # paramHBox1 = gtk.HBox(False,0)
+    # linearbutton = gtk.CheckButton("Linear Model")
+    # linearbutton.connect("toggled", self.linearCallback, "Linear Model")
+    # paramHBox1.pack_start(linearbutton,True,True,2)
 
-    self.paramVBox.pack_start(paramHBox1,True,True,0)
+    # self.paramVBox.pack_start(paramHBox1,True,True,0)
 
     combobox = gtk.combo_box_new_text()
     combobox.connect('changed', self.changed_cb)
@@ -455,9 +454,9 @@ class ParameterFrame(gtk.Frame):
     Global_Simulator = index    
 
 
-  def linearCallback(self, widget, data):
-    global Global_Linear
-    Global_Linear = 1-Global_Linear
+  # def linearCallback(self, widget, data):
+  #   global Global_Linear
+  #   Global_Linear = 1-Global_Linear
 
   """
     entryCallback
@@ -582,7 +581,7 @@ class PropertiesFrame(gtk.Frame):
     Return: none
   """
   def __init__(self,notebook,propertyList,propertyListFilter,propertyListLen,editListLen,varList,
-               modeList,paramData,hybridRep,verifyingPlotting):
+               paramData,hybridRep,verifyingPlotting):
     gtk.Frame.__init__(self,"Properties")
     self.notebook=notebook
     self.propertyList=propertyList
@@ -590,7 +589,6 @@ class PropertiesFrame(gtk.Frame):
     self.propertyListLen=propertyListLen
     self.editListLen=editListLen
     self.varList=varList
-    self.modeList=modeList
     self.paramData=paramData
     self.hybridRep=hybridRep
     self.subp=None
@@ -844,7 +842,8 @@ class PropertiesFrame(gtk.Frame):
             else:
               ploterversion = 1
               #print ploterversion
-            plotWindow=PlotWindow(["time"]+self.varList,self.modeList,unsafeSet,reachSetPath,
+            modeList = [m.name for m in self.hybridRep.automata[0].modes]
+            plotWindow=PlotWindow(["time"]+self.varList,modeList,unsafeSet,reachSetPath,
                                   prop.paramData[1],prop.paramData[2],self.verifyingPlotting, ploterversion)
             tab=gtk.HBox()
             tab.pack_start(gtk.Label(prop.name),True,True)
@@ -920,8 +919,9 @@ class PropertiesFrame(gtk.Frame):
     if btn.get_label()=="Add" or btn.get_label()=="Edit" and self.editListLen>0:
       removePropList=[]
       editPropList=[]
+      modeList = [m.name for m in self.hybridRep.automata[0].modes]
       propDialog=PropDialog(self.get_toplevel(),btn.get_label(),self.propertyList,
-                            self.propertyListLen,self.varList,self.modeList,removePropList,
+                            self.propertyListLen,self.varList,modeList,removePropList,
                             editPropList)
       response=propDialog.run()
       if response==gtk.RESPONSE_OK:
@@ -1032,13 +1032,13 @@ class PropertiesFrame(gtk.Frame):
           # Here we will print the entire file where the file is automatically generated
           c2e2String = ""
           c2e2String+= "dimensions=\""+str(len(self.varList))+"\"\n"
-          c2e2String+= "modes=\""+str(len(self.modeList))+"\"\n"
+          c2e2String+= "modes=\""+str(len(self.hybridRep.automata[0].modes))+"\"\n"
           c2e2String+= "simulator=\"simu\"\n"
           
           initialSet = prop.initialSetParsed
           unsafeSet = prop.unsafeSetParsed
           
-          initialModeString = initialSet[0]
+          initialMode = initialSet[0]
           initialMatrix = initialSet[1]
           initialB = initialSet[2]
           initialIneqs = initialSet[3]
@@ -1046,13 +1046,15 @@ class PropertiesFrame(gtk.Frame):
           unsafeMatrix = unsafeSet[0]
           unsafeB = unsafeSet[1]
           unsafeIneqs = unsafeSet[2]
-          initModeC2E2Rep = -1;
-          modesList = self.hybridRep.automata[0].modes
-          modeI = 0
-          for modeIndex in modesList:
-              modeI += 1
-              if(initialModeString == modeIndex.name):
-                  initModeC2E2Rep = modeI;
+
+          initModeC2E2Rep = [m.name for m in self.hybridRep.automata[0].modes].index(initialMode)+1
+          # initModeC2E2Rep = -1;
+          # modesList = self.hybridRep.automata[0].modes
+          # modeI = 0
+          # for modeIndex in modesList:
+          #     modeI += 1
+          #     if(initialModeString == modeIndex.name):
+          #         initModeC2E2Rep = modeI;
           
           c2e2String+= "init-mode=\""+str(initModeC2E2Rep)+"\"\n"
           print(self.paramData)
@@ -1092,8 +1094,9 @@ class PropertiesFrame(gtk.Frame):
           c2e2String+= self.getMatrixStr(unsafeB, unsafeIneqs)
           c2e2String+= "]\n"
        
-          for mode_num in range(1, len(self.modeList)+1):
-            c2e2String+= "annotation-mode=\""+str(mode_num)+"\"\n"
+          for m_i, mode in enumerate(self.hybridRep.automata[0].modes):
+            m_i+=1
+            c2e2String+= "annotation-mode=\""+str(m_i)+"\"\n"
             c2e2String+= "annotation-type=\"contraction\"\n"    
             # if array[3] == 1 or array[3] == 3 :
             #     c2e2String+= "annotation-type=\"contraction\"\n"
@@ -1101,10 +1104,10 @@ class PropertiesFrame(gtk.Frame):
             #     c2e2String+= "annotation-type=\"linear\"\n"
             c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
             c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
-            if (Global_Linear):
+            if mode.linear:
                 filename = ""
                 filename +="../wd/jacobiannature"
-                filename += str(mode_num)
+                filename += str(m_i)
                 filename +=".txt"
                 fid = open(filename,'r').read().split('\n')
                 numofvar = int(fid[0])
@@ -1145,7 +1148,7 @@ class PropertiesFrame(gtk.Frame):
                 k = self.paramData[4][1]
             c2e2String+= "k=\""+str(k)+"\"\n"
             c2e2String+= "gamma=\""+str(gamma)+"\"\n"
-            c2e2String+= "is_linear=\""+str(Global_Linear)+"\"\n"
+            c2e2String+= "is_linear=\""+("1" if mode.linear else "0")+"\"\n"
 
           c2e2String+= "visualize all to ReachSet"+prop.name+"\n"
           

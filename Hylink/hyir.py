@@ -183,12 +183,12 @@ class HyIR:
         var=self.treestore.append(None,["Variables"])
         self.treestore.append(var,[", ".join(varList)])
 
-        modeList=[]
+        # modeList=[]
         mode_dict = {}
         modes=self.treestore.append(None,["Modes"])
         for i in self.automata[0].modes:
           mode_dict[i.id] = i.name
-          modeList.append(i.name)
+          # modeList.append(i.name)
           m=self.treestore.append(modes,[i.name+' ('+str(i.id)+')'])      
           flows=self.treestore.append(m,["Flows"])
           for j in i.dais:
@@ -229,7 +229,8 @@ class HyIR:
         modelTree.expand_row(self.treestore.get_path(modes),False)
 
         swindow.add(modelTree)
-        return swindow,varList,modeList
+        return swindow,varList
+        # return swindow,varList,modeList
 
     def printHybridSimGuardsInvariants(self):
         self.printGuardsInvariants("../wd/hybridSimGI.cpp", True)
@@ -767,6 +768,7 @@ def hyirXML(fileName):
   hybrid.automata = [hybrid.automata]
   hybrid.populateInvGuards()
   varList = hybrid.varList
+  hybrid.print_all()
 
   propertyList=[]
   for prop in root.iterfind("property"):
