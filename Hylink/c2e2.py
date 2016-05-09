@@ -128,6 +128,7 @@ class Main(gtk.Window):
     global Global_Simulator
     Global_Simulator = 0
 
+    start = time.time()
     fileName, extension = os.path.splitext(os.path.basename(fileChoosen))
     self.set_title("C2E2: " + fileName)
     propList=[]
@@ -147,25 +148,40 @@ class Main(gtk.Window):
         sf_tree=RemoveHierarchy(sf_tree)
       hyir = hyirMdl(sf_tree, fileChoosen)
 
+    end = time.time()
+    print 'Generating represenation took ' + str(end-start) + ' seconds.'
+
+    start = time.time()
     verifLog.info('Model is \n' + hyir.convertToXML([]))
     hyir.printHybridSimGuardsInvariants();
     hyir.printBloatedSimGuardsInvariants()
-    
+    end = time.time()
+    print 'Printing guards/invariants took ' + str(end-start) + ' seconds.'
+
+    start = time.time()   
     st = 'constant'
     path = '../wd/simulator.cpp'
     gen_simulator(path, hyir, step_type=st)
+    end = time.time()
+    print 'Printing simulator took ' + str(end-start) + ' seconds.'
 
+    start = time.time()
     parseTree,vList = hyir.display_system()
     self.modelNotebook=ModelNotebook(parseTree,hyir,propList,vList,paramList)
+    end = time.time()
+    print 'Generating notebook took ' + str(end-start) + ' seconds.'
 
     #self.ModelNotebook.propertiesFrame.disableAllButtons()
     # arguments = ['mv', 'bloatedSimGI.cpp', 'hybridSimGI.cpp', 'simulator.cpp', '../wd/']
     # subp = subprocess.Popen(arguments)
     # subp.wait()
 
+    start = time.time()
     arguments = ['sh', './compileAndExecute', "0"]
     subp = subprocess.Popen(arguments,cwd="../wd/")
     subp.wait()
+    end = time.time()
+    print 'Compiling files took ' + str(end-start) + ' seconds.'
 
     self.fileLabel.hide()
     self.windowVBox.pack_start(self.modelNotebook)

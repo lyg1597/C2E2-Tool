@@ -839,7 +839,7 @@ def hyirMdl(sftree, file_name):
                             rate = re.sub('neg', lambda x: '-', rate)
                             k.children[1].value = "[%s]" % rate
                             k.value = " in "
-                        m.add_dai(DAI(k,collapse(k)))
+                        m.add_dai(DAI(collapse(k)))
                 if j.type == "firstTransition":
                     f_tran_id = j.value
                 if j.type == "position":
@@ -897,9 +897,9 @@ def hyirMdl(sftree, file_name):
                 elif j.type == "labelString":
                     for k in j.children:
                         if k.type == 'Logical' or k.type == 'Relational':
-                            guard = Guard(k,collapse2(k))
+                            guard = Guard(collapse2(k))
                         elif k.type == 'Assignment':
-                            actions.append(Action(k,collapseAction(k)))
+                            actions.append(Action(collapseAction(k)))
 
             if not initialFlag: 
                 hybrid.automata[0].modes[srid].add_inv(SymEq.construct_invariant(guard))

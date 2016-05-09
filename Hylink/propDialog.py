@@ -4,10 +4,9 @@ import gtk,gobject,re,sys,glpk
 import ply.yacc as yacc
 import ply.lex as lex
 import logging
-from symEq import SymEq
+from automaton import *
 
 propertyLog = logging.getLogger('c2e2VerificationLog')
-
 
 """
   PropDialog
