@@ -23,7 +23,6 @@ F1.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 verifLog.addHandler(F1)
 
 verifLog.info('Launching the logger')
-# Global_Linear = 0
 Global_Refine = 0
 Global_Simulator = 0
 
@@ -123,8 +122,6 @@ class Main(gtk.Window):
     if self.fileOpened:
       self.modelNotebook.destroy()
     
-    # global Global_Linear
-    # Global_Linear = 0
     global Global_Simulator
     Global_Simulator = 0
 
@@ -147,9 +144,8 @@ class Main(gtk.Window):
       if IsHierarchical(sf_tree):
         sf_tree=RemoveHierarchy(sf_tree)
       hyir = hyirMdl(sf_tree, fileChoosen)
-
     end = time.time()
-    print 'Generating represenation took ' + str(end-start) + ' seconds.'
+    print 'Generating representation took ' + str(end-start) + ' seconds.'
 
     start = time.time()
     verifLog.info('Model is \n' + hyir.convertToXML([]))
@@ -165,23 +161,15 @@ class Main(gtk.Window):
     end = time.time()
     print 'Printing simulator took ' + str(end-start) + ' seconds.'
 
+    arguments = ['sh', './compileAndExecute', "0"]
+    global compile_proc
+    compile_proc = subprocess.Popen(arguments,cwd="../wd/")
+
     start = time.time()
     parseTree,vList = hyir.display_system()
     self.modelNotebook=ModelNotebook(parseTree,hyir,propList,vList,paramList)
     end = time.time()
     print 'Generating notebook took ' + str(end-start) + ' seconds.'
-
-    #self.ModelNotebook.propertiesFrame.disableAllButtons()
-    # arguments = ['mv', 'bloatedSimGI.cpp', 'hybridSimGI.cpp', 'simulator.cpp', '../wd/']
-    # subp = subprocess.Popen(arguments)
-    # subp.wait()
-
-    start = time.time()
-    arguments = ['sh', './compileAndExecute', "0"]
-    subp = subprocess.Popen(arguments,cwd="../wd/")
-    subp.wait()
-    end = time.time()
-    print 'Compiling files took ' + str(end-start) + ' seconds.'
 
     self.fileLabel.hide()
     self.windowVBox.pack_start(self.modelNotebook)
@@ -207,7 +195,6 @@ class Main(gtk.Window):
         if response==gtk.RESPONSE_OK:
           self.fileSaved=saveDialog.get_filename()
           if not self.fileSaved.endswith(".hyxml"):
-          # if not ".hyxml" in self.fileSaved:
             self.fileSaved+=".hyxml"
           self.modelNotebook.saveModel(self.fileSaved)
         saveDialog.destroy()
@@ -258,6 +245,7 @@ class ModelNotebook(gtk.Notebook):
     if paramsData:
       for i,param in enumerate(paramsData):
         self.paramData[i][1]=param
+
     self.parseTree=parseTree
     self.verifyingPlotting=[False]
     self.hybridRep=hybridRep
@@ -386,13 +374,6 @@ class ParameterFrame(gtk.Frame):
       entry.connect("changed",self.entryCallback,i,checkImage)
       self.paramVBox.pack_start(paramHBox,True,True,0)
 
-    # paramHBox1 = gtk.HBox(False,0)
-    # linearbutton = gtk.CheckButton("Linear Model")
-    # linearbutton.connect("toggled", self.linearCallback, "Linear Model")
-    # paramHBox1.pack_start(linearbutton,True,True,2)
-
-    # self.paramVBox.pack_start(paramHBox1,True,True,0)
-
     combobox = gtk.combo_box_new_text()
     combobox.connect('changed', self.changed_cb)
     self.paramVBox.pack_start(combobox,True,True,2)
@@ -435,44 +416,14 @@ class ParameterFrame(gtk.Frame):
       subp.wait()
 
       arguments = ['sh', './compileSimulator', str(index)]
-      subp = subprocess.Popen(arguments,cwd="../wd/")
-      subp.wait()
-      # if index == 0:
-      #   st = 'constant'
-      #   path = '../Hylink/simulator.cpp'
-      #   gen_simulator(path, self.hybridRep, step_type=st)
-      #   arguments1 = ['mv','simulator.cpp', '../wd/']
-      #   subp1 = subprocess.Popen(arguments1)
-      #   subp1.wait()
-      #   arguments = ['sh', './compileSimulator', "0"]
-      #   subp = subprocess.Popen(arguments,cwd="../wd/")
-      #   subp.wait()
-      # if index == 1:
-      #   st = 'adaptive'
-      #   path = '../Hylink/simulator.cpp'
-      #   gen_simulator(path, self.hybridRep, step_type=st)
-      #   arguments1 = ['mv','simulator.cpp', '../wd/']
-      #   subp1 = subprocess.Popen(arguments1)
-      #   subp1.wait()
-      #   arguments = ['sh', './compileSimulator', "1"]
-      #   subp = subprocess.Popen(arguments,cwd="../wd/")
-      #   subp.wait()
-      # if index == 2:
-      #   self.hybridRep.convertToCAPD("simulator")
-      #   arguments1 = ['mv','simulator.cpp', '../wd/']
-      #   subp1 = subprocess.Popen(arguments1)
-      #   subp1.wait()
-      #   arguments = ['sh', './compileSimulator', "2"]
-      #   subp = subprocess.Popen(arguments,cwd="../wd/")
-      #   subp.wait()
+      global compile_proc
+      if compile_proc:
+        compile_proc.kill()
+      compile_proc = subprocess.Popen(arguments,cwd="../wd/")
+      # subp.wait()
 
     global Global_Simulator
-    Global_Simulator = index    
-
-
-  # def linearCallback(self, widget, data):
-  #   global Global_Linear
-  #   Global_Linear = 1-Global_Linear
+    Global_Simulator = index
 
   """
     entryCallback
@@ -849,18 +800,15 @@ class PropertiesFrame(gtk.Frame):
           if prop.tabChild==None:
             unsafeSet=prop.unsafeSetParsed
             reachSetPath=prop.reachSetPath
-            #print prop.simulator
             if prop.simulator==1:
-              ploterversion = 2 
-              #print ploterversion
+              plotterversion = 2 
             elif prop.simulation == 1:
-              ploterversion = 3
+              plotterversion = 3
             else:
-              ploterversion = 1
-              #print ploterversion
+              plotterversion = 1
             modeList = [m.name for m in self.hybridRep.automata[0].modes]
             plotWindow=PlotWindow(["time"]+self.varList,modeList,unsafeSet,reachSetPath,
-                                  prop.paramData[1],prop.paramData[2],self.verifyingPlotting, ploterversion)
+                                  prop.paramData[1],prop.paramData[2],self.verifyingPlotting, plotterversion)
             tab=gtk.HBox()
             tab.pack_start(gtk.Label(prop.name),True,True)
             closeBtn=gtk.Button()
@@ -1064,14 +1012,6 @@ class PropertiesFrame(gtk.Frame):
           unsafeIneqs = unsafeSet[2]
 
           initModeC2E2Rep = [m.name for m in self.hybridRep.automata[0].modes].index(initialMode)+1
-          # initModeC2E2Rep = -1;
-          # modesList = self.hybridRep.automata[0].modes
-          # modeI = 0
-          # for modeIndex in modesList:
-          #     modeI += 1
-          #     if(initialModeString == modeIndex.name):
-          #         initModeC2E2Rep = modeI;
-          
           c2e2String+= "init-mode=\""+str(initModeC2E2Rep)+"\"\n"
           print(self.paramData)
           taylor = self.paramData[3][1]
@@ -1174,6 +1114,19 @@ class PropertiesFrame(gtk.Frame):
           writer.write(c2e2String)
           writer.close()
           
+          global compile_proc
+          if compile_proc:
+            dialog = gtk.Dialog(title='Compiling Files!', parent=None, flags=0, buttons=None)
+            label = gtk.Label("Model generated files are compiling.\nIt will take 15-30 seconds.\nThis dialog box will close when completed.")
+            dialog.vbox.pack_start(label, True, True, 0)
+            label.show()
+            dialog.show()
+            while gtk.events_pending():
+              gtk.main_iteration()
+            compile_proc.wait()
+            dialog.destroy()
+            compile_proc = None
+
           arguments = ['sh', './ExecuteC2E2']
           self.subp = subprocess.Popen(arguments,cwd="../wd/",preexec_fn=os.setsid)
 

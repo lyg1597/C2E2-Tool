@@ -5,13 +5,11 @@
  *      Author: parasara
  */
 
-// #include "Polyhedron.h"
 #include "Vector.h"
 #include "Point.h"
 #include "Simulator.h"
 #include "Annotation.h"
 #include "Checker.h"
-//#include"y.tab.c"
 #include "InitialSet.h"
 
 #include "Visualizer.h"
@@ -119,8 +117,6 @@ int main(int argc, char* argv[]) {
         initMode = parser.scanner.initMode;
     }
 
-    //cout<<"The parser value of simu is "<<simulation_flag<<endl;
-
     // New object for simulator
     class Simulator* simVerify = new Simulator();
     simVerify->setAbsError(absoluteError); simVerify->setRelError(relativeError); simVerify->setExecutable(simuName);
@@ -157,25 +153,19 @@ int main(int argc, char* argv[]) {
 	for (dimIndex =0; dimIndex <dimensions; dimIndex++){
 		deltaArray[dimIndex] = (initialSet->getMax(dimIndex)-initialSet->getMin(dimIndex))/2;
 		initdeltaArray[dimIndex] = deltaArray[dimIndex];
-		//cout<< "deltaArray at " <<dimIndex<< " is " << deltaArray[dimIndex] <<endl; 
 	}
 
-	class CoverStack* ItrStack;
-	//class RepPoint* reptemp;
-
-	ItrStack = initialSet->getCoverStack(deltaArray,initMode,0);
-	
-	class Point* simulationPoint;
-	
-	class ReachTube* nextReach = new ReachTube();
+	CoverStack* ItrStack = initialSet->getCoverStack(deltaArray,initMode,0);	
+	ReachTube* nextReach = new ReachTube();
 	nextReach->setDimensions(dimensions);
 
 	std::vector<class ReachTube*> resultTube;
 	std::vector<class ReachTube*> TraceTube;
-	class ReachTube* guardSet;
+	ReachTube* guardSet;
+	Point* simulationPoint;
 
 	/* Initialized, now just add this to the Iterator when it becomes NULL */
-	int numberSamplePoints =0;
+	int numberSamplePoints = 0;
 	int modeSimulated;
 	int traceSafeFlag;
 	int numberOfPointsIterator = 0;
@@ -188,6 +178,8 @@ int main(int argc, char* argv[]) {
 	char input_buff3[32];
 	char input_buff4[32];
 
+    int refine_threshold = 10; //Number of times we refine before returning UNKNOWN.
+
 	Py_Initialize(); //starting Python environment
 
 	// read refine order file here
@@ -196,11 +188,11 @@ int main(int argc, char* argv[]) {
 	vector<int> refineorder;
 	int bufferReader;
 	if(tRFile == NULL){
-		cout<<"refineorder file does not exist, will do refinement by default method"<<endl;
+		cout<<"Refine order file does not exist, will refine by default method."<<endl;
 		refine_control = 0;
 	}
 	else{
-		cout<<"refineorder file detected, scan refine order file"<<endl;
+		cout<<"Custom refine order file detected, scanning file."<<endl;
 		while( fscanf(tRFile,"%d",&bufferReader) != EOF ){
 			if(bufferReader<=dimensions&&bufferReader>0){
 				refineorder.push_back(bufferReader);
@@ -217,7 +209,6 @@ int main(int argc, char* argv[]) {
 	int forbMsize = forbEquations*dimensions;
 	for(int i=0; i<forbMsize; i++){
 		if(forbM[i]!=0.0 || forbM[i]!=0.0){
-			//cout<<"forb matrix at "<<i<< " is not 0"<<endl;
 			refineflag[i%dimensions] = 1;
 		}
 	}
@@ -235,15 +226,13 @@ int main(int argc, char* argv[]) {
 	tmp << "hybrid simulation" << endl;
 	tmp.close();
 
-	//SUKET CODE
 	int isSafe = hybridSimulationCover(simVerify, checkVerify, unsafeSet, initialSet, dimensions, initMode, visuFileName);
-
+	//If it is a simulation or a counterexample has been detected, we are done.
 	if(simulation_flag || isSafe==-1){
 		ofstream resultStream;
 		resultStream.open("Result.dat");
 		resultStream << isSafe << endl;
 		resultStream.close();
-
 		exit(1);
 	}
 
@@ -251,34 +240,30 @@ int main(int argc, char* argv[]) {
 	tmp << "reachtube simulation" << endl;
 	tmp.close();
 
+	//Reset file.
 	tmp.open(visuFileName);
 	tmp.close();
 
-	typedef vector<pair<NNC_Polyhedron, int> > (*guard_fn)(int, double *, double *);
-	typedef bool (*inv_fn)(int, double *, double *);
-
-	guard_fn guards;
-	inv_fn invs;
-
+	//Try to open dynamic library.
     void *lib = dlopen("./libbloatedsim.so", RTLD_LAZY);
     if(!lib){
     	cerr << "Cannot open library: " << dlerror() << '\n';
     }
 
-    guards = (guard_fn) dlsym (lib, "hitsGuard");
-    invs = (inv_fn) dlsym(lib, "invariantSatisfied"); 
+	typedef vector<pair<NNC_Polyhedron, int> > (*guard_fn)(int, double *, double *);
+	typedef bool (*inv_fn)(int, double *, double *);
+	guard_fn guards = (guard_fn) dlsym (lib, "hitsGuard");
+	inv_fn invs = (inv_fn) dlsym(lib, "invariantSatisfied"); 
 
     cout << "Stack size: " << ItrStack->size() << endl;
 
-    int refine_threshold = 10;
 	RepPoint* curItrRepPoint;
 	while(!ItrStack->empty()){
 		numberSamplePoints++;
-		//cout  << "\n Sample point " << numberSamplePoints << " being checked \n";
-		
 		curItrRepPoint = ItrStack->top();
 		ItrStack->pop();
 
+		//Crossed refine threshold, give up now.
 		if(curItrRepPoint->getRefineTime()>refine_threshold){
 			ofstream resultStream;
 			resultStream.open("Result.dat");
@@ -288,10 +273,9 @@ int main(int argc, char* argv[]) {
 		}
 
 		cout<<"========================POP 1 REP POINT, VERFICATION PROCESS START=================================="<<endl;
-
 		curItrRepPoint->print();
 	    cout << "Current stack size: " << ItrStack->size() << endl;
-		
+
 		simulationPoint = curItrRepPoint->getState();
 		modeSimulated = curItrRepPoint->getMode();
 		double* refDeltaArray = curItrRepPoint->getDeltaArray();
@@ -307,7 +291,6 @@ int main(int argc, char* argv[]) {
 
 		//Step 2. Non-linear bloating
 		if (linear_from_parser[modeSimulated-1]==0){
-			//cout<<"non-linear model"<<endl;
 			double CT_step = KConstArray[modeSimulated-1];
 			int modeforpython = simulationTube->getMode();
 		    strcpy (input_buff, "delta = [");
@@ -330,17 +313,13 @@ int main(int argc, char* argv[]) {
 		    PyRun_SimpleFile(fid, filename);
 		    fclose(fid);
 		}
-		//Linear Bloating
 		else{
-			//cout<<"linear model"<<endl;
 		    class ReachTube* bloatedTube;
 			bloatedTube = simulationTube->bloatReachTube(refDeltaArray,annotVerify);
 			bloatedTube->printReachTube("reachtube.dat",0);
 			delete bloatedTube;
 		}
-		
 		delete simulationTube;
-
 
 		//Step 3. Check invariant and guard
 		simulationTube = new ReachTube();
@@ -357,18 +336,22 @@ int main(int argc, char* argv[]) {
         bool hitGuard = false;
         struct timeval inv_start, inv_end, guard_start, guard_end;
         for(int i=0; i<size; i++){
-        		cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
-        		cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
+        		//Print box corners.
+        		// cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+        		// cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
                 ptLower = simulationTube->getLowerBound(i)->getCoordinates();
                 ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
                 
                 // gettimeofday(&inv_start, NULL);
                 bool inv_true = invs(modeSimulated, ptLower, ptUpper);
-       //          gettimeofday(&inv_end, NULL);
+                // gettimeofday(&inv_end, NULL);
 		    	// cout << "INVARIANT TIME: "<< inv_end.tv_usec - inv_start.tv_usec << endl;
                 if(!inv_true){
-                	cout << "INVARIANT NOT SATISFIED: " << i << endl << endl;
+                	cout << "INVARIANT NOT SATISFIED: " << i << endl;
+	        		cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+    	    		cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
                     simulationTube->clear(i);
+                    cout << endl;
                     break;
                 }
 
@@ -378,6 +361,8 @@ int main(int argc, char* argv[]) {
             	// cout << "GUARD TIME: "<< guard_end.tv_usec - guard_start.tv_usec << endl;
                 if(!guards_hit.empty()){
                 	cout << "GUARD SATISFIED: " << i << endl;
+	        		cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+   		    		cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
                     guardSet->addGuards(guards_hit);
                     hitGuard = true;
                 }
@@ -387,16 +372,13 @@ int main(int argc, char* argv[]) {
                 }
                 // cout << endl;
         }
-
-		// guardSet->printGuards();
+		// guardSet->printGuards(); //Print all guards collected over reachtube.
 
 		traceSafeFlag = checkVerify->check(simulationTube, unsafeSet);
-
 		if(traceSafeFlag == 0){
-			//Tube unknown, trace to the origin and refine immedately 
+			//Tube unknown, trace to the origin and refine immedately.
 			cout << " Tube unknown! Start to refine\n";
 			TraceTube.clear();
-			int i;
 			double* originDeltaArray;
 			if (curItrRepPoint->getParentState()!=NULL)
 				originDeltaArray = curItrRepPoint->getParentDeltaArray();
@@ -404,7 +386,7 @@ int main(int argc, char* argv[]) {
 				originDeltaArray = curItrRepPoint->getDeltaArray();
 			
 			if (refine_control==0){
-				cout<<"using default method refinement"<<endl;
+				cout<<"Using default refinement strategy."<<endl;
 				if (refineunsafeflag<4)
 				{
 					//refine the dimension in unsafe equation 2 times
@@ -415,7 +397,7 @@ int main(int argc, char* argv[]) {
 				else{
 					double max = 0;
 					int refineidx=0;
-					for(i=0; i<dimensions;i++){
+					for(int i=0; i<dimensions;i++){
 						if (originDeltaArray[i]>max){
 							max = originDeltaArray[i];
 							refineidx = i;
@@ -426,19 +408,16 @@ int main(int argc, char* argv[]) {
 				}
 			}
 			else{
-				cout<<"using method written in file for refinement"<<endl;
+				cout<<"Using custom refinement strategy."<<endl;
 				int refineidx = curItrRepPoint->getRefineTime();
-
 				ItrStack->refine(curItrRepPoint,refineorder[refineidx%refineorder.size()]-1);
 			}
 			delete curItrRepPoint;
 		}
 		else if(traceSafeFlag == 1){
-			cout<< "Tube Safe! Check if there is transition for next mode\n";
+			cout<< "Tube Safe! Checking if there are transitions for next mode.\n";
 			TraceTube.push_back(simulationTube);
-
 			int ifnextSet = guardSet->getNextSetStack(ItrStack,curItrRepPoint);
-
 			if (!ifnextSet){
 				cout << "No more transitions" << endl;
 				resultTube.reserve(resultTube.size()+TraceTube.size());
@@ -457,23 +436,19 @@ int main(int argc, char* argv[]) {
 			delete curItrRepPoint;
 			class ReachTube* InvTube = NULL;
 			int ResultTubeLength = 0;
-			//cout<<resultTube.size()<<endl;
 			for(ResultTubeLength=0;ResultTubeLength<resultTube.size();ResultTubeLength++){
 				InvTube = resultTube.at(ResultTubeLength);
 				InvTube->printReachTube(visuFileName,1);
 				delete InvTube;
 			}
-
 			cout << " The system is unsafe \n";
 			ofstream resultStream;
 			resultStream.open("Result.dat");
 			resultStream << "-1" << endl;
 			resultStream.close();
-
 			std::cout << "Execution time: "<< std::difftime(std::time(NULL), start) << " s.\n";
 			exit(-1);
 		}
-		
 	}
 
 	class ReachTube* InvTube = NULL;
@@ -483,9 +458,7 @@ int main(int argc, char* argv[]) {
 		InvTube->printReachTube(visuFileName,1);
 		delete InvTube;
 	}
-
 	cout << "System is safe" << endl;
-
 
 	ofstream resultStream;
 	resultStream.open("Result.dat");
@@ -541,27 +514,21 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 	int isSafe = 1;
 	int traceSafeFlag;
 
-	// typedef vector<pair<int, double *> > (*guard_fn)(int, double *, double *);
-	typedef vector<pair<NNC_Polyhedron, int> > (*guard_fn)(int, double *, double *);
-	typedef bool (*inv_fn)(int, double *, double *);
-	
-	guard_fn guards;
-	inv_fn invs;
-
+	//Try to open dynamic library.
     void *lib = dlopen("./libhybridsim.so", RTLD_LAZY);
     if(!lib){
     	cerr << "Cannot open library: " << dlerror() << '\n';
     }
 
-    guards = (guard_fn) dlsym (lib, "hitsGuard");
-    invs = (inv_fn) dlsym(lib, "invariantSatisfied"); 
+	typedef vector<pair<NNC_Polyhedron, int> > (*guard_fn)(int, double *, double *);
+	typedef bool (*inv_fn)(int, double *, double *);
+	guard_fn guards = (guard_fn) dlsym (lib, "hitsGuard");
+	inv_fn invs = (inv_fn) dlsym(lib, "invariantSatisfied");
    
     while(true){
     	cout << "Simulating mode " << mode << " from ";
     	origin->print();
-
 		simulator->Simulate(origin, mode);
-
 		ReachTube* simulationTube = new ReachTube();
 		simulationTube->setDimensions(dimensions);
 		simulationTube->setMode(mode);
@@ -572,8 +539,9 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 		for(int i=0; i<size; i++){
 			ptLower = simulationTube->getLowerBound(i)->getCoordinates();
 			ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
-    		cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
-			cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
+			// Print box corners.
+			// cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+			// cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
 
 			guards_hit = guards(mode, ptLower, ptUpper);
 			if(!guards_hit.empty()){
@@ -589,7 +557,7 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 			}
 		}
 
-		/* Checks that the given trace is safe w.r.t the boxes given as unsafe set */
+		// Checks that the given trace is safe w.r.t the boxes given as unsafe set
 		traceSafeFlag = checker->checkHybridSimulation(simulationTube, unsafeSet);
 		if(traceSafeFlag==1){
 	       	simulationTube->printReachTube(file,1);
@@ -600,7 +568,7 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 			break;
 		}
 		else{
-			cout << "<SUKET ERROR> UNKNOWN TUBE IN HYBRID SIMULATION" << endl;
+			cout << "<ERROR> UNKNOWN TUBE IN HYBRID SIMULATION" << endl;
 		}
 
 		if(guards_hit.empty()){
