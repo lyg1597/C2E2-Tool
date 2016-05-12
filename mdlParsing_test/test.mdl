@@ -1,0 +1,204 @@
+Stateflow {
+  machine {
+    id			    1
+    name		    "LinThermo"
+    created		    "07-Jan-2010 15:02:52"
+    isLibrary		    0
+    firstTarget		    13
+    debug {
+      runTimeCheck	      [1 1 1 0]
+    }
+    sfVersion		    76014001.00040001
+  }
+  chart {
+    id			    2
+    name		    "Chart"
+    windowPosition	    [358.4 239.2 632 315.2]
+    viewLimits		    [0 512.986 2.921 244.873]
+    zoomFactor		    0.876
+    screen		    [1 1 1440 900 1.25]
+    treeNode		    [0 4 0 0]
+    firstTransition	    9
+    viewObj		    2
+    visible		    1
+    machine		    1
+    subviewS {
+      y1		      2.921
+      zoomFactor	      0.876
+    }
+    ssIdHighWaterMark	    19
+    decomposition	    CLUSTER_CHART
+    firstData		    10
+    updateMethod	    CONTINUOUS
+    chartFileNumber	    1
+    userSpecifiedStateTransitionExecutionOrder 1
+    disableImplicitCasting  1
+    supportVariableSizing   0
+  }
+  state {
+    id			    3
+    labelString		    "heating\ndu:\nx_dot = 40 - 0.5*x;\nx_out = x;"
+    position		    [38.984 77.505 137.5 90.75]
+    fontSize		    12
+    chart		    2
+    treeNode		    [2 0 4 6]
+    subviewer		    2
+    ssIdNumber		    4
+    type		    OR_STATE
+    decomposition	    CLUSTER_STATE
+  }
+  state {
+    id			    4
+    labelString		    "cooling\ndu:\nx_dot = 30 -0.5*x;\nx_out = x;"
+    position		    [317.2825 77.3655 140.598 92.904]
+    fontSize		    12
+    chart		    2
+    treeNode		    [2 0 0 3]
+    subviewer		    2
+    ssIdNumber		    5
+    type		    OR_STATE
+    decomposition	    CLUSTER_STATE
+  }
+  state {
+    id			    5
+    labelString		    "@annotation-mode=heating;\nk=1;\ngamma=-0.1;"
+    position		    [32.6966 175.7599 118.7264 38.5269]
+    chart		    2
+    treeNode		    [2 0 6 0]
+    superState		    GROUPED
+    isNoteBox		    1
+    noteBox		    [0 0 0 1]
+    subviewer		    2
+    ssIdNumber		    18
+    type		    GROUP_STATE
+    decomposition	    CLUSTER_STATE
+  }
+  state {
+    id			    6
+    labelString		    "@annotation-mode=cooling;\nk=1;\ngamma=-0.1;"
+    position		    [334.5358 173.6549 118.7264 38.5269]
+    chart		    2
+    treeNode		    [2 0 3 5]
+    superState		    GROUPED
+    isNoteBox		    1
+    noteBox		    [0 0 0 1]
+    subviewer		    2
+    ssIdNumber		    19
+    type		    GROUP_STATE
+    decomposition	    CLUSTER_STATE
+  }
+  transition {
+    id			    7
+    labelString		    "[x >= 75]"
+    labelPosition	    [202.247 82.332 47.654 18.269]
+    fontSize		    12
+    src {
+      id		      3
+      intersection	      [2 1 0 0.2417 176.484 99.4393 0 -22.125]
+    }
+    dst {
+      id		      4
+      intersection	      [4 -1 -0 0.7624 317.2825 99.4393 0 22.125]
+    }
+    midPoint		    [245.6834 99.443]
+    chart		    2
+    linkNode		    [2 9 8]
+    dataLimits		    [176.484 317.283 97.039 101.839]
+    stampAngle		    NaN
+    subviewer		    2
+    drawStyle		    SMART
+    executionOrder	    1
+    ssIdNumber		    7
+  }
+  transition {
+    id			    8
+    labelString		    "[x <= 65]"
+    labelPosition	    [209.892 130.145 47.654 18.269]
+    fontSize		    12
+    src {
+      id		      4
+      intersection	      [4 -1 -0 0.2619 317.2825 145.9396 0 -24.375]
+    }
+    dst {
+      id		      3
+      intersection	      [2 1 0 0.7541 176.484 145.9396 0 24.375]
+    }
+    midPoint		    [248.0831 145.9412]
+    chart		    2
+    linkNode		    [2 7 0]
+    dataLimits		    [176.484 317.282 143.54 148.34]
+    stampAngle		    NaN
+    subviewer		    2
+    drawStyle		    SMART
+    executionOrder	    1
+    ssIdNumber		    8
+  }
+  transition {
+    id			    9
+    labelString		    "{x = 70}"
+    labelPosition	    [100.985 43.458 42.048 18.269]
+    fontSize		    12
+    src {
+      intersection	      [0 0 1 0.4125 96.36 33.507 0 0]
+    }
+    dst {
+      id		      3
+      intersection	      [1 0 -1 0.4173 96.36 77.505 0 0]
+    }
+    midPoint		    [96.36 52.2018]
+    chart		    2
+    linkNode		    [2 0 7]
+    dataLimits		    [93.96 98.76 33.507 77.505]
+    subviewer		    2
+    drawStyle		    SMART
+    executionOrder	    1
+    ssIdNumber		    13
+  }
+  data {
+    id			    10
+    ssIdNumber		    2
+    name		    "x"
+    linkNode		    [2 0 11]
+    scope		    LOCAL_DATA
+    machine		    1
+    props {
+      updateMethod	      SF_CONTINUOUS_TIME_DATA
+      type {
+	primitive		SF_DOUBLE_TYPE
+	isSigned		1
+	wordLength		"16"
+      }
+    }
+    dataType		    "double"
+  }
+  data {
+    id			    11
+    ssIdNumber		    12
+    name		    "x_out"
+    linkNode		    [2 10 0]
+    scope		    OUTPUT_DATA
+    machine		    1
+    props {
+      type {
+	primitive		SF_DOUBLE_TYPE
+	isSigned		1
+	wordLength		"16"
+      }
+      frame		      SF_FRAME_NO
+    }
+    dataType		    "double"
+  }
+  instance {
+    id			    12
+    name		    "Chart"
+    machine		    1
+    chart		    2
+  }
+  target {
+    id			    13
+    name		    "sfun"
+    description		    "Default Simulink S-Function Target."
+    machine		    1
+    linkNode		    [1 0 0]
+  }
+}

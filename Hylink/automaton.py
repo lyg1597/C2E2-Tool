@@ -127,6 +127,7 @@ class Invariant:
         self.raw = raw
         eqns = raw.split('||')
         self.expr = [SymEq.construct_eqn(eqn, False, True) for eqn in eqns]
+        # Filter out equations that evaluate to False
         self.expr = filter(lambda eqn: eqn is not False, self.expr)
         if True in self.expr: 
             print 'Redundant Inv: ' + raw
@@ -137,6 +138,7 @@ class Guard:
         self.raw = raw
         eqns = raw.split('&&')
         self.expr = [SymEq.construct_eqn(eqn, False, True) for eqn in eqns]
+        # Filter out equations that evaluate to True
         self.expr = filter(lambda eqn: eqn is not True, self.expr)
         if False in self.expr: 
             print 'Redundant Guard: ' + raw
@@ -150,6 +152,9 @@ class Action:
 
 #Symbolic Equation library
 class SymEq:
+    # Construct equation with sympy
+    # rationalize it if flag is set to True
+    # is_eq is True for DAI's and actions
     @staticmethod
     def construct_eqn(eqn, is_eq, rationalize):
         try:
@@ -171,6 +176,7 @@ class SymEq:
     def to_str(self):
         return str(self.eqn)
 
+    # Given an equation convert all decimals to integers by multiplying by LCM
     @staticmethod
     def rationalize(expr):
         if expr.is_Relational:
@@ -198,6 +204,7 @@ class SymEq:
     def get_term_exp(unit):
         return len(str(float(unit)))-str(float(unit)).index('.')-1
 
+    # Return A, B matrices for expressions with x as varList
     @staticmethod
     def get_eqn_matrix(expressions, varList):
         exprs = []
@@ -213,7 +220,6 @@ class SymEq:
                 elif sym_expr.func==sympy.StrictGreaterThan:
                     sym_expr = sympy.GreaterThan(sym_expr.lhs, sym_expr.rhs)
                 exprs.append(sym_expr)
-        # exprs = [sympy.sympify(expr) for expr in exprs.split('&&')]
         aMatrix=[[0 for v in varList] for expr in exprs]
         bMatrix=[0 for expr in exprs]
         eqMatrix=[]
@@ -226,6 +232,7 @@ class SymEq:
                 bMatrix[i] = [-expr.as_coefficients_dict()[sympy.numbers.One()]]
         return [aMatrix, bMatrix, eqMatrix]
 
+    # Represent u**n as u*u*...u for the simulators.
     @staticmethod
     def convert_pow(expr):
         return str(SymEq.convert_pow_helper(expr))
@@ -240,24 +247,7 @@ class SymEq:
             return sympy.Symbol('*'.join(['('+str(conv_args[0])+')']*int(conv_args[1])))
         return expr.func(*conv_args)
 
-    # @staticmethod
-    # def convert_pow(expr):
-    #     pow_eq = str(SymEq.convert_pow_helper(expr))
-    #     pow_l = re.findall('(pow\(([a-zA-Z0-9\[\]]*), ([0-9]*)\))', pow_eq)
-    #     for pow_t, pow_b, pow_e in pow_l:
-    #         pow_eq = pow_eq.replace(pow_t, '*'.join([pow_b]*int(pow_e)))
-    #     return pow_eq
-
-    # @staticmethod
-    # def convert_pow_helper(expr):
-    #     if not expr.args:
-    #         return expr
-
-    #     conv_args = [SymEq.convert_pow_helper(arg) for arg in expr.args]
-    #     if expr.is_Pow:
-    #         return sympy.sympify(sympy.Function('pow')(conv_args[0],conv_args[1]))
-    #     return expr.func(*conv_args)
-
+    # Negate guard to construct invariant
     @staticmethod
     def construct_invariant(guard):
         inv_eqn = []
@@ -275,6 +265,7 @@ class SymEq:
         inv_eqn = [str(inv) for inv in inv_eqn]
         return Invariant('||'.join(inv_eqn))
 
+    # Return all free vars in exprs
     @staticmethod
     def vars_used(exprs):
         var_set = set()
@@ -282,6 +273,7 @@ class SymEq:
             var_set = var_set.union(eqn.free_symbols)
         return [str(v) for v in var_set]
 
+    # Return if expr is linear
     @staticmethod
     def is_linear(expr):
         syms = expr.free_symbols

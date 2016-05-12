@@ -33,17 +33,21 @@ class HyIR:
                 m_initial = m1.initial and m2.initial
                 cross_mode = Mode(name=m_name,id=m_id,initial=m_initial)
 
+                # Replace input variables with corresponding output variables
                 dai_dict = {}
                 HyIR.construct_output_dict(cross_mode, m1.dais, dai_dict)
                 HyIR.construct_output_dict(cross_mode, m2.dais, dai_dict)
                 HyIR.replace_dais(cross_mode, dai_dict)
 
+                # Resulting invariant is a conjunction
                 for inv1 in m1.invs:
                     cross_mode.add_inv(inv1)
                 for inv2 in m2.invs:
                     cross_mode.add_inv(inv2)
                 composed.automata.add_mode(cross_mode)
 
+        # Construct guards of composed automata. (a,b)->(a',b) and (a,b)->(a,b')
+        # for all transitions a->a' and b->b'. Note there is no (a,b)->(a',b')
         trans_id = 0
         for t1 in hyir1.automata.trans:
             t_guard = t1.guard
@@ -65,6 +69,7 @@ class HyIR:
                 composed.automata.add_trans(cross_trans)
                 trans_id+=1
 
+        # Construct composed variables
         composed.variables.local = hyir1.variables.local+hyir2.variables.local
         composed.variables.output = hyir1.variables.output+hyir2.variables.output
         composed.variables.input = hyir1.variables.input+hyir2.variables.input
@@ -79,6 +84,7 @@ class HyIR:
         for i in self.vars:
             print i.name+" "+i.type+" "+i.scope
     
+    # Construct dictionary mapping output variables to their RHS expressions
     @staticmethod
     def construct_output_dict(mode, dais, dai_dict):
         for dai in dais:
@@ -88,6 +94,7 @@ class HyIR:
                 dai_dict[lhs] = rhs
             mode.add_dai(dai)
 
+    # Replace input variables with corresponding output variables
     @staticmethod
     def replace_dais(mode, dai_dict):
         for dai in mode.dais:
@@ -100,6 +107,7 @@ class HyIR:
                         dai.expr = dai.expr.func(dai.expr.lhs, dai.expr.rhs.subs(var, dai_dict[var_name]))
                 dai.raw = str(dai.expr)
 
+    # Populate the guard and invariant dictionaries we use to generate PPL files
     def populateInvGuards(self):
         guardResets = defaultdict(list)
         invariants = defaultdict(list)
@@ -234,7 +242,8 @@ class HyIR:
         self.printInvariants(file_name, is_hybrid)
         self.printGuardResets(file_name, is_hybrid)
 
-
+    # Generate PPL code to check invariants. 
+    # Only check against those variables in the invariant
     def printInvariants(self, file_name, is_hybrid):
         checkFile = open(file_name, "a")
         codeString="extern \"C\" bool invariantSatisfied(int curMode, double *ptLower, double *ptUpper){\n"
@@ -268,6 +277,8 @@ class HyIR:
         checkFile.write(codeString)
         checkFile.close()
 
+    # Generates PPL code to check guards and create transitions.
+    # Only check against those variables in the guard. If reset exists, create 2*n dimensional space.
     def printGuardResets(self, file_name, is_hybrid):
         varList = ["Simu_time"]+self.varList
         resetVarList = [var+"_new" for var in varList]
@@ -382,6 +393,7 @@ class HyIR:
         codeString+=indentation+"box_poly = NNC_Polyhedron(cs_box);\n"
         return codeString
 
+    # Get factor to multiply doubles by because PPL only takes integers.
     def getMultFactorPt(self):
         codeString="double getMultFactor(double *pt){\n"
         codeString+="  int multiplier=0, tmp_mul, str_len;\n"
@@ -402,7 +414,6 @@ class HyIR:
         codeString+="  return pow(10, multiplier);\n"
         codeString+="}\n\n"
         return codeString
-
 
     def getMultFactor(self):
         codeString="double getMultFactor(double *ptLower, double *ptUpper){\n"
@@ -977,35 +988,6 @@ def separateAutomata(hyir):
         #Some transitions still might need converting
         for tran in needsDestChange.keys():
             tran.dest = mapID_List[needsDestChange[tran]][tran.dest]
-
-# def build_invariant(guard):
-#     '''creates a deep copy of a parsed guard (ie Node tree) and calls the 
-#     negate method on that copy and returns the result as an Invariant object'''
-#     x = copy.deepcopy(guard)
-#     negate(x)
-#     return Invariant(x, collapse2(x))
-
-# def negate(node):
-#     '''assumes this method is being used to create deterministic transitions
-#     by altering mode invariances'''
-#     if node.value == 'or':
-#         node.value = 'and'
-#     elif node.value == 'and':
-#         node.value = 'or'
-#     elif node.value == '>':
-#         node.value = '<='
-#     elif node.value == '<':
-#         node.value = '>='
-#     elif node.value == '>=' or node.value == '=>':
-#         node.value = '<'
-#     elif node.value == '<=' or node.value == '=<':
-#         node.value = '>'
-#     elif node.value == '==':
-#         node.value = '!='
-#     if len(node.children) > 0:
-#         for i in node.children:
-#             negate(i)
-#     return node
 
 def collapseAction(node):
     '''There exists an implicit assumption due to the parsing of the tree 

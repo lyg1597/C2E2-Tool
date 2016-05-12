@@ -688,109 +688,109 @@ class ExprParser:
     for n in node.children:
       self.printNode(n)
 
-  """
-    parse
-    Description: initiates the call to the parseTre function
-    Inputs: user input set that has to be parsed
-    Outputs: none
-    Return: termList - list of coefficient,variables tuples
-            constant - summation of the constants in the set
-            divisorList - set of the divisors in the set
-            multiplier - length of largest decimals value in the set
-    Note: the variables are class accessible since modified by recursive function
-  """
-  def parse(self,data):
-    self.termList=[]
-    self.divisorList.clear()
-    self.multiplier=0
-    self.constant=0
+  # """
+  #   parse
+  #   Description: initiates the call to the parseTre function
+  #   Inputs: user input set that has to be parsed
+  #   Outputs: none
+  #   Return: termList - list of coefficient,variables tuples
+  #           constant - summation of the constants in the set
+  #           divisorList - set of the divisors in the set
+  #           multiplier - length of largest decimals value in the set
+  #   Note: the variables are class accessible since modified by recursive function
+  # """
+  # def parse(self,data):
+  #   self.termList=[]
+  #   self.divisorList.clear()
+  #   self.multiplier=0
+  #   self.constant=0
 
-    result=self.parser.parse(data,lexer=self.lexer)
-    # print(result)
-    self.parseTree(result,1)
-    return self.termList,self.constant,self.divisorList,self.multiplier
+  #   result=self.parser.parse(data,lexer=self.lexer)
+  #   # print(result)
+  #   self.parseTree(result,1)
+  #   return self.termList,self.constant,self.divisorList,self.multiplier
 
-  """
-    parseSet
-    Description: takes in the set written by the user, splits them up into smaller chunks that
-                 are fed into the other parsing functions 
-    Inputs: varList - list of variables in the mode
-            inputText - the set typed out by the user
-            setType - which set is currently being parsed, initial or unsafe
-    Outputs: none
-    Return: none
-  """
-  def parseSet(self,varList,inputText,setType):
-    parsedInput=[]
-    equations=[]
-    print(varList,inputText)
-    if setType==0:
-      parsedInput=(''.join(inputText.split())).split(':')
-      equations=parsedInput[1]
-    else:
-      equations=''.join(inputText.split())
+  # """
+  #   parseSet
+  #   Description: takes in the set written by the user, splits them up into smaller chunks that
+  #                are fed into the other parsing functions 
+  #   Inputs: varList - list of variables in the mode
+  #           inputText - the set typed out by the user
+  #           setType - which set is currently being parsed, initial or unsafe
+  #   Outputs: none
+  #   Return: none
+  # """
+  # def parseSet(self,varList,inputText,setType):
+  #   parsedInput=[]
+  #   equations=[]
+  #   print(varList,inputText)
+  #   if setType==0:
+  #     parsedInput=(''.join(inputText.split())).split(':')
+  #     equations=parsedInput[1]
+  #   else:
+  #     equations=''.join(inputText.split())
 
-    #setType 2 is for invariants
-    if setType==2:
-      inequalities=equations.split("||")
-    else:
-      inequalities=equations.split("&&")
+  #   #setType 2 is for invariants
+  #   if setType==2:
+  #     inequalities=equations.split("||")
+  #   else:
+  #     inequalities=equations.split("&&")
     
-    addInequalities=[]
-    remInequalities=[]
-    for j,ineq in enumerate(inequalities):
-      equal=re.search(r'==',ineq)
-      if not equal==None:
-        remInequalities.append(j)
-        addInequalities.append(ineq.replace("==","<="))
-        addInequalities.append(ineq.replace("==",">="))
+  #   addInequalities=[]
+  #   remInequalities=[]
+  #   for j,ineq in enumerate(inequalities):
+  #     equal=re.search(r'==',ineq)
+  #     if not equal==None:
+  #       remInequalities.append(j)
+  #       addInequalities.append(ineq.replace("==","<="))
+  #       addInequalities.append(ineq.replace("==",">="))
 
-    print(remInequalities,inequalities)
-    for rem in reversed(remInequalities):
-      inequalities.pop(rem)
-    inequalities+=addInequalities
+  #   print(remInequalities,inequalities)
+  #   for rem in reversed(remInequalities):
+  #     inequalities.pop(rem)
+  #   inequalities+=addInequalities
 
-    aMatrix=[[0 for v in varList] for s in inequalities]
-    bMatrix=[0 for x in inequalities]
-    eqMatrix=[]
+  #   aMatrix=[[0 for v in varList] for s in inequalities]
+  #   bMatrix=[0 for x in inequalities]
+  #   eqMatrix=[]
 
-    for j,ineq in enumerate(inequalities):
-      row=aMatrix[j]
-      match=re.search(r'>=?|<=?',ineq).group(0)
-      pos=ineq.rfind(match)
-      expression=ineq[0:pos]
-      constant=ineq[pos+len(match):len(ineq)]
-      expression+="-"+constant
-      print(expression)
-      data,term,divisorList,multiplier=self.parse(expression)
-      # print data
-      # print term
-      # print divisorList
-      # print multiplier
-      # print "for unsafe set, what is the expression and other things"
+  #   for j,ineq in enumerate(inequalities):
+  #     row=aMatrix[j]
+  #     match=re.search(r'>=?|<=?',ineq).group(0)
+  #     pos=ineq.rfind(match)
+  #     expression=ineq[0:pos]
+  #     constant=ineq[pos+len(match):len(ineq)]
+  #     expression+="-"+constant
+  #     print(expression)
+  #     data,term,divisorList,multiplier=self.parse(expression)
+  #     # print data
+  #     # print term
+  #     # print divisorList
+  #     # print multiplier
+  #     # print "for unsafe set, what is the expression and other things"
       
-      print "Multiplier is " + str(multiplier)
+  #     print "Multiplier is " + str(multiplier)
       
-      multiply=1*(10**multiplier)
-      for d in divisorList:
-        multiply*=d
+  #     multiply=1*(10**multiplier)
+  #     for d in divisorList:
+  #       multiply*=d
 
-      for d in data:
-        row[varList.index(d[1])]+=d[0]*multiply
-        bMatrix[j]=[(-term)*multiply]
-        if bMatrix[j][0]==-0.0:
-          bMatrix[j][0]=0.0
+  #     for d in data:
+  #       row[varList.index(d[1])]+=d[0]*multiply
+  #       bMatrix[j]=[(-term)*multiply]
+  #       if bMatrix[j][0]==-0.0:
+  #         bMatrix[j][0]=0.0
 
-      if match==">":
-        match=">="
-      elif match=="<":
-        match="<="
-      eqMatrix.append([match])
+  #     if match==">":
+  #       match=">="
+  #     elif match=="<":
+  #       match="<="
+  #     eqMatrix.append([match])
     
-    if setType==0:
-      return[parsedInput[0],aMatrix,bMatrix,eqMatrix]
-    else:
-      return[aMatrix,bMatrix,eqMatrix]
+  #   if setType==0:
+  #     return[parsedInput[0],aMatrix,bMatrix,eqMatrix]
+  #   else:
+  #     return[aMatrix,bMatrix,eqMatrix]
 
 """
   Node
