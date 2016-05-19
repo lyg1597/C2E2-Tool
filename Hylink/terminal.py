@@ -548,7 +548,7 @@ def autotest(model):
 
 def autotest2(model):
 	print(Lineararg)
-	vList,mList,hybridRep,propList,paramsData,typeInput = loadfile("../NewExamples/"+model)
+	vList,mList,hybridRep,propList,paramsData,typeInput = loadfile("../Examples/"+model)
 	paramData=[["Partitioning:",2000,1],["Time-step:",paramsData[1],1],["Time horizon:",paramsData[2],1],["Taylor model order:",paramsData[3],1]]
 	verification(hybridRep,paramData,mList,vList,propList)
  	sys.exit()
