@@ -202,6 +202,7 @@ Copyright \copyright\ \the\year\ \thanklessauthor
 
 \chapter{Acknowledgements}
 \label{sec:ack}
+Suket Karnawat$\circ$
 Matthew Potok$\circ$
 Zhenqi Huang $\circ$
 Taylor Johnson $\circ$ 
@@ -256,7 +257,7 @@ In this chapter, we give a quick tour of some features of C2E2 using a couple of
 In the c2e2 folder, type command ./runC2E2 to launch C2E2 and you should be able to see the front end of the tool as Figure~\ref{figure:frontend}. Once C2E2 is launched, go ahead and open one of the examples from the \texttt{File} menu (or use \texttt{Ctrl + O}). All examples are stored in the \texttt{Examples} folder inside \texttt{c2e2} folder. For this tutorial, we will use the model of an adaptive cruise control system (see the example webpage \footnote{https://publish.illinois.edu/c2e2-tool/example/adaptive-cruise-control/}) which is stored as \texttt{TotalMotion100s.hyxml}. For the description of other examples, please refer to the examples webpage \footnote{https://publish.illinois.edu/c2e2-tool/example/}. 
 
 \begin{marginfigure}
-\centerline{\includegraphics[scale=.24,keepaspectratio=true]{Manual_ver0_2_image/Frontend.png}}
+\centerline{\includegraphics[scale=.24,keepaspectratio=true]{Images/Frontend.png}}
  \caption{Frond end of C2E2 when launched} 
  \label{figure:frontend}
 \end{marginfigure}
@@ -264,7 +265,7 @@ In the c2e2 folder, type command ./runC2E2 to launch C2E2 and you should be able
 Upon opening the file , the C2E2 window should look like Figure~\ref{fig:parsetree}.  
 
 \begin{figure}[h!]
-\centerline{\includegraphics[scale=.22,keepaspectratio=true]{Manual_ver0_2_image/GUI.jpg}}
+\centerline{\includegraphics[scale=.22,keepaspectratio=true]{Images/GUI.jpg}}
 \caption{{\em Left:\/} Model parse tree. {\em Right:\/} Verification pane.} 
 \label{fig:parsetree}
 \end{figure}
@@ -287,7 +288,7 @@ The coordinate transformation step $K$ for nonlinear models has been set to $200
 Current version of C2E2 supports Odeint constant time step simulator, Odeint adaptive time step simulator and CAPD simulator. The default simulator is Odeint constant time step simulator, and it is been compiled when you opening the model. You can change the simulator by selecting different simulator from the simulator drop down menu as shown in Figure \ref{figure:simulator}. Note that the CAPD simulator may not work for several models due to the integration method used in the CAPD library. For example, the CAPD simulator for  \texttt{cardiacComposition.hyxml}, \texttt{Powertrain.hyxml}, \texttt{helicopter.hyxml} will fail simulating. 
 
 \begin{marginfigure}
-\centerline{\includegraphics[scale=.24,keepaspectratio=true]{Manual_ver0_2_image/simulator.png}}
+\centerline{\includegraphics[scale=.24,keepaspectratio=true]{Images/simulator.png}}
  \caption{Simulator drop down menu} 
  \label{figure:simulator}
 \end{marginfigure}
@@ -297,7 +298,7 @@ When the initial set needs refinement, C2E2 provides different refinement strate
 
 
 \begin{marginfigure}
-\centerline{\includegraphics[scale=.24,keepaspectratio=true]{Manual_ver0_2_image/refine.png}}
+\centerline{\includegraphics[scale=.24,keepaspectratio=true]{Images/refine.png}}
  \caption{Refinement drop down menu} 
  \label{figure:refine}
 \end{marginfigure}
@@ -334,7 +335,7 @@ vx<=2.1
 \end{enumerate}
 %
 \begin{marginfigure}
-\centerline{\includegraphics[width=\textwidth]{Manual_ver0_2_image/property_dialog.png}}
+\centerline{\includegraphics[width=\textwidth]{Images/property_dialog.png}}
  \caption{Dialog box for adding properties checks the syntax of the initial and unsafe sets.}
  \label{fig:property dialog}
 \end{marginfigure}
@@ -373,7 +374,7 @@ The reachable set over-approximation computed by C2E2 is stored in the \texttt{/
 If you have multiple properties, then you may select one or more of them to be verified. Multiple properties are verified one at a time. When the verification is in progress clicking the \texttt{Abort} button aborts it.
 
 \begin{marginfigure}
- \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Manual_ver0_2_image/Verified.png}}
+ \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Images/Verified.png}}
  \caption{One or more properties can be selected by checking the boxes to the left of the property name. The \texttt{Verify} button launches the verification engine to verify one property at a time.} 
  \label{fig:safe}
 \end{marginfigure}
@@ -386,7 +387,7 @@ C2E2 also allows users to generate pure simulation traces from initial sets. Onc
 C2E2 supports user defined refinement strategy (see Section ~\ref{sec:open}). You can select USER DEFINE STRATEGY from the drop down menu as shown in Figure \ref{figure:refine}. In this case, you need to write down your strategy in a file named \texttt{refineorder.txt} and store it in the \texttt{/wd} folder. The file should be look like Figure \ref{figure:refine_file}. In each line, you should write down the index of the variables, the order of which is the same as the variables that are shown in the front end GUI. That is, "2`` means the second variable shown in the Variables list in the front end. Indexes that are larger than the dimension of system will be ignored automatically. C2E2 will refine the initial set according to the order written in \texttt{refineorder.txt} iteratively. For example, if use the refinement strategy as in Figure~\ref{figure:refine_file}, the dimension corresponding to the second variable will be refined three times, then the dimension corresponding to the first variable will be refined once, then go back to the first line of \texttt{refineorder.txt} if the verification process has not terminated.
 
 \begin{marginfigure}
- \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Manual_ver0_2_image/refine_order.png}}
+ \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Images/refine_order.png}}
  \caption{The user defined refine strategy file} 
   \label{figure:refine_file}
 \end{marginfigure}
@@ -401,7 +402,7 @@ Once a property is verified the status of the property will change to \texttt{Ve
 
 Once the verification of a property is complete, a small box icon appears next to the result. Click this icon and this opens a new tab with the same name as the property. This is the plotting window for this property: it enables us to plot various projections of the reach set that has been computed in verifying the property. 
 \begin{figure}[!htbp]
- \centerline{\includegraphics[scale=.25,keepaspectratio=true]{./Manual_ver0_2_image/Plot_display.jpg}}
+ \centerline{\includegraphics[scale=.25,keepaspectratio=true]{./Images/Plot_display.jpg}}
  \caption{The plotting tab for property 1 without any plots.} 
 \end{figure}
 %
@@ -419,7 +420,7 @@ The steps for creating new plots (as in Figure~\ref{fig:plot_dialog}) is similar
 
 
 \begin{marginfigure}
- \centerline{\includegraphics[scale=.24,keepaspectratio=true]{Manual_ver0_2_image/plot_dialog.png}}
+ \centerline{\includegraphics[scale=.24,keepaspectratio=true]{Images/plot_dialog.png}}
  \caption{Add Plot dialog box.} 
  \label{fig:plot_dialog}
 \end{marginfigure}
@@ -447,7 +448,7 @@ Double click on an icon to expand a plot. The plot window allows you to pan and 
 
 
 \begin{marginfigure}
- \centerline{\includegraphics[scale=.24,keepaspectratio=true]{Manual_ver0_2_image/plot_open.png}}
+ \centerline{\includegraphics[scale=.24,keepaspectratio=true]{Images/plot_open.png}}
  \caption{A plot of a reach tube of one variable with respect to time.} 
  \label{fig:reachtube_plot}
 \end{marginfigure}
@@ -458,7 +459,7 @@ Double click on an icon to expand a plot. The plot window allows you to pan and 
 If plotting multiple variables on the y-axis, the reach tube of each variable will be shown in different colors with labels. For example, in Figure~\ref{fig:xytime} the $x$-axis is time and the $y$-axis shows the reach tubes of two variables $\omega$ and $v_x$ which are shown in blue and green respectively. The axis for $v_x$ is labeled by green and that of $\omega$ is labeled by blue.
 
 \begin{marginfigure}
- \centerline{\includegraphics[scale=.24,keepaspectratio=true]{Manual_ver0_2_image/PLOT_RESULT_DOUBLE.png}}
+ \centerline{\includegraphics[scale=.24,keepaspectratio=true]{Images/PLOT_RESULT_DOUBLE.png}}
  \caption{A plot of a reach tube of two variables with respect to time.} 
 \label{fig:xytime}
 \end{marginfigure}
@@ -533,31 +534,31 @@ Once the model is loaded, there will be various of commands you can use. Type \t
 When you are finishing with the command line version C2E2, you can type \texttt{quit} command to exit.
 
 \begin{figure}
- \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Manual_ver0_2_image/terminal_main.png}}
+ \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Images/terminal_main.png}}
  \caption{Command line version C2E2 interface} 
   \label{figure:terminalmain}
 \end{figure}
 
 \begin{figure}
- \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Manual_ver0_2_image/terminal_linear.png}}
+ \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Images/terminal_linear.png}}
  \caption{Type Y or N to tell C2E2 if the model is linear} 
   \label{figure:terminallinear}
 \end{figure}
 
 \begin{figure}
- \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Manual_ver0_2_image/terminal_help.png}}
+ \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Images/terminal_help.png}}
  \caption{All command options} 
   \label{figure:terminalhelp}
 \end{figure}
 
 \begin{figure}
- \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Manual_ver0_2_image/terminal_prop.png}}
+ \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Images/terminal_prop.png}}
  \caption{Expand properties come with the model \texttt{.hyxml} file} 
   \label{figure:terminalprop}
 \end{figure}
 
 \begin{figure}
- \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Manual_ver0_2_image/terminal_verify.png}}
+ \centerline{\includegraphics[scale=.25,keepaspectratio=true]{Images/terminal_verify.png}}
  \caption{Verify the properties in the property list} 
   \label{figure:terminalverify}
 \end{figure}
