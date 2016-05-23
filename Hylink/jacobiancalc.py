@@ -41,6 +41,7 @@ def jacobian(difvar,diffun,loop):
     dvl = [x.strip() for x in difvar.split(',')]
     dfl = [x.strip() for x in diffun.split(',')]
     #print (dvl)
+    print dfl
 
     varlen = len(dvl)
     funlen = len(dfl)
@@ -57,9 +58,8 @@ def jacobian(difvar,diffun,loop):
             matrixvarcommand = matrixvarcommand+'])'
         else:
             matrixvarcommand = matrixvarcommand+','
-    print(matrixvarcommand)
+    #print(matrixvarcommand)
     exec('Y ='+matrixvarcommand)
-    print(len(Y))
     matrixcommand  = 'Matrix(['
     for i in range (funlen):
         matrixcommand = matrixcommand + dfl[i]
@@ -67,9 +67,9 @@ def jacobian(difvar,diffun,loop):
             matrixcommand = matrixcommand + '])'
         else:
             matrixcommand = matrixcommand+','
-    print(matrixcommand)
+    #print(matrixcommand)
     exec('X ='+matrixcommand)
-    print(len(X))
+    #print(len(X))
     jac = X.jacobian(Y)
     Ljac = jac.tolist()
    

@@ -235,17 +235,34 @@ class SymEq:
     # Represent u**n as u*u*...u for the simulators.
     @staticmethod
     def convert_pow(expr):
+        #SymEq.pow_to_mul(expr)
         return str(SymEq.convert_pow_helper(expr))
 
     @staticmethod
     def convert_pow_helper(expr):
         if not expr.args:
             return expr
-
         conv_args = [SymEq.convert_pow_helper(arg) for arg in expr.args]
-        if expr.is_Pow:
+        if expr.is_Pow and expr.exp>0:
+            print "this expr is pow:", expr
+            print expr.base, expr.exp
             return sympy.Symbol('*'.join(['('+str(conv_args[0])+')']*int(conv_args[1])))
         return expr.func(*conv_args)
+
+    @staticmethod
+    def pow_to_mul(expr):
+        """
+        Convert integer powers in an expression to Muls, like a**2 => a*a.
+        """
+        pows = list(expr.atoms(sympy.Pow))
+        if any(not e.is_Integer for b, e in (i.as_base_exp() for i in pows)):
+            raise ValueError("A power contains a non-integer exponent")
+        print pows
+        for b,e in (i.as_base_exp() for i in pows):
+            print b,e
+        repl = zip(pows, (sympy.Mul(*[b]*e,evaluate=False) for b,e in (i.as_base_exp() for i in pows)))
+        #print repl
+        return expr.subs(repl)
 
     # Negate guard to construct invariant
     @staticmethod

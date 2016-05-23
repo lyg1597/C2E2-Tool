@@ -51,8 +51,10 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
                 lhs, rhs = str(dai.expr.lhs), dai.expr.rhs
                 lhs = lhs.split('_dot')[0] 
                 lhs_idx = vars.index(lhs)
-                rhs = SymEq.convert_pow(rhs)
-
+                #print "orig: ", rhs
+                #rhs = SymEq.convert_pow(rhs)
+                #print "convert: ", rhs
+                rhs = str(rhs)
                 # Generate jacobian in correct order
                 orig_eqns.insert(lhs_idx,rhs)
 
@@ -62,6 +64,7 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
                     rhs = rhs.subs(var, sympy.Symbol('x['+str(j)+']'))
                     # rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
                 rhs = SymEq.convert_pow(rhs)
+
 
                 # Generate dxdt in correct order
                 dxdt[i].insert(lhs_idx, rhs) 
