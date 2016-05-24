@@ -12,11 +12,3 @@ cd wd
 rm ReachSetProperty1
 cd ../
 
-echo "Test2, navSafe"
-cd Hylink
-python terminal.py 1 navSafe.hyxml > ../wd/Verbose 2> ../wd/warnings 
-python c2e2testchecker.py goldennavsafe
-cd ../
-cd wd
-rm ReachSetProperty1
-cd ../

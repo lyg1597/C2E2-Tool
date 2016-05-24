@@ -46,38 +46,6 @@ def loadfile(fileChoosen):
 		if IsHierarchical(sf_tree):
 			sf_tree=RemoveHierarchy(sf_tree)
 		hybridRep=hyirMdl(sf_tree,fileChoosen)
-		for annotString in hybridRep.annotationsRaw:
-			annotMode=0;K=1.1;gamma=0;annotType=1;
-			splits=string.split(annotString,';')
-			for substrings in splits:
-				match = re.search('mode=.*',substrings)
-				if not match == None:
-					matchedString = match.group(0)
-					modeString=matchedString[5:]
-					modeIndex=0
-					for mode in hybridRep.automata[0].modes:
-						modeIndex+=1
-						if mode.name == modeString:
-							annotMode=modeIndex
-				match = re.search('k=.*',substrings)
-				if not match == None:
-					Kstring = match.group(0)[2:]
-					K = float(Kstring)
-				match = re.search('gamma=.*',substrings)
-				if not match == None:
-					GammaString = match.group(0)[6:]
-					gamma = float(GammaString)
-				match = re.search('type=.*',substrings)
-				if not match == None:
-					TypeString = match.group(0)[5:]
-					if TypeString == "exponential":
-						annotType = 1
-					if TypeString == "linear":
-						annotType = 2
-					if TypeString == "contraction":
-						annotType = 3
-			newAnnot = [annotMode,K,gamma,annotType]
-			hybridRep.annotationsParsed += [newAnnot]
 	else:
 		print("unknow file type")
 		sys.exit()
@@ -91,9 +59,9 @@ def loadfile(fileChoosen):
 
 
 
-	parseTree,vList,mList=hybridRep.display_system("System")
+	parseTree,vList = hybridRep.display_system()
 
-	arguments1 = ['mv', 'bloatedSimGI.cpp', 'hybridSimGI.cpp', 'simulator.cpp', '../wd/']
+	arguments1 = ['mv', 'simulator.cpp', '../wd/']
 	subp1 = subprocess.Popen(arguments1)
 	subp1.wait()
 
@@ -101,6 +69,7 @@ def loadfile(fileChoosen):
 	subp = subprocess.Popen(arguments,cwd="../wd/")
 	subp.wait()
 	print("---------------model load success-------------------")
+	mList = hybridRep.automata[0].modes
 
 	return vList,mList,hybridRep,propList,paramList,typeInput
 

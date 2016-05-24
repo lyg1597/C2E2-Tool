@@ -534,14 +534,16 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 		simulationTube->setMode(mode);
 		simulationTube->parseInvariantTube("SimuOutput", 0);
 		int size = simulationTube->getSize();
+		if (size == 0)
+			break;
 		double *ptLower, *ptUpper;
 		vector< pair<NNC_Polyhedron, int> > guards_hit;
 		for(int i=0; i<size; i++){
 			ptLower = simulationTube->getLowerBound(i)->getCoordinates();
 			ptUpper = simulationTube->getUpperBound(i)->getCoordinates();
-			// Print box corners.
-			// cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
-			// cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
+			//Print box corners.
+			cout << "ptLower: "; simulationTube->getLowerBound(i)->print();
+			cout << "ptUpper: "; simulationTube->getUpperBound(i)->print();
 
 			guards_hit = guards(mode, ptLower, ptUpper);
 			if(!guards_hit.empty()){
@@ -559,6 +561,7 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 
 		// Checks that the given trace is safe w.r.t the boxes given as unsafe set
 		traceSafeFlag = checker->checkHybridSimulation(simulationTube, unsafeSet);
+		cout<<"checked"<<endl;
 		if(traceSafeFlag==1){
 	       	simulationTube->printReachTube(file,1);
 		}
@@ -571,11 +574,13 @@ int hybridSimulation(Simulator *simulator, Checker *checker, LinearSet *unsafeSe
 			cout << "<ERROR> UNKNOWN TUBE IN HYBRID SIMULATION" << endl;
 		}
 
+		cout<<"guard_size"<<guards_hit.size()<<endl;
 		if(guards_hit.empty()){
 			break;
 		}
     }
 	dlclose ( lib );
+	cout<<"is Safe? "<<isSafe<<endl;
 	return isSafe;
 }
 

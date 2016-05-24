@@ -73,6 +73,8 @@ class Point* ReachTube::getLowerBoundState(int index){
 int ReachTube::getSize(){
 	if(upperBound.size() == lowerBound.size())
 		return upperBound.size();
+	else
+		return 0;
 }
 
 class Point* ReachTube::getUpperBound(int index){
