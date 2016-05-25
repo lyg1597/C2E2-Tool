@@ -41,7 +41,7 @@ class PropDialog(gtk.Dialog):
     self.newPropNames=[]
     self.exprParser=ExprParser()
 
-    print(propertyListLen)
+    # print(propertyListLen)
 
     mode="(\s*[a-zA-Z_][_a-zA-Z0-9]*:\s*)"
     term="((\-?\d*\.?\d+\*?)|(\-?\(\-?\d+/\-?\d+\)\*?))"
@@ -50,8 +50,12 @@ class PropDialog(gtk.Dialog):
     expression="("+"("+term+")*"+var+"(\s*((\-)|(\+))\s*(("+"("+term+")*"+var+")|("+term+")))*)"
     equation="("+expression+equality+term+")"
 
+    number="[+-]?(\d+(\.\d*)?|\.\d+)"
+    simpleEquation = "("+var+equality+number+")$"
+
     self.modePattern=re.compile(mode)
     self.varPattern=re.compile(var) 
+    self.equationPattern=re.compile(simpleEquation)
     pattern="("+equation+"(\s*&&\s*"+equation+")*)$"
     self.unsafePattern=re.compile(pattern)
     pattern="("+mode+equation+"(\s*&&\s*"+equation+")*)$"
@@ -236,9 +240,24 @@ class PropDialog(gtk.Dialog):
   def checkInitialSet(self,textBuffer,errorLabel,image,index):
     start,end=textBuffer.get_bounds()
     inputText=textBuffer.get_text(start,end)
-    match=self.initialPattern.match(inputText)
 
-    if match==None:
+    # match=self.initialPattern.match(inputText)
+    finalmatch = True
+
+    stringlist = inputText.split(":")
+    stringlist[0]+=":"
+    match = self.modePattern.match(stringlist[0])
+    if match == None:
+      finalmatch = False
+
+    equlist = stringlist[1].split("&&")
+    for i in range (len(equlist)):
+      match = self.equationPattern.match(equlist[i])
+      #print(equlist[i])
+      if match == None:
+        finalmatch = False
+        
+    if finalmatch==False:
       self.newPropNames[index][2]=0
       image.set_from_stock(gtk.STOCK_CANCEL,gtk.ICON_SIZE_MENU)
       if not inputText=="":
