@@ -1054,19 +1054,18 @@ class PropertiesFrame(gtk.Frame):
             m_i+=1
             c2e2String+= "annotation-mode=\""+str(m_i)+"\"\n"
             c2e2String+= "annotation-type=\"contraction\"\n"    
-            # if array[3] == 1 or array[3] == 3 :
-            #     c2e2String+= "annotation-type=\"contraction\"\n"
-            # if array[3] == 2 :
-            #     c2e2String+= "annotation-type=\"linear\"\n"
             c2e2String+= "annotation=\'dx1^2 + dx2^2\'\n"
             c2e2String+= "beta=\'dx1^2 + dx2^2\'\n"
+            filename = ""
+            filename +="../wd/jacobiannature"
+            filename += str(m_i)
+            filename +=".txt"
+            fid = open(filename,'r').read().split('\n')
+            numofvar = int(fid[0])
+            if numofvar==0:
+              mode.linear = False
             if mode.linear:
-                filename = ""
-                filename +="../wd/jacobiannature"
-                filename += str(m_i)
-                filename +=".txt"
-                fid = open(filename,'r').read().split('\n')
-                numofvar = int(fid[0])
+                
                 listofvar = []
                 for i in range (numofvar):
                   listofvar.append(fid[i+1])
