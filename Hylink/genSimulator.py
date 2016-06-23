@@ -55,24 +55,23 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
                 #rhs = SymEq.convert_pow(rhs)
                 #print "convert: ", rhs
                 rhs = str(rhs)
-                # Generate jacobian in correct order
+                # Generate jacobian in correct order        
                 orig_eqns.insert(lhs_idx,rhs)
-
+                
                 # Replace variables with 'x[i]'
-                rhs = dai.expr.rhs
+                rhs = dai.expr.rhs                
                 for j, var in enumerate(vars):
                     rhs = rhs.subs(var, sympy.Symbol('x['+str(j)+']'))
                     # rhs = re.sub(r'\b%s\b' % var, 'x[' + str(j) + ']', rhs)
                 rhs = SymEq.convert_pow(rhs)
 
-
                 # Generate dxdt in correct order
-                dxdt[i].insert(lhs_idx, rhs) 
+                dxdt[i].insert(lhs_idx, rhs)
 
         # Bloat factor calculation/generation
         var_str = ','.join(vars)
         eqn_str = ','.join(orig_eqns)
-        del_elem = jacobian(var_str, eqn_str, i)
+        del_elem = jacobian(var_str, orig_eqns, i)
         del_list.append(del_elem)
 
     # Generate python file for bloating
@@ -83,7 +82,6 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
         for j, eqn in enumerate(dxdt[i]):
             dxdt[i][j] = 'dxdt[' + str(j) + ']=' + eqn
         dxdt[i] = '\t\t\t' + ';\n\t\t\t'.join(dxdt[i]) + ';'
-
     # Components for .cpp
     # Auto generated comment
     auto_gen = '/* AUTO-GENERATED SIMULATOR BY C2E2 */\n'

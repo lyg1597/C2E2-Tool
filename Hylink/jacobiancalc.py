@@ -1,7 +1,6 @@
-from sympy import symbols,Matrix,cos,sin,tan,ln
+from sympy import symbols,Matrix,cos,sin,tan,ln,exp,log
 
 from calculator import parse,converthyxml
-
 
 
 def removeDelete(grid):
@@ -39,9 +38,8 @@ def mark(matrix,num,size):
 def jacobian(difvar,diffun,loop):
     #print "jacobian calculator is been called"
     dvl = [x.strip() for x in difvar.split(',')]
-    dfl = [x.strip() for x in diffun.split(',')]
-    #print (dvl)
-    print dfl
+    #dfl = [x.strip() for x in diffun.split(',')]
+    dfl = diffun
 
     varlen = len(dvl)
     funlen = len(dfl)
