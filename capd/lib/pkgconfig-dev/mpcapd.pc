@@ -1,0 +1,6 @@
+Name: mpcapd
+Description: mpcapd library.
+Requires:  mpcapdDynSys mpcapdAlg
+Version: 1.0
+Libs:
+Cflags: 

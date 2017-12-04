@@ -1,9 +1,0 @@
-C2E2 TEST FILE
-FourGridNavigation.mdl
-0.05
-0.01
-2.0
-10
-Property1
-Zone1: x>=0.5&&x<=0.55&&y>=0.5&&y<=0.55&&vx==0&&vy==0
-x>=5

@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdDynSys4/src/capd/map
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdDynSys4/include
+
+Name: capdmap
+Description: capdmap module
+Requires: capdautodiff
+Version: 1.0
+Libs:   ${libdir}/libcapdmap.a 
+Cflags:   -I${includedir}

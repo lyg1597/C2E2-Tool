@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAux/src/capd/krak
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAux/include
+
+Name: capdkrak
+Description: capdkrak module
+Requires: x11
+Version: 1.0
+Libs:   ${libdir}/libcapdkrak.a  
+Cflags:   -I${includedir}

@@ -1,0 +1,88 @@
+/*! \page poincare Poincare maps and their derivatives
+
+The CAPD library provides mechanisms for easy computation of Poincare maps their derivatives. In general the Poincare map is defined by specifying
+\li an ODE solver (instance of DTaylor or ITaylor)
+\li a function \f$\alpha:R^n\to R \f$ that defines Poincare section. It is assumed that the function \f$ \alpha\in C^1 \f$ is smooth and the Poincare section is given as 
+\f[\Pi = \{x\in R^n : \alpha(x) =0 \} \f]       
+
+In the CAPD a Poincare map is seen as a function
+\f[
+  P: R^n\to \Pi \subset R^n
+\f]
+rather than a mapping from section to section. Initial point does not need to be on Poincare section \f$ \Pi\f$. We can compute intersection point of any trajectory with Poincare section. 
+
+We will give an overview on Poincare maps for both cases of rigorous and nonrigorous computations as they differ in details. 
+  
+\section poincare_define Defining Poincare maps
+Given an ODE solver (see section \ref odes_nonrigorous) 
+\code
+int order = ...;
+DMap vectorField(...);
+DTaylor solver (vectorField,order);
+\endcode   
+and Poincare section
+\code
+DFunction section(...);
+\endcode
+we define an instance of Poincare map by constructor call
+\code
+DPoincareMap pm(solver,section,crossingDirection);
+\endcode 
+The last argument specifies crossing direction of Poincare section. This is an enumeration type with three possible values
+\li capd::poincare::MinusPlus - the function \f$ \alpha \f$ changes sign from minus to plus along trajectory
+\li capd::poincare::PlusMinus - the function \f$ \alpha \f$ changes sign from plus to minus along trajectory
+\li capd::poincare::Both - both direction are acceptable
+<p></p>
+\note The argument <tt>crossingDirection</tt> of the constructor can be skipped. Its default value is <tt>capd::poincare::Both</tt>.
+
+In similar way one can define an instance of IPoincareMap for rigorous computation of Poincare maps.
+\code
+  IMap vectorField("var:x,y;fun:-y,x;");
+  ITaylor solver(vectorField,20);
+  IFunction section("var:x,y;fun:x;");
+  IPoincareMap pm (solver,section);
+\endcode
+
+\attention The objects <tt>vectorField, solver, section</tt> must exists during usage of object <tt>pm</tt> as <tt>pm</tt> holds references to them. In particular this code is incorrect
+\code
+  // do not use this in your code! 
+  // Using object returned by this function can cause segmentation fault error.
+  DPoincareMap& createPoincareMap(){
+    DMap vectorField("var:x,y;fun:-y,x;");
+    DTaylor solver(vectorField,20);
+    DFunction section("var:x,y;fun:x;");
+    return *(new DPoincareMap(solver,section));
+  }
+\endcode  
+Instead one can create vector field, solver and section on storage (by operator new) or use static variables
+\code
+  // better
+  DPoincareMap& createPoincareMap(){
+    static DMap vectorField("var:x,y;fun:-y,x;");
+    static DTaylor solver(vectorField,20);
+    static DFunction section("var:x,y;fun:x;");
+    static DPoincareMap pm(solver,section);
+    return pm;
+  }
+\endcode  
+or define a little class for storing all objects (\b recommended)
+\code
+struct MyPoincareMap{
+  MyPoincareMap(int order)
+    : vectorField(...),
+      solver(vectorField,order),
+      section(...),
+      pm(solver,section)
+  {}
+
+  DMap vectorField;
+  DTaylor solver;
+  DFunction section;
+  DPoincareMap pm;
+};
+\endcode
+
+- \subpage poincare_nonrigorous 
+- \subpage poincare_rigorous 
+
+*/

@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: mpcapdvectalg
+Description: mpcapdvectalg module
+Requires: capdauxil
+Version: 1.0
+Libs: -L${libdir}  -lmpcapdvectalg -lgmp -lgmpxx -lmpfr
+Cflags: -D__HAVE_MPFR__ -frounding-math  -I${includedir}

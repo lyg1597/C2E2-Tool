@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdDynSys4/src/capd/dynsys
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdDynSys4/include
+
+Name: capddynsys
+Description: capddynsys module
+Requires:
+Version: 1.0
+Libs:   ${libdir}/libcapddynsys.a 
+Cflags:   -I${includedir}

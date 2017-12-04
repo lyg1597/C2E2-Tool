@@ -1,0 +1,17 @@
+/*! \page odes_nonrigorous ODEs - nonrigorous methods
+\tableofcontents
+
+Before reading this section be sure that you already familiar with sections \ref linear_algebra and \ref maps_definition.
+
+In the CAPD we offer for you three strategies of solving IVP for ODEs. You can choose from 
+\li one-step numerical scheme based on high-order Taylor method or explicit-implicit Hermite-Obreshkov scheme (seems easiest at start but we do not recommend it)
+\li a method for computation of the solution after a given time. This approach combines one-step scheme with automatic step control.
+\li a method for computation of a solution curve (as a functional object) over a time range.
+
+In this section we will give an overview on for computing solutions to IVP for ODEs.
+
+- \subpage odes_taylor
+- \subpage odes_timemap
+- \subpage odesvar_nonrigorous
+
+*/

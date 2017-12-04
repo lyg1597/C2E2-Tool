@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/src/capd/vectalg
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/include
+
+Name: capdvectalg
+Description: capdvectalg module
+Requires: capdauxil capdintervals capdbasicalg
+Version: 1.0
+Libs:   ${libdir}/libcapdvectalg.a 
+Cflags: -frounding-math  -I${includedir}

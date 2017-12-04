@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdExt/src/capd/alglib
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdExt/include
+
+Name: capdalglib
+Description: capdalglib module
+Requires:
+Version: 1.1
+Libs:   ${libdir}/libcapdalglib.a
+Cflags:   -I${includedir}

@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: capdautodiff
+Description: capdautodiff module
+Requires:
+Version: 1.0
+Libs:   -L${libdir} -lcapdautodiff 
+Cflags:   -I${includedir}

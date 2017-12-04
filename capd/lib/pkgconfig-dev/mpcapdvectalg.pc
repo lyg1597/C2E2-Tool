@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/src/mpcapd/vectalg
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/include
+
+Name: mpcapdvectalg
+Description: mpcapdvectalg module
+Requires: capdauxil
+Version: 1.0
+Libs:  ${libdir}/libmpcapdvectalg.a -lgmp -lgmpxx -lmpfr
+Cflags: -D__HAVE_MPFR__ -frounding-math  -I${includedir}

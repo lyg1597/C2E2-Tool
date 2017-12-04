@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: capdvectalg
+Description: capdvectalg module
+Requires: capdauxil capdintervals capdbasicalg
+Version: 1.0
+Libs:   -L${libdir} -lcapdvectalg 
+Cflags: -frounding-math  -I${includedir}

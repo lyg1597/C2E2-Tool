@@ -1,1 +1,0 @@
-This function parses the Stateflow model into a dictionary. It can be then used to construct the intermediate representation.

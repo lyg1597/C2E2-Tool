@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/src/capd/algfacade
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/include
+
+Name: capdalgfacade
+Description: capdfacade module
+Requires:
+Version: 1.0
+Libs:   ${libdir}/libcapdalgfacade.a 
+Cflags: -frounding-math  -I${includedir}

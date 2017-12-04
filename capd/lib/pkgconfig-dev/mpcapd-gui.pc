@@ -1,0 +1,6 @@
+Name: mpcapd-gui
+Description: mpcapd library with gui.
+Requires:  capdkrak  mpcapdDynSys mpcapdAlg
+Version: 1.0
+Libs:
+Cflags: 

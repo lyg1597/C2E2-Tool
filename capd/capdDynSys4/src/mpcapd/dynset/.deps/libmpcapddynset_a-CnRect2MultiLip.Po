@@ -1,0 +1,1 @@
+libmpcapddynset_a-CnRect2MultiLip.o: CnRect2MultiLip.cpp

@@ -1,0 +1,6 @@
+Name: capd-gui
+Description: capd library with gui.
+Requires: capdkrak  capdDynSys capdAlg capdAux capdExt
+Version: 1.0
+Libs:
+Cflags: 

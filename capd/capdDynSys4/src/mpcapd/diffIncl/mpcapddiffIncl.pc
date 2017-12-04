@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: mpcapddiffIncl
+Description: mpcapddiffIncl module
+Requires:
+Version: 1.0
+Libs: -L${libdir}  -L${libdir} -lmpcapddiffIncl -lgmp -lgmpxx -lmpfr
+Cflags: -D__HAVE_MPFR__ -frounding-math  -I${includedir}

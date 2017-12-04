@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdDynSys4/src/mpcapd/geomset
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdDynSys4/include
+
+Name: mpcapdgeomset
+Description: mpcapdgeomset module
+Requires:
+Version: 1.0
+Libs:  ${libdir}/libmpcapdgeomset.a -lgmp -lgmpxx -lmpfr
+Cflags: -D__HAVE_MPFR__ -frounding-math  -I${includedir}

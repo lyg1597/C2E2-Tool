@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/src/mpcapd/intervals
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/include
+
+Name: mpcapdintervals
+Description: mpcapdintervals module
+Requires:
+Version: 1.0
+Libs:  ${libdir}/libmpcapdintervals.a -lgmp -lgmpxx -lmpfr
+Cflags: -D__HAVE_MPFR__ -frounding-math  -I${includedir}

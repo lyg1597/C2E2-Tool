@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/src/capd/intervals
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/include
+
+Name: capdintervals
+Description: capdintervals module
+Requires: capdauxil capdrounding capdbasicalg
+Version: 1.0
+Libs:   ${libdir}/libcapdintervals.a 
+Cflags: -frounding-math  -I${includedir}

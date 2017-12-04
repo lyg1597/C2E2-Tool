@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: capdkrak
+Description: capdkrak module
+Requires: x11
+Version: 1.0
+Libs:   -L${libdir} -lcapdkrak  
+Cflags:   -I${includedir}

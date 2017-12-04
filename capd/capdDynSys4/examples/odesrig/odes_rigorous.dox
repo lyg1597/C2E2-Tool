@@ -1,0 +1,82 @@
+/*! \page odes_rigorous ODEs - interval-based methods
+
+\tableofcontents
+
+The CAPD library provides various methods for rigorous enclosures of trajectories. There are two main groups of rigorous solvers
+\li based on Taylor method
+\li based on Hermite-Obreshkov (explicit-implicit) method 
+
+In each group we implemented several algorithms which perform better depending on dynamical properties of the system in consideration. 
+In this section we will present two main algorithms that proved to be most efficient in typical cases.
+
+
+\section odesrig_representation Representation of initial condition 
+
+The rigorous solver requires that the initial condition is given in one of the acceptable representation. 
+Among others two of them are proved to be most efficient and thus we omit other in this introduction. These are defined in classes 
+\li C0Rect2Set
+\li C0HORect2Set
+
+Both classes represent a subset of \f$ R^n \f$ in the form of doubleton \f$ x + C*r0 + B*r \f$ where 
+\li \f$ x,r,r0\f$ are interval vectors, \f$ r,r_0\f$ contain zero
+\li \f$ C,B\f$ are interval matrices, with \f$ B\f$ close to orthogonal   
+
+They differ by the numerical method used to integrate an ODE:
+\li C0Rect2Set uses high order Taylor method
+\li C0HORect2Set uses high order Taylor method as a predictor and then Hermite-Obreshkov explicit-implicit method as a corrector step
+
+One can define an instance of these classes by simple contructor call
+\code
+IVector initialCondition(...);
+C0Rect2Set set1(initialCondition);
+C0HORect2Set set2(initialCondition);
+\endcode
+
+If the initial condition is not an interval vector but an affine set 
+\f[
+  x + C*r_0
+\f]
+we recommend to use one of the following overloaded constructors
+\code 
+IVector x(...);
+IMatrix C(...);
+IVector r0(...);
+
+C0Rect2Set set1(x,C,r0);
+C0HORect2Set set2(x,C,r0);
+\endcode  
+
+
+
+\section odesrig_taylor One-step method
+
+Given an initial condition \b set which is an instance of either C0Rect2Set or C0HORect2Set one can compute image of this set after one step of numerical method. 
+One have to 
+\li define a solver like in the case of nonrigorous computation
+\code
+IMap vectorField(...);
+int order = ...;
+ITaylor solver(vectorField,order);
+\endcode
+\li propagate the set by the solver
+\code
+  set.move(solver);
+\endcode  
+The solver makes automatic time step prediction (provided it has not been turned off by the user) and computes rigorous bound of this set after one time step. Internally, the set holds doubleton representation of a subset of \f$ R^n\f$ that is ready to perform the next time step. 
+
+As in the case of nonrigorous computation the user can fix time step by the call to 
+\code
+interval timeStep = ...; // must be positive
+solver.setStep(timeStep);
+\endcode
+\note After fixing time step the solver tries to validate the existence of solutions over this time and for the set of initial conditions represented by <tt>set</tt>.
+\code
+  set.move(solver);
+\endcode  
+An exception is thrown if the solver cannot validate the existence of solution over time range <tt>[0,timeStep]</tt>.
+ 
+
+- \subpage odesrig_timemap
+- \subpage odesvar_rigorous
+
+ */

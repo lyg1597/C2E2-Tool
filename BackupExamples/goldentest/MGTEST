@@ -1,9 +1,0 @@
-C2E2 TEST FILE
-MG.mdl
-0.2
-0.01
-10.0
-10
-Property1
-MGJE: phi>=3&&phi<=4&&psi>=3&&psi<=4
-phi>=3&&psi<=-1

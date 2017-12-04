@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/src/capd/matrixAlgorithms
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/include
+
+Name: capdmatrixAlgorithms
+Description: capdmatrixAlgorithms module
+Requires:
+Version: 1.0
+Libs:   ${libdir}/libcapdmatrixAlgorithms.a 
+Cflags: -frounding-math  -I${includedir}

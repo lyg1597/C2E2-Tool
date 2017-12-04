@@ -1,0 +1,6 @@
+Name: capdDynSys
+Description: capdDynSys library.
+Requires: capdcovrel capddiffIncl  capdpoincare capddiffAlgebra  capddynsysm  capdmap capdautodiff capddynset  capdgeomset  capdAlg capdExt capdauxil
+Version: 1.0
+Libs: 
+Cflags:  

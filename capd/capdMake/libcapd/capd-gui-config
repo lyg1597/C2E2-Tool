@@ -1,0 +1,19 @@
+#!/bin/sh
+
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+pkgconfigdir=${libdir}/pkgconfig
+PATH_SEPARATOR=":"
+
+if test "x$PKG_CONFIG_PATH" = "x"; then
+   PKG_CONFIG_PATH="${pkgconfigdir}"
+else
+   PKG_CONFIG_PATH="${pkgconfigdir}${PATH_SEPARATOR}${PKG_CONFIG_PATH}"
+fi
+
+export PKG_CONFIG_PATH
+
+
+pkg-config $* capd-gui

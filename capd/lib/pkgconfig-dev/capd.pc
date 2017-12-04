@@ -1,0 +1,6 @@
+Name: capd
+Description: capd library.
+Requires:  capdDynSys capdAlg capdAux capdExt
+Version: 1.0
+Libs:
+Cflags: 

@@ -1,0 +1,57 @@
+/** \page examples_LorenzPeriodicOrbit Multiple periodic solutions for the Lorenz system
+ * This example is a complete proof of the existence od 116 periodic orbits for the Lorenz system with chaotic parameter values s=10, r=28., q=8/3.
+ * Data for periodic orbits are taken from the paper 
+
+	Z. Galias, W. Tucker, 
+	Validated study of the existence of short cycles for chaotic systems using symbolic dynamics and interval tools.
+	Int. J. Bifurcation and Chaos, 21(2):551-563, 2011. 
+
+ * This example shows also how to speed up computations by means of usage of static allocation.
+ *
+ * The source of the following example can be found in the <tt>examples/LorenzPeriodicOrbit</tt> directory of the CAPD package.
+ *
+ * Allocating vectors on storage (malloc or new) is time consuming.
+ * If the dimension is fixed and known at compile time
+ * you can use static allocation like 
+ \code
+ type data[dimension];
+ \endcode 
+ * which is much faster. The CAPD library provides a header file
+ *    capd/fdcapdlib.h
+ * that defines most important types for the dimension specified by the user. 
+ *
+ * NOTE: Before including this file you MUST define two macros
+ * 1. CAPD_USER_NAMESPACE
+ *    - is the namespace in which most important types (like vectors, matrices, solvers, poincare maps)
+ *      will be defined for you.
+ * 2. CAPD_DEFAULT_DIMENSION
+ *    - is a nonnegative number that stands for the dimension.
+ *
+ * NOTE: if you need few different dimensions in the same program you can undef these macros and define them again.
+ *       For example:
+ \code {.cpp}
+ #define CAPD_USER_NAMESPACE capd3
+ #define CAPD_DEFAULT_DIMENSION 3
+	 #include "capd/fdcapdlib.h"
+ #undef CAPD_USER_NAMESPACE
+ #undef CAPD_DEFAULT_DIMENSION
+
+ #define CAPD_USER_NAMESPACE capd5
+ #define CAPD_DEFAULT_DIMENSION 5
+ 	#include "capd/fdcapdlib.h"
+ #undef CAPD_USER_NAMESPACE
+ #undef CAPD_DEFAULT_DIMENSION
+ \endcode
+ 
+ * Now capd3::IVector and capd5::IVector are 3 and 5 dimensional vectors, respectively.
+ * The same for matrices, ODE solvers, etc.
+ *
+ * In this example we will use 3-dimensional objects for integration of the Lorenz system
+ * and variable size vectors and matrices when computing Interval Newton Operator
+ * (this is not time-critical operation in this example).
+ *
+ * \dontinclude LorenzPeriodicOrbit.cpp
+ * \skip #include <iostream>
+ * \until END
+ *
+ */

@@ -1,6 +1,0 @@
-cd ~/Downloads
-curl -o glpk-4.43.tar.gz http://ftp.gnu.org/gnu/glpk/glpk-4.43.tar.gz
-tar -xzf glpk-4.43.tar.gz
-./configure --prefix=/usr/local
-make
-sudo make install

@@ -1,0 +1,45 @@
+include ${capdMake}/make/common_makefile.mkf
+
+noinst_PROGRAMS=DTaylorExample DTaylorVariationalEquationsExample DTimeMapExample DTimeMapSolutionCurveExample DTimeMapStepControlExample DTimeMapVariationalEquationsExample DTimeMapMonodromyMatrixCurveExample 
+
+DTaylorExample_SOURCES=DTaylorExample.cpp
+DTaylorExample_CXXFLAGS=${capdDynSys_CFLAGS}
+DTaylorExample_libs=${capdDynSys_LIBS}
+DTaylorExample_LDADD=${DTaylorExample_libs}
+DTaylorExample_DEPENDENCIES=${filter %.a %.la,${DTaylorExample_libs}}
+
+DTaylorVariationalEquationsExample_SOURCES=DTaylorVariationalEquationsExample.cpp
+DTaylorVariationalEquationsExample_CXXFLAGS=${capdDynSys_CFLAGS}
+DTaylorVariationalEquationsExample_libs=${capdDynSys_LIBS}
+DTaylorVariationalEquationsExample_LDADD=${DTaylorVariationalEquationsExample_libs}
+DTaylorVariationalEquationsExample_DEPENDENCIES=${filter %.a %.la,${DTaylorVariationalEquationsExample_libs}}
+
+DTimeMapExample_SOURCES=DTimeMapExample.cpp
+DTimeMapExample_CXXFLAGS=${capdDynSys_CFLAGS}
+DTimeMapExample_libs=${capdDynSys_LIBS}
+DTimeMapExample_LDADD=${DTimeMapExample_libs}
+DTimeMapExample_DEPENDENCIES=${filter %.a %.la,${DTimeMapExample_libs}}
+
+DTimeMapVariationalEquationsExample_SOURCES=DTimeMapVariationalEquationsExample.cpp
+DTimeMapVariationalEquationsExample_CXXFLAGS=${capdDynSys_CFLAGS}
+DTimeMapVariationalEquationsExample_libs=${capdDynSys_LIBS}
+DTimeMapVariationalEquationsExample_LDADD=${DTimeMapVariationalEquationsExample_libs}
+DTimeMapVariationalEquationsExample_DEPENDENCIES=${filter %.a %.la,${DTimeMapVariationalEquationsExample_libs}}
+
+DTimeMapSolutionCurveExample_SOURCES=DTimeMapSolutionCurveExample.cpp
+DTimeMapSolutionCurveExample_CXXFLAGS=${capdDynSys_CFLAGS}
+DTimeMapSolutionCurveExample_libs=${capdDynSys_LIBS}
+DTimeMapSolutionCurveExample_LDADD=${DTimeMapSolutionCurveExample_libs}
+DTimeMapSolutionCurveExample_DEPENDENCIES=${filter %.a %.la,${DTimeMapSolutionCurveExample_libs}}
+
+DTimeMapMonodromyMatrixCurveExample_SOURCES=DTimeMapMonodromyMatrixCurveExample.cpp
+DTimeMapMonodromyMatrixCurveExample_CXXFLAGS=${capdDynSys_CFLAGS}
+DTimeMapMonodromyMatrixCurveExample_libs=${capdDynSys_LIBS}
+DTimeMapMonodromyMatrixCurveExample_LDADD=${DTimeMapMonodromyMatrixCurveExample_libs}
+DTimeMapMonodromyMatrixCurveExample_DEPENDENCIES=${filter %.a %.la,${DTimeMapMonodromyMatrixCurveExample_libs}}
+
+DTimeMapStepControlExample_SOURCES=DTimeMapStepControlExample.cpp
+DTimeMapStepControlExample_CXXFLAGS=${capdDynSys_CFLAGS}
+DTimeMapStepControlExample_libs=${capdDynSys_LIBS}
+DTimeMapStepControlExample_LDADD=${DTimeMapStepControlExample_libs}
+DTimeMapStepControlExample_DEPENDENCIES=${filter %.a %.la,${DTimeMapStepControlExample_libs}}

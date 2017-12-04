@@ -1,0 +1,9 @@
+prefix=/usr/local
+
+Name: capdExt
+Description: capdExt  library.
+Requires: capdalglib 
+Version: 1.1
+Libs: -L${prefix}/lib -lprim 
+Cflags:   -D__USE_FILIB__ -I${prefix}/include -frounding-math  
+

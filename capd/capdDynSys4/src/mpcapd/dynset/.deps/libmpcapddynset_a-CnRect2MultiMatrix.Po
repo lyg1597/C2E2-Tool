@@ -1,0 +1,1 @@
+libmpcapddynset_a-CnRect2MultiMatrix.o: CnRect2MultiMatrix.cpp

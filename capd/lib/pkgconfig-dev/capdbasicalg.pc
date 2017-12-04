@@ -1,0 +1,11 @@
+prefix=./..
+exec_prefix=${prefix}
+libdir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/src/capd/basicalg
+includedir=/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdAlg/include
+
+Name: capdbasicalg
+Description: capdbasicalg module
+Requires:
+Version: 1.0
+Libs:   ${libdir}/libcapdbasicalg.a 
+Cflags: -frounding-math  -I${includedir}

@@ -1,0 +1,7 @@
+Name: capdExt
+Description: capdExt  library.
+Requires: capdalglib 
+Version: 1.1
+Libs: -L/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdExt/filibsrc/libprim/.libs -lprim 
+Cflags:   -D__USE_FILIB__ -I/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdExt/./filibsrc -I/home/parasara/Documents/SimulinkSimulations/CAPD/newVer/DynSysNew/capd/capdExt/filibsrc -frounding-math -ffloat-store 
+

@@ -1,0 +1,84 @@
+/*! \page odesvar_nonrigorous ODEs - variational equations
+\tableofcontents
+
+In this section we will give an overview on simultaneous integration of ODEs and associated first order variational equations.
+
+\section odes_taylor_first_variational One step Taylor method
+
+Class DTaylor can also integrate first order variational equations of ODEs. Creating an instance of solver is exactly the same as in the case of computing the trajectory only (see section \ref odes_taylor_traj). 
+
+In order to compute derivatives with respect to initial conditions one has to
+\li specify initial conditions for the trajectory and for variational equations 
+\code 
+double t = ...;
+DVector initPoint(...);
+DMatrix initMatrix(...) 
+\endcode  
+\li define matrix that will store solution to variational equations
+\code DMatrix D(...); \endcode
+\li call operator that integrates simultaneously ODE and first order variational equation
+\code DVector y = solver(t,initPoint,initMatrix,D); \endcode
+
+After the last instruction the vector <tt>y</tt> will contain approximate solution after specified time step and the matrix <tt>D</tt> will contain solution to the variational equations. 
+
+\note Two arguments <tt>initMatrix</tt> and <tt>D</tt> can be the same object instance. This is used to obtain monodromy matrix after many steps of integration.
+\code
+int dimension = ...;
+DMatrix D = DMatrix::Identity(dimension);
+
+for(int i=0;i<numberOfSteps;++i)
+  u = solver(t,u,D,D);
+  cout << "t=" << t << ", u=" << u << endl;
+  cout << "Monodromy matrix: " << D << endl;
+}  
+\endcode
+
+<b>Complete example (from examples/odes/DTaylorVariationalEquationsExample.cpp):</b>
+\include DTaylorVariationalEquationsExample.cpp
+
+
+\section odesvar_timemap Long-time integration of variational equations
+The class TimeMap (see \ref odes_timemap) provides interface for long-time integration of ODEs with associated variational equations. One has to specify initial condition 
+\code
+int dimension = ...;
+double initTime = ...;
+DVector x(...);
+DMatrix initMatrix(...);
+\endcode  
+and call suitable operator
+\code
+double finalTime = ...;
+DMatrix monodromyMatrix(dimension,dimension);
+
+DVector y = timeMap(finalTime,x,initMatrix,monodromyMatrix,initTime);
+\endcode
+
+\note When solving ODEs with variational equations step control mechanism predicts time steps to fix requested error tolerances both for main equations and for variational equations. 
+<p></p>
+\note The argument <b>initMatrix</b> can be skipped. Then the initial condition for variational equations is set to identity.
+\code
+DVector y = timeMap(finalTime,x,monodromyMatrix,initTime);
+\endcode
+<p></p>
+\note The last argument <b>initTime</b> can be skipped. Then it is set to zero by default.    
+\code
+DVector y = timeMap(finalTime,x,monodromyMatrix);
+\endcode
+<p></p>
+
+<b>Complete example (from examples/odes/DTimeMapVariationalEquationsExample.cpp):</b>
+\include DTimeMapVariationalEquationsExample.cpp
+
+
+
+\section odesvar_timemap_curves Variational equations - functional approach
+As in the case of computing trajectories (see \ref odes_timemap_curves) one can obtain solution to variational equation as a functional object that can be evaluated at any intermediate time.
+In principle there are two differences:
+\li we can specify initial condition for variational equations (this is optional, if skipped the Identity matrix will be chosen)
+\li we have to send an additional argument to operator that receives monodromy matrix at the end of trajectory and indicates that we intend to integrate variational equations   
+<p></p>
+
+<b>Complete example (from examples/odes/DTimeMapMonodromyMatrixCurveExample.cpp):</b>
+\include DTimeMapMonodromyMatrixCurveExample.cpp
+
+*/ 
