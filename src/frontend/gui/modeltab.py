@@ -21,9 +21,9 @@ class ModelTab(Frame):
 
     def _init_widgets(self):
         print ("initialize the Treeview and Property Editor")
-        self.tree_view = TreeView(self).pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
+        TreeView(self).pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
         PropertyEditor(self).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
-      
+
 
 class TreeView(Treeview):
     def __init__(self, parent, **options):
@@ -41,7 +41,11 @@ class TreeView(Treeview):
         EventHandler.add_event_listeners(self, CLOSE_EVENT)
 
         self.bind(OPEN_EVENT, self._display_model)
-        EventHandler.add_event_listeners(self, OPEN_EVENT) 
+        EventHandler.add_event_listeners(self, OPEN_EVENT)
+
+        # Double-click treeview element   LMB +1 12/07/2017  WOrking on tree interface
+        self.bind( '<Double-1>', self._on_double_click )
+      
 
     def _clear_model(self, event=None):
         self.delete(*self.get_children())
@@ -104,9 +108,31 @@ class TreeView(Treeview):
             act_id = self.insert(tran_id, 'end', text='Actions')
             for act in tran.actions:
                 self.insert(act_id, 'end', text=act.raw)
+
+    def _on_double_click( self, event ):  # LMB 12/07/2017  Enable editing of tree on model tab
+
+        item = self.identify('item',event.x,event.y)
+        print("you clicked on", self.item(item,"text"))
+
+        self.popup = PopupWindow(self.parent)
+
+        # If item or parent is Variables, we want to open the variables up to edit
+
+        # If item is Modes, we want to add a new Mode (possibly with a popup that allows you to add flows/invariants at the same time)
+        # If parent is Modes, we want to edit what was double-clicked on
+
+        # If item is Flows, we want to add a flow
+        # If parent is Flows, we want to edit what was double-clicked on
+
+        # If item is Invariants, we want to add an invariant
+        # If parent is Invariant, we want to edit what was double-clicked on
+
+        # If item is Transitions, we want to add a new transition. Popup should include options to add Source, Destination, Guards, and Actions
+        # If parent is Transitions, we want to edit the transition with a similar looking popup (as described above)
         
 
 class PropertyEditor(Frame):
+
     def __init__(self, parent, **options):
         Frame.__init__(self, parent, **options)
         self.parent = parent
@@ -884,3 +910,32 @@ class PropertyEditor(Frame):
         Session.cur_prop.is_visible = True
         self._display_property(Session.cur_prop)
 
+class PopupWindow():
+
+    def __init__(self, parent):
+        top = self.top = Toplevel( parent )
+        top.resizable( width=False, height=False )
+        
+        Label( top, text="TEST POPUP" ).grid( row=0, column=0, columnspan=2 )
+
+        Label( top, text="EXAMPE:" ).grid( row=1, column=0 )
+
+        self.entry = Entry(top)
+        self.entry.grid( row=1, column=1 )
+        
+
+        self.confirm_button = Button( top, text="Confirm", command = self.cleanup )
+        self.confirm_button.grid( row=2, column=1 )
+
+        self.cancel_button = Button( top, text="Cancel", command = self.cancel )
+        self.cancel_button.grid( row=2, column=0  )
+
+    def cleanup( self ):
+        self.value  = self.entry.get()
+        print( "You have entered", self.value )
+        self.top.destroy()
+
+    def cancel( self ):
+        print( "Entry canceled ")
+        self.top.destroy()
+        
