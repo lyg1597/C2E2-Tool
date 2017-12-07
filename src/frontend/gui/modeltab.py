@@ -32,8 +32,6 @@ class TreeView(Treeview):
         self.parent = parent
 
         self._bind_events()
-
-
         self.config(show='tree')
 
     def _bind_events(self):
@@ -910,7 +908,7 @@ class PropertyEditor(Frame):
         Session.cur_prop.is_visible = True
         self._display_property(Session.cur_prop)
 
-class PopupWindow():
+class PopupWindow():  # LMB 12/07/2017  Adding popup edit windows
 
     def __init__(self, parent):
         top = self.top = Toplevel( parent )
