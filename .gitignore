@@ -35,6 +35,7 @@ Hylink/simulator.cpp
 c2e2/lex.yy.cc
 
 src/frontend/gui/__pycache__/
+src/frontend/gui/__pycache__/
 
 #Temporary directory
 Temp/
