@@ -8,6 +8,7 @@ capd/
 
 #Working directory
 wd/*
+work-dir/
 
 #C++ files
 *.d
@@ -32,6 +33,9 @@ Hylink/parsetab.py
 Hylink/simulatorannot
 Hylink/simulator.cpp
 c2e2/lex.yy.cc
+
+src/frontend/gui/__pycache__/
+
 #Temporary directory
 Temp/
 Parsing/

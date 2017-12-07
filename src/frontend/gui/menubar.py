@@ -32,6 +32,7 @@ class MenuBar(Menu):
         self._init_widgets()
         
     def _init_widgets(self):
+
         # File menu
         file_menu = Menu(self, tearoff=0)
         file_menu.add_command(label='Open', accelerator='Crtl+O', underline=0,
@@ -45,6 +46,46 @@ class MenuBar(Menu):
         file_menu.add_command(label='Quit', accelerator='Ctrl+Q', underline=0, 
                 command=self.quit_callback)
         self.add_cascade(label='File', menu=file_menu)
+
+        # Edit menu             LMB +37 12/06/2017
+        edit_menu = Menu(self, tearoff=0)
+
+        variables_submenu = Menu( self, tearoff=0 )
+        variables_submenu.add_command( label='Add Variables' ) # TODO Add command
+        variables_submenu.add_command( label='Edit Variables' ) # TODO Add command
+        
+        modes_submenu = Menu( self, tearoff=0 )
+        modes_submenu.add_command( label='Add Mode' ) # TODO Add command
+        modes_submenu.add_command( label='Edit Mode' ) # TODO Add command
+        modes_submenu.add_command( label='Remove Mode' ) # TODO Add command
+        modes_submenu.add_separator()
+        modes_submenu.add_command( label='Add Flow' ) # TODO Add command
+        modes_submenu.add_command( label='Edit Flow' ) # TODO Add command
+        modes_submenu.add_command( label='Remove Flow' ) # TODO Add command
+        modes_submenu.add_separator()
+        modes_submenu.add_command( label='Add Invariants' ) # TODO Add command
+        modes_submenu.add_command( label='Edit Invariants' ) # TODO Add command
+        modes_submenu.add_command( label='Remove Invariants' ) # TODO Add command
+        
+        transitions_submenu = Menu( self, tearoff=0 )
+        transitions_submenu.add_command( label='Add Transition' ) # TODO Add command
+        transitions_submenu.add_command( label='Edit Transition' ) # TODO Add command
+        transitions_submenu.add_command( label='Remove Transition' ) # TODO Add command 
+        transitions_submenu.add_separator()
+        transitions_submenu.add_command( label='Edit Source' ) # TODO Add command
+        transitions_submenu.add_command( label='Edit Destination' ) # TODO Add command
+        transitions_submenu.add_command( label='Edit Guards' ) # TODO Add command 
+        transitions_submenu.add_separator()
+        transitions_submenu.add_command( label='Add Action' ) # TODO Add command
+        transitions_submenu.add_command( label='Edit Action' ) # TODO Add command
+        transitions_submenu.add_command( label='Remove Action' ) # TODO Add command 
+ 
+        edit_menu.add_cascade( label='Variables', menu=variables_submenu )
+        edit_menu.add_cascade( label='Modes', menu=modes_submenu )
+        edit_menu.add_cascade( label='Transitions', menu=transitions_submenu )
+
+        self.add_cascade( label='Edit', menu=edit_menu )
+
 
         # Help menu
         help_menu = Menu(self, tearoff=0)
