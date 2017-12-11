@@ -12,27 +12,62 @@ from frontend.mod.constants import *
 from frontend.mod.session import Session, Property
 from frontend.mod.simgen import * # FIXME
 
+
 class ModelTab(Frame):
+
     def __init__(self, parent):
         Frame.__init__(self, parent)
         self.parent = parent
 
         self._init_widgets()
 
+
     def _init_widgets(self):
-        print ("initialize the Treeview and Property Editor")
-        TreeView(self).pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
+        print ("Initialize the Treeview and Property Editor")
+        self.tree = TreeView(self)  # Store the TreeView object
+        self.tree.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
         PropertyEditor(self).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
 
 
 class TreeView(Treeview):
-    def __init__(self, parent, **options):
-        Treeview.__init__(self, parent, **options)
+        
+    def __init__(self, master, **options):
+        """ 
+        Note: We use 'master' here instead of 'parent' due to naming conflict
+              with the parent() function in the Treeview class. 
+
+        TODO: Investigate other solutions to the naming conflict.
+        """
+        Treeview.__init__(self, master, **options)
         self.pack(fill=BOTH, expand=TRUE)
-        self.parent = parent
+        self.master = master
 
         self._bind_events()
+        self._init_rc_menus()  # Right-click menus
         self.config(show='tree')
+
+
+    def _init_rc_menus( self ):
+        """Initialize right-click menus for Treeview"""  
+
+        # Right-click 'Variables' parent
+        self.variables_rc_menu = Menu( self, tearoff=0 )
+        self.variables_rc_menu.add_command( label='Add Variable' )
+        self.variables_rc_menu.add_command( label='Edit Variable' )
+        #self.variables_rc_menu.add_command( label='Delete Variable' )
+        
+        # Right-click 'Modes' parent
+        self.modes_rc_menu = Menu( self, tearoff=0 )
+        self.modes_rc_menu.add_command( label='Add Mode' )
+        self.modes_rc_menu.add_command( label='Edit Mode' )
+        self.modes_rc_menu.add_command( label='Delete Mode' )
+
+        # Right-click 'Transitions' parent
+        self.transitions_rc_menu = Menu( self, tearoff=0 )
+        self.transitions_rc_menu.add_command( label='Add Transition' )
+        self.transitions_rc_menu.add_command( label='Edit Transition' )
+        self.transitions_rc_menu.add_command( label='Delete Transition' )
+
 
     def _bind_events(self):
         self.bind(CLOSE_EVENT, self._clear_model)
@@ -41,8 +76,9 @@ class TreeView(Treeview):
         self.bind(OPEN_EVENT, self._display_model)
         EventHandler.add_event_listeners(self, OPEN_EVENT)
 
-        # Double-click treeview element   LMB +1 12/07/2017  WOrking on tree interface
+        # Double-click treeview element   LMB +2 12/11/2017  Working on tree interface
         self.bind( '<Double-1>', self._on_double_click )
+        self.bind( '<Button-3>', self._on_right_click )
       
 
     def _clear_model(self, event=None):
@@ -63,7 +99,6 @@ class TreeView(Treeview):
             self.insert(thin_var_id, 'end', text=thin_var_str)
             self.item(thin_var_id, open=TRUE)
             
-
         mode_dict = {}
         modes_id = self.insert('', 'end', text='Modes')
         self.item(modes_id, open=TRUE)
@@ -86,7 +121,7 @@ class TreeView(Treeview):
             for inv in mode.invs:
                 self.insert(inv_id, 'end', text=inv.raw)
 
-        # Display transistions
+        # Display transitions
         trans_id = self.insert('', 'end', text='Transitions')
         self.item(trans_id, open=TRUE)
         for tran in hybrid.automata[0].trans:
@@ -107,12 +142,13 @@ class TreeView(Treeview):
             for act in tran.actions:
                 self.insert(act_id, 'end', text=act.raw)
 
+
     def _on_double_click( self, event ):  # LMB 12/07/2017  Enable editing of tree on model tab
 
         item = self.identify('item',event.x,event.y)
         print("you clicked on", self.item(item,"text"))
 
-        self.popup = PopupWindow(self.parent)
+        self.popup = PopupWindow(self.master)
 
         # If item or parent is Variables, we want to open the variables up to edit
 
@@ -127,8 +163,36 @@ class TreeView(Treeview):
 
         # If item is Transitions, we want to add a new transition. Popup should include options to add Source, Destination, Guards, and Actions
         # If parent is Transitions, we want to edit the transition with a similar looking popup (as described above)
-        
 
+
+    def _on_right_click( self, event ):
+        """Display appropriate right-click menu based on what item is clicked"""
+
+        item_id = self.identify_row( event.y )
+        
+        if( not item_id ):
+            print( 'No item selected' )
+            return
+
+        self.selection_set( item_id )  # Highlight item that was right-clicked
+
+        # Look for selected item's root to determine which context menu to display
+        root_id = item_id
+        while( self.parent( root_id ) != '' ):
+            root_id = self.parent( root_id )
+        context = self.item( root_id )['text']
+            
+        print( self.item( item_id )['text'] ) #TODO: Remove me, I'm here for dev
+        print( 'Context: ' + self.item( root_id )['text'] ) #TODO: Remove me, I'm here for dev
+
+        if( context == 'Variables' ):
+            self.variables_rc_menu.tk_popup( event.x_root, event.y_root )
+        elif( context == 'Modes' ):
+            self.modes_rc_menu.tk_popup( event.x_root, event.y_root )
+        elif( context == 'Transitions' ):
+            self.transitions_rc_menu.tk_popup( event.x_root, event.y_root )
+      
+        
 class PropertyEditor(Frame):
 
     def __init__(self, parent, **options):
@@ -147,6 +211,7 @@ class PropertyEditor(Frame):
         self.bind(OPEN_EVENT, self._display_properties)
         EventHandler.add_event_listeners(self, OPEN_EVENT) 
 
+
     def _init_widgets(self):
         self._init_prop_view()
         self._init_prop_list()
@@ -155,7 +220,8 @@ class PropertyEditor(Frame):
         self.prop_view.pack(fill=X)
         self.prop_view.columnconfigure(1, weight=1)
         self.prop_list.pack(expand=TRUE, fill=BOTH)
-        
+
+
     ''' PROPERTY VIEW GUI AND FUNCTIONS '''
     def _init_prop_view(self):
         # Regex building blocks
@@ -255,6 +321,7 @@ class PropertyEditor(Frame):
         self.unsafe_set = SetText(self.prop_view, height=65, callback=self._callback_us)
         self.unsafe_set.grid(row=13, rowspan=4, columnspan=3, sticky=N+S+E+W)
 
+    
     def _callback_name(self, *args):
         name = self.name_var.get()
         if name != Session.cur_prop.name:
@@ -277,6 +344,7 @@ class PropertyEditor(Frame):
         self.name_vl.set_state(valid)
         self.list_view.set(self.sel_iid, 0, name)
 
+    
     def _callback_time_step(self, *args):
 
         try:
@@ -294,6 +362,7 @@ class PropertyEditor(Frame):
         Session.cur_prop.time_step_valid = valid
         self.ts_vl.set_state(valid)
 
+    
     def _callback_time_horizon(self, *args):
 
         try:
@@ -310,6 +379,7 @@ class PropertyEditor(Frame):
         Session.cur_prop.time_horizon_valid = valid
         self.th_vl.set_state(valid)
 
+    
     def _callback_k_value(self, *args):
 
         try:
@@ -327,8 +397,8 @@ class PropertyEditor(Frame):
         Session.cur_prop.k_value_valid = valid
         self.kv_vl.set_state(valid)
 
+    
     def _callback_simulator(self, *args):
-
 
         if Session.simulator != self.sim_var.get():
             Session.simulator = self.sim_var.get()
@@ -347,11 +417,11 @@ class PropertyEditor(Frame):
                 Session.hybrid.convertToCAPD("simulator")
 
 
-
     def _callback_refine_strat(self, *args):
         #change the refine strategy
         Session.refine_strat = self.ref_var.get()
-        
+
+
     # TODO optimize this
     def _callback_is(self, input):
         #if Session.cur_prop.status == "Simulated" or Session.cur_prop.status == "Verified":
@@ -418,6 +488,7 @@ class PropertyEditor(Frame):
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
 
+
     def _callback_us(self, input):
         #if Session.cur_prop.status == "Simulated" or Session.cur_prop.status == "Verified":
             #self._update_property_status(0,0,1)
@@ -455,6 +526,7 @@ class PropertyEditor(Frame):
             Session.cur_prop.unsafe_set_obj = SymEq.get_eqn_matrix(input, var_list)
             Session.cur_prop.unsafe_set_valid = True
 
+
     def _display_property(self, prop):
         prop.is_visible = True
         self.name_var.set(prop.name)
@@ -466,6 +538,7 @@ class PropertyEditor(Frame):
         self.initial_set.set(prop.initial_set_str)
         #print (prop.initial_set_str)
         self.unsafe_set.set(prop.unsafe_set_str)
+
 
     ''' PROPERTY LIST GUI AND FUNCTIONS'''
     def _init_prop_list(self):
@@ -510,9 +583,11 @@ class PropertyEditor(Frame):
         self.ver_btn = Button(row, text='Verify', command=self._callback_ver)
         self.ver_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
+
     def _add_property(self, prop):
         iid = self.list_view.insert('', 'end', values=(prop.name, prop.status, prop.result))
         return iid
+
 
     def _callback_btn_press_double(self,event):
         if Session.cur_prop.status == Simulated:
@@ -523,8 +598,6 @@ class PropertyEditor(Frame):
             else:
                 self._open_the_plotter_window(1)
         return
-
-
 
 
     def _callback_btn_press(self, event):
@@ -539,6 +612,7 @@ class PropertyEditor(Frame):
             Session.cur_prop = Session.prop_list[idx]
             self._display_property(Session.cur_prop)
 
+
     def _callback_new(self):
         # Create new property
         Session.cur_prop = Property()
@@ -548,6 +622,7 @@ class PropertyEditor(Frame):
         self.sel_iid = self._add_property(Session.cur_prop)
         self.list_view.selection_set(self.sel_iid)
         self._display_property(Session.cur_prop)
+
 
     def _callback_cpy(self):
         # Create a deep copy of the current session
@@ -562,6 +637,7 @@ class PropertyEditor(Frame):
         self.sel_iid = self._add_property(Session.cur_prop)
         self.list_view.selection_set(self.sel_iid)
         self._display_property(Session.cur_prop)
+
 
     def _callback_rmv(self):
         # Find next property to select
@@ -586,6 +662,7 @@ class PropertyEditor(Frame):
         self.sel_iid = up_iid
         self.list_view.selection_set(self.sel_iid)
         self._display_property(Session.cur_prop)
+
 
     # TODO implement me
     def _callback_sim(self):
@@ -612,6 +689,7 @@ class PropertyEditor(Frame):
         if result!=0:
             self._open_the_plotter_window(3)
 
+
     def _open_the_plotter_window(self,sim_adpative):
         #construct arguments to open the plot window
         #Sim == 1, FIX_STEP == 0, Adaptive == 2
@@ -624,8 +702,6 @@ class PropertyEditor(Frame):
         modelist = [m.name for m in Session.hybrid.automata[0].modes]
 
         self.parent.parent._init_plot_widgets(varlist,modelist,time_step,time_horizon,unsafe_set,file_path,sim_adpative,Session.cur_prop.name)
-
-
         
     
     def _update_property_status(self, sim, result, expire):
@@ -649,8 +725,8 @@ class PropertyEditor(Frame):
             Session.cur_prop.result = "Unsafe"
         self.list_view.item(self.sel_iid, values=(Session.cur_prop.name, Session.cur_prop.status, Session.cur_prop.result))
 
-
         return 
+
 
     def _disable_enable_button(self,disable):
         if disable:
@@ -715,6 +791,7 @@ class PropertyEditor(Frame):
 
         top.destroy()
 
+
     def _callback_ver(self):
         if not Session.cur_prop.is_valid():
             return
@@ -739,9 +816,11 @@ class PropertyEditor(Frame):
             else:
                 self._open_the_plotter_window(1)
 
+
     def _set_list_property(self, name):
         iid = self.list_view.focus()
         self.list_view(iid, 0, name)
+
 
 
     def _initialize_cpp_model(self, simulate):
@@ -871,7 +950,8 @@ class PropertyEditor(Frame):
         #model.beta_str = ''
         #model.opt_str = ''
         model.visualize_filename = '../work-dir/'+Session.cur_prop.name
-    
+
+
     def _extract_matrix(self, mat_in, mat_eqn):
         mat = []
         for row, eqn in zip(mat_in, mat_eqn):
@@ -889,6 +969,7 @@ class PropertyEditor(Frame):
         for i in self.list_view.get_children():
             self.list_view.delete(i)
         self.sel_iid = None
+
 
     def _display_properties(self, event=None):
         st = 'constant'
@@ -908,7 +989,8 @@ class PropertyEditor(Frame):
         Session.cur_prop.is_visible = True
         self._display_property(Session.cur_prop)
 
-class PopupWindow():  # LMB 12/07/2017  Adding popup edit windows
+
+class PopupWindow(object):
 
     def __init__(self, parent):
         top = self.top = Toplevel( parent )
