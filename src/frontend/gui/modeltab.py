@@ -47,28 +47,6 @@ class TreeView(Treeview):
         self.config(show='tree')
 
 
-    def _init_rc_menus( self ):
-        """Initialize right-click menus for Treeview"""  
-
-        # Right-click 'Variables' parent
-        self.variables_rc_menu = Menu( self, tearoff=0 )
-        self.variables_rc_menu.add_command( label='Add Variable' )
-        self.variables_rc_menu.add_command( label='Edit Variable' )
-        #self.variables_rc_menu.add_command( label='Delete Variable' )
-        
-        # Right-click 'Modes' parent
-        self.modes_rc_menu = Menu( self, tearoff=0 )
-        self.modes_rc_menu.add_command( label='Add Mode' )
-        self.modes_rc_menu.add_command( label='Edit Mode' )
-        self.modes_rc_menu.add_command( label='Delete Mode' )
-
-        # Right-click 'Transitions' parent
-        self.transitions_rc_menu = Menu( self, tearoff=0 )
-        self.transitions_rc_menu.add_command( label='Add Transition' )
-        self.transitions_rc_menu.add_command( label='Edit Transition' )
-        self.transitions_rc_menu.add_command( label='Delete Transition' )
-
-
     def _bind_events(self):
         self.bind(CLOSE_EVENT, self._clear_model)
         EventHandler.add_event_listeners(self, CLOSE_EVENT)
@@ -79,7 +57,7 @@ class TreeView(Treeview):
         # Double-click treeview element   LMB +2 12/11/2017  Working on tree interface
         self.bind( '<Double-1>', self._on_double_click )
         self.bind( '<Button-3>', self._on_right_click )
-      
+
 
     def _clear_model(self, event=None):
         self.delete(*self.get_children())
@@ -142,7 +120,29 @@ class TreeView(Treeview):
             for act in tran.actions:
                 self.insert(act_id, 'end', text=act.raw)
 
+    
+    def _init_rc_menus( self ):
+        """Initialize right-click menus for Treeview"""  
 
+        # Right-click 'Variables' parent
+        self.variables_rc_menu = Menu( self, tearoff=0 )
+        self.variables_rc_menu.add_command( label='Add Variable' )
+        self.variables_rc_menu.add_command( label='Edit Variable' )
+        #self.variables_rc_menu.add_command( label='Delete Variable' )
+        
+        # Right-click 'Modes' parent
+        self.modes_rc_menu = Menu( self, tearoff=0 )
+        self.modes_rc_menu.add_command( label='Add Mode' )
+        self.modes_rc_menu.add_command( label='Edit Mode' )
+        self.modes_rc_menu.add_command( label='Delete Mode' )
+
+        # Right-click 'Transitions' parent
+        self.transitions_rc_menu = Menu( self, tearoff=0 )
+        self.transitions_rc_menu.add_command( label='Add Transition' )
+        self.transitions_rc_menu.add_command( label='Edit Transition' )
+        self.transitions_rc_menu.add_command( label='Delete Transition' )
+    
+    
     def _on_double_click( self, event ):  # LMB 12/07/2017  Enable editing of tree on model tab
 
         item = self.identify('item',event.x,event.y)
@@ -196,10 +196,11 @@ class TreeView(Treeview):
 
         context_menu.tk_popup( event.x_root, event.y_root )
 
+        # Diable/Enable appropriate depending on where user clicked
         if( root_id == item_id ):  # User clicked on the root
             context_menu.entryconfig( 1, state=DISABLED )
             context_menu.entryconfig( 2, state=DISABLED )
-        else:
+        else:  # User clicked on a child
             context_menu.entryconfig( 1, state=NORMAL )
             context_menu.entryconfig( 2, state=NORMAL )
         
