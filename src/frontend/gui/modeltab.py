@@ -186,13 +186,24 @@ class TreeView(Treeview):
         print( 'Context: ' + self.item( root_id )['text'] ) #TODO: Remove me, I'm here for dev
 
         if( context == 'Variables' ):
-            self.variables_rc_menu.tk_popup( event.x_root, event.y_root )
+            context_menu = self.variables_rc_menu
         elif( context == 'Modes' ):
-            self.modes_rc_menu.tk_popup( event.x_root, event.y_root )
+            context_menu = self.modes_rc_menu
         elif( context == 'Transitions' ):
-            self.transitions_rc_menu.tk_popup( event.x_root, event.y_root )
-      
+            context_menu = self.transitions_rc_menu
+        else:
+            return  # The following lines depend on context_menu existing
+
+        context_menu.tk_popup( event.x_root, event.y_root )
+
+        if( root_id == item_id ):  # User clicked on the root
+            context_menu.entryconfig( 1, state=DISABLED )
+            context_menu.entryconfig( 2, state=DISABLED )
+        else:
+            context_menu.entryconfig( 1, state=NORMAL )
+            context_menu.entryconfig( 2, state=NORMAL )
         
+
 class PropertyEditor(Frame):
 
     def __init__(self, parent, **options):
