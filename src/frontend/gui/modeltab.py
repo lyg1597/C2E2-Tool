@@ -27,7 +27,6 @@ class ModelTab(Frame):
 
         self._init_widgets()
 
-
     def _init_widgets(self):
         print ("Initialize the Treeview and Property Editor")
         self.tree = TreeView(self)  # Store the TreeView object
@@ -152,24 +151,35 @@ class TreeView(Treeview):
     def _on_double_click( self, event ): 
         """Pop-up edit menu (child) or add menu (root) depending on item double clicked"""
 
-        item = self.identify('item',event.x,event.y)
-        print("you clicked on", self.item(item,"text"))
+        print( 'Double-Click Event' )
 
-        self.popup = PopupWindow( self.master,  )
+        item_id = self.identify_row( event.y )
 
-        # If item or parent is Variables, we want to open the variables up to edit
+        # Do nothing is no Treeview item was selected
+        if( not item_id ):
+            print( 'No item selected' ) #TODO: Remove or polish me before release
+            print()  #TODO: Remove or polish me before release
+            return
 
-        # If item is Modes, we want to add a new Mode (possibly with a popup that allows you to add flows/invariants at the same time)
-        # If parent is Modes, we want to edit what was double-clicked on
+        root_id, context = self._get_root_and_context( item_id )
 
-        # If item is Flows, we want to add a flow
-        # If parent is Flows, we want to edit what was double-clicked on
+        print( 'Item: ' + self.item( item_id )['text'] ) #TODO: Remove me, I'm here for dev
 
-        # If item is Invariants, we want to add an invariant
-        # If parent is Invariant, we want to edit what was double-clicked on
+        # Do nothing if a root was selected.
+        if( root_id == item_id ):
+            print( 'Context: None (root selected)' )  #TODO: Remove me, I'm here for dev
+            print()  #TODO: Remove me, I'm here for dev
+            return 
 
-        # If item is Transitions, we want to add a new transition. Popup should include options to add Source, Destination, Guards, and Actions
-        # If parent is Transitions, we want to edit the transition with a similar looking popup (as described above)
+        print( 'Context: ' + context ) #TODO: Remove me, I'm here for dev
+        print()  # TODO: Remove me, I'm here for dev
+        
+        if( context == VARIABLES ):
+            VariablesEntry( self.master, item_id )
+        elif( context == MODES ):
+            ModelEntry( self.master, item_id )
+        elif( context == TRANSITIONS ):
+            TransitionEntry( self.master, item_id )
 
 
     def _on_right_click( self, event ):
@@ -187,8 +197,7 @@ class TreeView(Treeview):
 
         self.selection_set( item_id )  # Highlight item that was right-clicked
 
-        root_id = self._find_root_id( item_id )
-        context = self.item( root_id )['text']
+        root_id, context = self._get_root_and_context( item_id )
 
         print( 'Item: ' + self.item( item_id )['text'] ) #TODO: Remove me, I'm here for dev
         print( 'Context: ' + context ) #TODO: Remove me, I'm here for dev
@@ -214,43 +223,14 @@ class TreeView(Treeview):
             context_menu.entryconfig( 2, state=NORMAL )
 
 
-    def _find_root_id( self, item_id ):
-        """Find the root of item_id. Intended to be used to determine context for menus"""
+    def _get_root_and_context( self, item_id ):
+        """Returns the root and context of item_id (in that order)"""
 
         root_id = item_id
         while( self.parent( root_id ) != '' ):
             root_id = self.parent( root_id )
-        return root_id
-
-
-class PopupWindow(object):
-
-    def __init__(self, parent, context):
-        top = self.top = Toplevel( parent )
-        top.resizable( width=False, height=False )
         
-        Label( top, text="TEST POPUP" ).grid( row=0, column=0, columnspan=2 )
-
-        Label( top, text="EXAMPE:" ).grid( row=1, column=0 )
-
-        self.entry = Entry(top)
-        self.entry.grid( row=1, column=1 )
-
-        self.confirm_button = Button( top, text="Confirm", command = self.cleanup )
-        self.confirm_button.grid( row=2, column=1 )
-
-        self.cancel_button = Button( top, text="Cancel", command = self.cancel )
-        self.cancel_button.grid( row=2, column=0  )
-
-
-    def cleanup( self ):
-        self.value  = self.entry.get()
-        print( "You have entered", self.value )
-        self.top.destroy()
-
-    def cancel( self ):
-        print( "Entry canceled ")
-        self.top.destroy()
+        return root_id, self.item( root_id )['text']
                 
 
 class PropertyEditor(Frame):

@@ -105,3 +105,66 @@ class SetText(Frame):
         self.text.delete('1.0', END)
         self.text.insert(END, str)
         self._callback()
+
+
+class PopupEntry( object ):
+
+    def __init__( self, parent, item_id ):
+
+        self.popup = Toplevel( parent )
+        self.popup.resizable( width=False, height=False )
+
+        self.title_label = Label( self.popup, text='C2E2' )
+        self.title_label.grid( row=0, column=0, columnspan=2 )
+        
+        self.confirm_button = Button( self.popup, text='Confirm', command=self.confirm )
+        self.confirm_button.grid( row=2, column=1 )
+
+        self.cancel_button = Button( self.popup, text='Cancel', command=self.cancel )
+        self.cancel_button.grid( row=2, column=0 )
+
+
+    def confirm( self ):
+
+        print( 'Saved!\n' )
+        self.popup.destroy()
+
+
+    def cancel( self ):
+        
+        print( 'Entry Canceled\n' )
+        self.popup.destroy()
+
+
+class VariablesEntry( PopupEntry ):
+
+    def __init__( self, parent, item_id ):
+        PopupEntry.__init__( self, parent, item_id )
+
+        self.title_label.config( text='Variables' )
+
+        Label( self.popup, text='Enter variables separated by a comma' ).grid( row=2, columnspan=2 )
+        
+        Label( self.popup, text='(var_1, var_2, var_3, ... )' ).grid( row=3, columnspan=2 )
+
+        self.variables_entry = Entry( self.popup )
+        self.variables_entry.grid( row=4, column=0, columnspan=2 )
+
+        self.confirm_button.grid( row=5, column=1 )
+        self.cancel_button.grid( row=5, column=0 )
+
+
+class ModelEntry( PopupEntry ):
+
+    def __init__( self, parent, item_id ):
+        PopupEntry.__init__( self, parent, item_id )
+
+        self.title_label.config( text='Model' )
+
+
+class TransitionEntry( PopupEntry ):
+
+    def __init__( self, parent, item_id ):
+        PopupEntry.__init__( self, parent, item_id )
+
+        self.title_label.config( text='Transition' )
