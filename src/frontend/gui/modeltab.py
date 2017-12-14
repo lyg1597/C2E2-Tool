@@ -175,9 +175,9 @@ class TreeView(Treeview):
         print()  # TODO: Remove me, I'm here for dev
         
         if( context == VARIABLES ):
-            VariablesEntry( self.master, item_id )
+            VariableEntry( self.master, item_id )
         elif( context == MODES ):
-            ModelEntry( self.master, item_id )
+            ModeEntry( self.master, item_id )
         elif( context == TRANSITIONS ):
             TransitionEntry( self.master, item_id )
 
