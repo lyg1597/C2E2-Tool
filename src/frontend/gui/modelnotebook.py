@@ -5,7 +5,7 @@ from frontend.gui.eventhandler import EventHandler
 from frontend.gui.modeltab import ModelTab
 from frontend.mod.constants import *
 from frontend.gui.plotwindow import PlotterModelTab
-from frontend.gui.editortab import EditorTab  # LMB +0 12/05/2017, Added Editor Tab
+from frontend.gui.editortab import EditorTab 
 
 
 class ModelNotebook(Notebook):
@@ -26,7 +26,7 @@ class ModelNotebook(Notebook):
     def _init_widgets(self):
         self.model_tab = ModelTab(self)
         self.add(self.model_tab, text='Model')
-        self.editor_tab = EditorTab(self)  #LMB +1, 12/05/2017, Added Editor tab
+        self.editor_tab = EditorTab(self)
         self.add( self.editor_tab, text='Editor')
 
     def _init_plot_widgets(self,*args):
@@ -44,8 +44,6 @@ class ModelNotebook(Notebook):
         self.forget(self.plot_tab_dic[tabname])
         self.plot_tab_dic.pop(tabname,None)
         return
-
-        
 
     def display_widgets(self, event=None):
         self.pack(fill=BOTH, expand=True)
