@@ -5,7 +5,9 @@ from frontend.gui.eventhandler import EventHandler
 from frontend.gui.menubar import MenuBar
 from frontend.gui.modelnotebook import *
 
+
 class C2E2(Tk):
+
     def __init__(self, parent):
         Tk.__init__(self, parent)
 
@@ -39,9 +41,11 @@ class C2E2(Tk):
         self.manual.bind("<Button-1>", callback)
         self._init_widgets()
     
+
     # Initialize all widgets
     def _init_widgets(self):
+    
         self.menu = MenuBar(self)
-        self.notebook = ModelNotebook(self)
+        self.notebook = ModelNotebook(self, self.menu)
 
 

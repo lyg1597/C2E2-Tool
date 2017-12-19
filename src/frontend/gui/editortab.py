@@ -2,16 +2,18 @@ from tkinter import *
 from tkinter.ttk import *
 from frontend.gui.eventhandler import EventHandler
 from frontend.gui.modeltab import PropertyEditor
-from frontend.mod.session import Session, Property
 from frontend.mod.constants import *
+from frontend.mod.filehandler import FileHandler
+from frontend.mod.session import Session, Property
 
 
 class EditorTab( Frame ):
 
-    def __init__( self, parent ):
+    def __init__( self, parent, menu_bar ):
         Frame.__init__( self, parent )
         
         self.parent = parent
+        self.menu_bar = menu_bar
 
         self._init_widgets()
         self._bind_events()
@@ -50,14 +52,15 @@ class EditorTab( Frame ):
         self.save_xml_btn = Button( self.xml_buttons, text='Save XML', command=self._save_xml )\
             .pack( expand=TRUE, fill=X, side=LEFT )
 
-        self.reload_xml_btn = Button( self.xml_buttons, text='Reload XML', command=self._open_xml )\
+        self.reload_xml_btn = Button( self.xml_buttons, text='Reload XML', command=self._reload_xml )\
             .pack( expand=TRUE, fill=X, side=LEFT )
         
         self.xml_buttons.pack( fill=X )
         
         # Property List
         
-        PropertyList( self.sidebar ).pack( expand=TRUE, fill=BOTH )
+        self.property_list = PropertyList( self.sidebar )
+        self.property_list.pack( expand=TRUE, fill=BOTH )
 
 
     def _open_xml( self, event=None ):
@@ -67,21 +70,62 @@ class EditorTab( Frame ):
         if( not Session.file_path ):
             return
 
+        print( 'Opening xml...' )
         with open( Session.file_path, 'r' ) as f:
             self.editor.insert( INSERT, f.read() )
+        print( 'Success!' )
 
+        print( 'Loading properties...' )
+        self.property_list._clear_properties()
+        self.property_list._display_properties()
+        print( 'Success!' )
+        
     
     def _save_xml( self, event=None ):
         
         if( not Session.file_path ):
+            print( 'No session filepath\n' )
             return
-
+        print( 'Saving xml...' )
+        
         text = self.editor.get( '1.0', 'end-1c') 
         with open( Session.file_path, 'w' ) as f:
             f.write( text )
         
-        print( 'Saved as:\n' )
-        print( Session.file_path )
+        print( 'Saved as:' + Session.file_path + '\n' )
+
+        self._reload_xml()
+
+
+    def _reload_xml( self, event=None ):
+
+        if( not Session.file_path ):
+            print( 'No session filepath\n' )
+            return
+        print( 'Reloading xml...' )
+
+        file_path = Session.file_path
+        file = FileHandler.open_file( file_path )
+        if( HYXML_FILE in file_path ): 
+            print( '.hyxml file reloaded\n' )
+            Session.file_type = HYXML_FILE
+        elif( MDL_FILE in file_path ):
+            print ( '.mdl file opened\n' )
+            Session.file_type = MDL_FILE
+
+        if file == None:
+            print( 'File reload failed: No file\n' )
+            return
+
+        # Obtain parsed results
+        Session.hybrid = file['hybrid']
+        Session.prop_list = file['prop_list']
+        if( len(Session.prop_list) == 0 ):
+            Session.prop_list.append( Property() )
+        Session.file_opened = True
+
+        print( 'File reloaded!' )
+        self._open_xml()
 
 
 class PropertyList( PropertyEditor ):

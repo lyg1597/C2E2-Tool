@@ -9,8 +9,10 @@ from frontend.mod.constants import *
 from frontend.mod.session import *
 
 class MenuBar(Menu):
+
     def __init__(self, parent):
         Menu.__init__(self, parent)
+    
         self.parent = parent
 
         # Open file constants
@@ -31,9 +33,11 @@ class MenuBar(Menu):
 
         self._init_widgets()
         
+
     def _init_widgets(self):
 
         # File menu
+
         file_menu = Menu(self, tearoff=0)
         file_menu.add_command(label='Open', accelerator='Crtl+O', underline=0,
                 command=self.open_callback)
@@ -47,7 +51,9 @@ class MenuBar(Menu):
                 command=self.quit_callback)
         self.add_cascade(label='File', menu=file_menu)
 
-        # Edit menu             LMB +37 12/06/2017
+
+        # Edit menu 
+
         edit_menu = Menu(self, tearoff=0)
 
         variables_submenu = Menu( self, tearoff=0 )
@@ -88,19 +94,24 @@ class MenuBar(Menu):
 
 
         # Help menu
+
         help_menu = Menu(self, tearoff=0)
         help_menu.add_command(label='About')
         self.add_cascade(label='Help', menu=help_menu)
         self.parent.config(menu=self)
 
+
         # Bind accelerators
+        
         self.parent.bind_all('<Control-o>', lambda event: self.open_callback())
         self.parent.bind_all('<Control-s>', lambda event: self.save_callback())
         self.parent.bind_all('<Control-Shift-s>', lambda event: self.save_as_callback())
         self.parent.bind_all('<Control-l>', lambda event: self.close_callback())
         self.parent.bind_all('<Control-q>', lambda event: self.quit_callback())
 
+
     def open_callback(self):
+
         # Open selected file
         self.parent.label.pack_forget() 
         self.parent.manual.pack_forget()
@@ -129,7 +140,9 @@ class MenuBar(Menu):
             Session.file_opened = True
             EventHandler.event_generate(OPEN_EVENT)
 
+
     def save_callback(self):
+
         if not Session.file_opened:
             return 
 
@@ -139,7 +152,9 @@ class MenuBar(Menu):
             
         self.save_model(Session.file_path)
 
+
     def save_as_callback(self, event=None):
+
         if not Session.file_opened:
             return 
         file_path = filedialog.asksaveasfile(**self.SAVE_OPT)
@@ -150,6 +165,7 @@ class MenuBar(Menu):
                 Session.file_path = file_path.name
             Session.file_saved = True
         return 
+
 
     def save_model(self, filepath):
         savedModelString = FileHandler.save_model(Session.hybrid, Session.prop_list, filepath)
@@ -170,7 +186,7 @@ class MenuBar(Menu):
             EventHandler.event_generate(CLOSE_EVENT)
         Session.file_opened = False
 
+
     def quit_callback(self, event=None):
+
         self.parent.destroy()
-
-
