@@ -14,12 +14,6 @@ from frontend.mod.session import Session, Property
 from frontend.mod.simgen import * # FIXME
 
 
-# Prevents errors and tricky bugs associated with typos.
-VARIABLES = 'Variables'
-MODES = 'Modes'
-TRANSITIONS = 'Transitions'
-
-
 class ModelTab(Frame):
 
     def __init__(self, parent):
@@ -84,11 +78,13 @@ class TreeView(Treeview):
             self.item(thin_var_id, open=TRUE)
             
         mode_dict = {}
+        self.mode_str_dict = {}  # LMB: Connect mode_str to mode for easier editing
         modes_id = self.insert('', 'end', text=MODES)
         self.item(modes_id, open=TRUE)
         for mode in hybrid.automata[0].modes:
             mode_dict[mode.id] = mode.name
             mode_str = mode.name + ' (' + str(mode.id) + ')'
+            self.mode_str_dict[mode_str] = mode
             mode_id = self.insert(modes_id, 'end', text=mode_str)
 
             # Display flows
@@ -162,7 +158,7 @@ class TreeView(Treeview):
             print()  #TODO: Remove or polish me before release
             return
 
-        root_id, context = self._get_root_and_context( item_id )
+        root_id, parent_id, context = self._get_root_and_context( item_id )
 
         print( 'Item: ' + self.item( item_id )['text'] ) #TODO: Remove me, I'm here for dev
 
@@ -176,11 +172,11 @@ class TreeView(Treeview):
         print()  # TODO: Remove me, I'm here for dev
         
         if( context == VARIABLES ):
-            VariableEntry( self.master, item_id )
+            VariableEntry( self.master )
         elif( context == MODES ):
-            ModeEntry( self.master, item_id )
+            ModeEntry( self.master, self.mode_str_dict[self.item(parent_id)['text']] )
         elif( context == TRANSITIONS ):
-            TransitionEntry( self.master, item_id )
+            TransitionEntry( self.master, parent_id )
 
 
     def _on_right_click( self, event ):
@@ -198,7 +194,7 @@ class TreeView(Treeview):
 
         self.selection_set( item_id )  # Highlight item that was right-clicked
 
-        root_id, context = self._get_root_and_context( item_id )
+        root_id, parent_id, context = self._get_root_and_context( item_id )
 
         print( 'Item: ' + self.item( item_id )['text'] ) #TODO: Remove me, I'm here for dev
         print( 'Context: ' + context ) #TODO: Remove me, I'm here for dev
@@ -228,10 +224,13 @@ class TreeView(Treeview):
         """Returns the root and context of item_id (in that order)"""
 
         root_id = item_id
+        parent_id = item_id
+
         while( self.parent( root_id ) != '' ):
+            parent_id = root_id
             root_id = self.parent( root_id )
         
-        return root_id, self.item( root_id )['text']
+        return root_id, parent_id, self.item( root_id )['text']
                 
 
 class PropertyEditor(Frame):

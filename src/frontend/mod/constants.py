@@ -24,3 +24,13 @@ Verified = "Verified"
 Plotted = "Plotted"
 
 #Result
+
+#Variable Types / LMB 12/21/2017 / Options for variable type OptionMenu, contained in the VariableEntry popup
+REAL = 'Real'
+INTEGER = 'Integer'
+VARIABLE_TYPES = [ REAL, INTEGER ]
+
+#Contexts / LMB 12/21/2017 / Used to determine right-click menus and popup entry/edit menus in the ModelTab Treeview
+VARIABLES = 'Variables'
+MODES = 'Modes'
+TRANSITIONS = 'Transitions'
