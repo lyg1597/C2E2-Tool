@@ -162,7 +162,19 @@ class HyIR:
         self.thinvariables.add_thin_var(v)
         if v.scope=='LOCAL_DATA':
             self.thinvarList.append(v.name)
-        
+
+    def reset_vars( self ):
+        """ Reset variable lists. Used for editing. """
+        self.vars = []
+        self.variables = Variables()
+        self.varList = []
+
+
+    def reset_thin_vars( self ):
+        """ Reset thing variable lists. Used for editing. """
+        self.thinvars = []
+        self.thinvariables = ThinVariables()
+        self.thinvarList = []
 
     def print_all(self):
         print("%s:" % self.name)

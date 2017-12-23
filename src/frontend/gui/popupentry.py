@@ -1,21 +1,29 @@
 from tkinter import *
 from tkinter.ttk import *
+from frontend.mod.automaton import *
 from frontend.mod.constants import *
+from frontend.mod.hyir import *
 from frontend.mod.session import Session
 
 
-class PopupEntry( object ):
+class PopupEntry( Toplevel ):
 
     def __init__( self, parent ):
+        Toplevel.__init__( self, parent )
 
-        self.popup = Toplevel( parent )
-        self.popup.resizable( width=False, height=False )
+        self.parent = parent
+        self.resizable( width=False, height=False )
 
-        self.title_label = Label( self.popup, text='C2E2' )
+        self.title_label = Label( self, text='C2E2' )
         self.title_label.grid( row=0, column=0, columnspan=2 )
         
         self.TEXTBOX_HEIGHT = 10
         self.TEXTBOX_WIDTH = 30
+
+        # Prevent interaction with main window until Popup is Confirmed/Canceled
+        self.wait_visibility()
+        self.focus_set()
+        self.grab_set()
 
 
 class VariableEntry( PopupEntry ):
@@ -32,9 +40,9 @@ class VariableEntry( PopupEntry ):
 
         self.title_label.grid( row=0, column=0, columnspan=3 )
 
-        Label( self.popup, text='Name' ).grid( row=1, column=0 )
-        Label( self.popup, text='Type' ).grid( row=1, column=1 )
-        Label( self.popup, text='Thin' ).grid( row=1, column=2 )
+        Label( self, text='Name' ).grid( row=1, column=0 )
+        Label( self, text='Type' ).grid( row=1, column=1 )
+        Label( self, text='Thin' ).grid( row=1, column=2 )
 
         # Variable lists for uknown number of inputs
         self.names = []  # StringVar()
@@ -43,7 +51,7 @@ class VariableEntry( PopupEntry ):
         self.var_index = 0
 
         # Buttons
-        self.btn_frame = Frame( self.popup )
+        self.btn_frame = Frame( self )
 
         self.add_btn = Button( self.btn_frame, text='Add', command=self._add_row )
         self.confirm_btn = Button( self.btn_frame, text='Confirm', command=self._confirm )
@@ -85,15 +93,15 @@ class VariableEntry( PopupEntry ):
         self.thins.append( BooleanVar() )
 
         # Name
-        Entry( self.popup, textvariable=self.names[self.var_index] )\
+        Entry( self, textvariable=self.names[self.var_index] )\
             .grid( row=self.var_index+2, column=0 )
 
         # Type
-        OptionMenu( self.popup, self.types[self.var_index], *VARIABLE_TYPES )\
+        OptionMenu( self, self.types[self.var_index], *VARIABLE_TYPES )\
             .grid( row=self.var_index+2, column=1 )
 
         # Thin
-        Checkbutton( self.popup, var=self.thins[self.var_index] )\
+        Checkbutton( self, var=self.thins[self.var_index] )\
             .grid( row=self.var_index+2, column=2 )
 
         self.btn_frame.grid( row=self.var_index+3, columnspan=3 )
@@ -102,14 +110,39 @@ class VariableEntry( PopupEntry ):
 
 
     def _confirm( self ):
+        """ Commit changes to Session variables. Does NOT save these changes.
+        
+        NOTE: Scope hard-coded to LOCAL_DATA after discussions with leaderhsip.
+              LOCAL_DATA is the only scope we expect to use with editing, so there
+              is no need for users to enter it (or for it to be anything else)
+        """
+        hybrid = Session.hybrid
+        hybrid.reset_vars()
+        hybrid.reset_thin_vars()
 
-        print( 'Variable Entry, Confirm Button Callback\n' )
-        self.popup.destroy()
+        for i in range( 0, self.var_index ):
+
+            name = ( self.names[i].get() ).strip()
+            type_ = self.types[i].get()  # Reserved word
+            thin = self.thins[i].get()
+            scope = 'LOCAL_DATA'
+
+            if not name:  # Delete variables by erasing their name 
+                continue
+
+            if thin:
+                hybrid.add_thin_var( Variable( name=name, type=type_, scope=scope ) )
+            else:
+                hybrid.add_var( Variable( name=name, type=type_, scope=scope ) )
+            
+        print( 'Variable Entry Confirmed' )
+        self.destroy()
+
 
     def _cancel( self ):
-
-        print( 'Variable Entry, Cancel Button Callback\n' )
-        self.popup.destroy()
+        """ Cancels changes made in popup """
+        print( 'Variable Entry Canceled' )
+        self.destroy()
 
 
 class ModeEntry( PopupEntry ):
@@ -122,26 +155,26 @@ class ModeEntry( PopupEntry ):
 
         # Name
 
-        Label( self.popup, text='Name:' ).grid( row=1, column=0, sticky=W )
+        Label( self, text='Name:' ).grid( row=1, column=0, sticky=W )
         self.name = StringVar()
         self.name.set( mode.name )
         #self.name.trace_variable( 'w', self._callback_name )
-        Entry( self.popup, textvariable=self.name ).grid( row=1, column=1, sticky=E )
+        Entry( self, textvariable=self.name ).grid( row=1, column=1, sticky=E )
 
 
         # ID
         
-        Label( self.popup, text='ID:' ).grid( row=2, column=0, sticky=W )
+        Label( self, text='ID:' ).grid( row=2, column=0, sticky=W )
         self.mode_id = StringVar()
         self.mode_id.set( mode.id )
         #self.mode_id.trace_variable( 'w', self._callback_mode_id )
-        Entry( self.popup, textvariable=self.mode_id ).grid( row=2, column=1, sticky=E )
+        Entry( self, textvariable=self.mode_id ).grid( row=2, column=1, sticky=E )
 
 
         # Flows
 
-        Label( self.popup, text='Flows: ' ).grid( row=3, column=0, sticky=W )       
-        self.flows = Text( self.popup, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
+        Label( self, text='Flows: ' ).grid( row=3, column=0, sticky=W )       
+        self.flows = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
         self.flows.grid( row=4, column=0, columnspan=2, sticky=N+S+E+W )
 
         for dai in mode.dais:
@@ -153,8 +186,8 @@ class ModeEntry( PopupEntry ):
 
         # Invariants
 
-        Label( self.popup, text='Invariants: ' ).grid( row=5, column=0, sticky=W )
-        self.invariants = Text( self.popup, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
+        Label( self, text='Invariants: ' ).grid( row=5, column=0, sticky=W )
+        self.invariants = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
         self.invariants.grid( row=6, column=0, columnspan=2, sticky=N+S+E+W )
 
         #for inv in mode.invs:
@@ -195,7 +228,7 @@ class TransitionEntry( PopupEntry ):
         self.mode_list = [ 'Mode 1', 'Mode 2', 'Mode 3' ]
 
         self.transition_var = StringVar()
-        Label( self.popup, textvariable=self.transition_var ).grid( row=1, column=0, columnspan=2 )
+        Label( self, textvariable=self.transition_var ).grid( row=1, column=0, columnspan=2 )
 
 
         # Source and Destination
@@ -206,29 +239,29 @@ class TransitionEntry( PopupEntry ):
         self.destination_var.set( self.mode_list[1] )
         self._callback_mode_select # Initialize transition label (self.transition_var)
 
-        Label( self.popup, text='Source:' ).grid( row=2, column=0, sticky=W )
-        Label( self.popup, text='Destination: ' ).grid( row=3, column=0, sticky=W )
+        Label( self, text='Source:' ).grid( row=2, column=0, sticky=W )
+        Label( self, text='Destination: ' ).grid( row=3, column=0, sticky=W )
         
         self.source_var.trace_variable( 'w', self._callback_mode_select )
         self.destination_var.trace_variable( 'w', self._callback_mode_select )
 
-        OptionMenu( self.popup, self.source_var, self.mode_list[0], *self.mode_list ).grid( row=2, column=1, sticky=W+E )
-        OptionMenu( self.popup, self.destination_var, self.mode_list[1], *self.mode_list ).grid( row=3, column=1, sticky=W+E )
+        OptionMenu( self, self.source_var, self.mode_list[0], *self.mode_list ).grid( row=2, column=1, sticky=W+E )
+        OptionMenu( self, self.destination_var, self.mode_list[1], *self.mode_list ).grid( row=3, column=1, sticky=W+E )
        
 
         # Guards
         
-        Label( self.popup, text='Guards: ' ).grid( row=4, column=0, sticky=W )
+        Label( self, text='Guards: ' ).grid( row=4, column=0, sticky=W )
        
-        self.guards = Text( self.popup, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
+        self.guards = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
         self.guards.grid( row=5, column=0, columnspan=2, sticky=N+S+E+W )
 
         
         # Actions 
         
-        Label( self.popup, text='Actions: ' ).grid( row=6, column=0, sticky=W )
+        Label( self, text='Actions: ' ).grid( row=6, column=0, sticky=W )
 
-        self.actions = Text( self.popup, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
+        self.actions = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
         self.actions.grid( row=7, column=0, columnspan=2, sticky=N+S+E+W )
 
 

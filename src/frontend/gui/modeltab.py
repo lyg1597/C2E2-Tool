@@ -60,10 +60,12 @@ class TreeView(Treeview):
 
 
     def _clear_model(self, event=None):
+        print( 'Clearing Model...' )
         self.delete(*self.get_children())
 
 
     def _display_model(self, event=None):
+        print( 'Displaying Model...' )
         hybrid = Session.hybrid
         # Display variables
         var_id = self.insert('', 'end', text=VARIABLES)
@@ -148,35 +150,43 @@ class TreeView(Treeview):
     def _on_double_click( self, event ): 
         """Pop-up edit menu (child) or add menu (root) depending on item double clicked"""
 
-        print( 'Double-Click Event' )
+        print( '<<Double-Click>>' )
 
         item_id = self.identify_row( event.y )
 
         # Do nothing is no Treeview item was selected
         if( not item_id ):
-            print( 'No item selected' ) #TODO: Remove or polish me before release
-            print()  #TODO: Remove or polish me before release
+            print( 'No item selected\n' )
             return
 
         root_id, parent_id, context = self._get_root_and_context( item_id )
 
-        print( 'Item: ' + self.item( item_id )['text'] ) #TODO: Remove me, I'm here for dev
+        print( 'Item: ' + self.item( item_id )['text'] ) 
 
         # Do nothing if a root was selected.
         if( root_id == item_id ):
-            print( 'Context: None (root selected)' )  #TODO: Remove me, I'm here for dev
-            print()  #TODO: Remove me, I'm here for dev
+            print( 'Context: None (root selected)\n' )
             return 
 
-        print( 'Context: ' + context ) #TODO: Remove me, I'm here for dev
-        print()  # TODO: Remove me, I'm here for dev
+        print( 'Context: ' + context + '\n' )
         
         if( context == VARIABLES ):
-            VariableEntry( self.master )
+            entry = VariableEntry( self.master )
         elif( context == MODES ):
-            ModeEntry( self.master, self.mode_str_dict[self.item(parent_id)['text']] )
+            entry = ModeEntry( self.master, self.mode_str_dict[self.item(parent_id)['text']] )
         elif( context == TRANSITIONS ):
-            TransitionEntry( self.master, parent_id )
+            entry = TransitionEntry( self.master, parent_id )
+        else:
+            return
+        
+        # Wait for user response
+        self.master.wait_window( entry )
+        
+        # Refresh Model
+        self._clear_model()
+        self._display_model()
+        
+        print( 'Done!\n' )
 
 
     def _on_right_click( self, event ):
