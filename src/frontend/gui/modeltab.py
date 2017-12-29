@@ -35,8 +35,6 @@ class TreeView(Treeview):
         """ 
         Note: We use 'master' here instead of 'parent' due to naming conflict
               with the parent() function in the Treeview class. 
-
-        TODO: Investigate other solutions to the naming conflict.
         """
         Treeview.__init__(self, master, **options)
         self.pack(fill=BOTH, expand=TRUE)

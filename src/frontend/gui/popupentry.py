@@ -33,10 +33,11 @@ class VariableEntry( PopupEntry ):
         self.title_label.config( text='Variables' )
 
         self._init_widgets()
-        self._load_session_vars()
+        self._load_session()
 
 
     def _init_widgets( self ):
+        """ Initialize GUI elements """
 
         self.title_label.grid( row=0, column=0, columnspan=3 )
 
@@ -50,19 +51,23 @@ class VariableEntry( PopupEntry ):
         self.thins = []  # BoolVar()
         self.var_index = 0
 
+
         # Buttons
+
         self.btn_frame = Frame( self )
 
+        self.cancel_btn = Button( self.btn_frame, text='Cancel', command=self._cancel )
         self.add_btn = Button( self.btn_frame, text='Add', command=self._add_row )
         self.confirm_btn = Button( self.btn_frame, text='Confirm', command=self._confirm )
-        self.cancel_btn = Button( self.btn_frame, text='Cancel', command=self._cancel )
 
-        self.add_btn.grid( row=0, column=0 )
-        self.confirm_btn.grid( row=0, column=1 )
-        self.cancel_btn.grid( row=0, column=2 )
+        self.cancel_btn.grid( row=0, column=0 )
+        self.add_btn.grid( row=0, column=1 )
+        self.confirm_btn.grid( row=0, column=2 )
+        
+        # self.btn_frame is added to the grid in self._add_row()
 
     
-    def _load_session_vars( self ):
+    def _load_session( self ):
         """ Load current model's values """
         
         #TODO LMB: I'm not sure if hybrid.vars and hybrid.thinvars are the correct variables to be looping over for this. Confirm that I have loaded the values correctly or fix it
@@ -110,7 +115,7 @@ class VariableEntry( PopupEntry ):
 
 
     def _confirm( self ):
-        """ Commit changes to Session variables. Does NOT save these changes.
+        """ Commit changes to Session. Does NOT save these changes.
         
         NOTE: Scope hard-coded to LOCAL_DATA after discussions with leaderhsip.
               LOCAL_DATA is the only scope we expect to use with editing, so there
@@ -135,49 +140,84 @@ class VariableEntry( PopupEntry ):
             else:
                 hybrid.add_var( Variable( name=name, type=type_, scope=scope ) )
             
-        print( 'Variable Entry Confirmed' )
+        print( 'Variable Entry Confirmed\n' )
         self.destroy()
 
 
     def _cancel( self ):
         """ Cancels changes made in popup """
-        print( 'Variable Entry Canceled' )
+        print( 'Variable Entry Canceled\n' )
         self.destroy()
 
 
 class ModeEntry( PopupEntry ):
 
     def __init__( self, parent, mode ):
-
         PopupEntry.__init__( self, parent )
-        self.title_label.config( text='Mode' )  # row=0, column=0, columnspan=2
+        self.title_label.config( text='Mode' )
 
+        self.mode = mode
+
+        self._init_widgets()
+        self._load_session()
+
+
+    def _init_widgets( self ):
+        """ Initialize GUI elements """ 
 
         # Name
-
         Label( self, text='Name:' ).grid( row=1, column=0, sticky=W )
         self.name = StringVar()
-        self.name.set( mode.name )
-        #self.name.trace_variable( 'w', self._callback_name )
         Entry( self, textvariable=self.name ).grid( row=1, column=1, sticky=E )
 
-
         # ID
-        
         Label( self, text='ID:' ).grid( row=2, column=0, sticky=W )
         self.mode_id = StringVar()
-        self.mode_id.set( mode.id )
-        #self.mode_id.trace_variable( 'w', self._callback_mode_id )
         Entry( self, textvariable=self.mode_id ).grid( row=2, column=1, sticky=E )
 
+        # Initial
+        Label( self, text='Initial:' ).grid( row=3, column=0, sticky=W )
+        self.initial = BooleanVar()
+        Checkbutton( self, var=self.initial ).grid( row=3, column=1 )
 
         # Flows
-
-        Label( self, text='Flows: ' ).grid( row=3, column=0, sticky=W )       
+        Label( self, text='Flows: ' ).grid( row=4, column=0, sticky=W )       
         self.flows = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
-        self.flows.grid( row=4, column=0, columnspan=2, sticky=N+S+E+W )
+        self.flows.grid( row=5, column=0, columnspan=2, sticky=N+S+E+W )
 
-        for dai in mode.dais:
+        # Invariants
+        Label( self, text='Invariants: ' ).grid( row=6, column=0, sticky=W )
+        self.invariants = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
+        self.invariants.grid( row=7, column=0, columnspan=2, sticky=N+S+E+W )
+
+        
+        # Buttons
+        
+        self.btn_frame = Frame( self )
+
+        self.cancel_btn = Button( self.btn_frame, text='Cancel', command=self._cancel )
+        self.confirm_btn = Button( self.btn_frame, text='Confirm', command=self._confirm )
+        
+        self.cancel_btn.grid( row=0, column=0 )
+        self.confirm_btn.grid( row=0, column=1 )
+
+        self.btn_frame.grid( row=8, column=0, columnspan=2 )
+
+
+    def _load_session( self ):
+        """ Load selected mode's values """
+
+        # Name
+        self.name.set( self.mode.name )
+
+        # ID
+        self.mode_id.set( self.mode.id )
+
+        # Initial
+        self.initial.set( self.mode.initial )
+
+        # Flows
+        for dai in self.mode.dais:
             if '_dot' in dai.raw:
                 dai_str = dai.raw[3:-1]
                 idx = dai_str.index(',')
@@ -185,36 +225,23 @@ class ModeEntry( PopupEntry ):
                 self.flows.insert( INSERT, dai_str + '\n' )
 
         # Invariants
+        for inv in self.mode.invs:
+            self.invariants.insert( INSERT, inv.raw + '\n' )
 
-        Label( self, text='Invariants: ' ).grid( row=5, column=0, sticky=W )
-        self.invariants = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
-        self.invariants.grid( row=6, column=0, columnspan=2, sticky=N+S+E+W )
+    
+    def _confirm( self ):
+        """ Commit changes to Session. Does NOT save changes """
 
-        #for inv in mode.invs:
-         #   self.invariants.insert( inv_i
+        # TODO: Impelement Me Please!
 
-        # Buttons
-
-        self.confirm_button.grid( row=7, column=0, sticky=E+W )
-        self.cancel_button.grid( row=7, column=1, sticky=E+W )
+        print( 'Mode Entry Confirmed\n' )
+        self.destroy()
 
 
-    def _load_current_values( self ):
-
-        # Find current mode
-        hybrid = Session.hybrid
-
-    def _callback_flows( self, input ):
-        #TODO
-        print( 'Callback Flows\n' )
-
-    def _callback_name( self, input ):
-        #TODO
-        print( 'Callback Name\n' )
-
-    def _callback_mode_id( self, input ):
-        #TODO
-        print( 'Callback Mode ID\n' )
+    def _cancel( self ):
+        """ Cancels changes made in popup """
+        print( 'Mode Entry Canceled\n' )
+        self.destroy()
 
 
 class TransitionEntry( PopupEntry ):
