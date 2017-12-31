@@ -142,7 +142,7 @@ class ToggleFrame( Frame ):
         
         self.visible = BooleanVar()
         self.visible.set( False )
-        self.toggle_btn = Checkbutton( self.header_frame, text='+', width=2, variable=self.visible, command=self.toggle, style='Toolbutton' )
+        self.toggle_btn = Checkbutton( self.header_frame, text='+', width=2, variable=self.visible, command=self._btn_toggle, style='Toolbutton' )
         self.toggle_btn.pack( side=LEFT )
 
         self.header_frame.pack( fill=X, expand=TRUE )
@@ -150,33 +150,45 @@ class ToggleFrame( Frame ):
 
         # Content (Entry Fields)
 
-        self.body_frame = Frame( self, relief='sunken' )
+        self.body_frame = Frame( self )
 
         self.rows = []  # StringVar() 
         self.row_index = 0
                
 
         # Add Button
+
         self.btn_frame = Frame( self.body_frame )
         Button( self.btn_frame, text='Add Row', command=self.add_row ).pack()
         
-        self.add_row()
-
     
-    def toggle( self ):
+    def _btn_toggle( self ):
 
         if( self.visible.get() ):
             self.body_frame.pack( fill=X, expand=TRUE )
             self.toggle_btn.config( text='-' )
         else:
             self.body_frame.forget()
-            self.toggle_btn.config( text='+' )            
+            self.toggle_btn.config( text='+' )
 
 
-    def add_row( self ):
+    def toggle( self ):
+
+        if( self.visible.get() ):
+            self.visible.set( False )
+        else:
+            self.visible.set( True )
+
+        self._btn_toggle()       
+
+
+    def add_row( self, text='' ):
         
         self.rows.append( StringVar() )
         self.btn_frame.forget()
+
+        if( text ):
+            self.rows[self.row_index].set( text )
 
         Entry( self.body_frame, textvariable=self.rows[self.row_index] ).pack( fill=X, expand=TRUE )
 
