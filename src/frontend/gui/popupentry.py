@@ -161,16 +161,30 @@ class ModeEntry( PopupEntry ):
         self.initial = BooleanVar()
         Checkbutton( self, var=self.initial ).grid( row=3, column=1 )
 
+
         # Flows
+
+        self.flow_toggle = ToggleFrame( self, text='Flows' )
+        self.flow_toggle.grid( row=4, column=0, columnspan=2 )
+
+        '''
         Label( self, text='Flows: ' ).grid( row=4, column=0, sticky=W )       
         self.flows = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
         self.flows.grid( row=5, column=0, columnspan=2, sticky=N+S+E+W )
+        '''
+
 
         # Invariants
+
+        self.inv_toggle = ToggleFrame( self, text='Invariants' )
+        self.inv_toggle.grid( row=5, column=0, columnspan=2 )
+
+
+        '''
         Label( self, text='Invariants: ' ).grid( row=6, column=0, sticky=W )
         self.invariants = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
         self.invariants.grid( row=7, column=0, columnspan=2, sticky=N+S+E+W )
-
+        '''
         
         # Buttons
         
@@ -198,17 +212,19 @@ class ModeEntry( PopupEntry ):
         self.initial.set( self.mode.initial )
 
         # Flows
+        '''
         for dai in self.mode.dais:
             if '_dot' in dai.raw:
                 dai_str = dai.raw[3:-1]
                 idx = dai_str.index(',')
                 dai_str = dai_str[:idx]+'='+dai_str[idx+1:]
                 self.flows.insert( INSERT, dai_str + '\n' )
-
+        '''
         # Invariants
+        '''
         for inv in self.mode.invs:
             self.invariants.insert( INSERT, inv.raw + '\n' )
-
+        '''
     
     def _confirm( self ):
         """ Commit changes to Session. Does NOT save changes """

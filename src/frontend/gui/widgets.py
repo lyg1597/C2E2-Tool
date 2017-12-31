@@ -127,32 +127,59 @@ class PopupEntry( Toplevel ):
         self.focus_set()
         self.grab_set()
 
-        
+
 class ToggleFrame( Frame ):
 
-    def __init__( self, parent, title ):
+    def __init__( self, parent, text ):
         Frame.__init__( self, parent )
-
+          
+        
+        # Title / Collapse button
+        
+        self.header_frame = Frame( self )
+        
+        Label( self.header_frame, text=text ).pack( side=LEFT, fill=X, expand=TRUE )
+        
         self.visible = BooleanVar()
         self.visible.set( False )
-
-        self.header_frame = Frame( self )
-
-        Label( self.header_frame, text=title ).pack( side=LEFT, fill=X, expand=TRUE )
-        
-        self.toggle_btn = Checkbutton( self.header_frame, width=2, text='+', command=self.toggle_visibile, variable=self.visible, style='Toolbutton' )
+        self.toggle_btn = Checkbutton( self.header_frame, text='+', width=2, variable=self.visible, command=self.toggle, style='Toolbutton' )
         self.toggle_btn.pack( side=LEFT )
-        
+
         self.header_frame.pack( fill=X, expand=TRUE )
+    
 
-        self.sub_frame = Frame( self, relief='sunken', borderwidth=1 )
+        # Content (Entry Fields)
 
+        self.body_frame = Frame( self, relief='sunken' )
 
-    def toggle_visibile( self ):
+        self.rows = []  # StringVar() 
+        self.row_index = 0
+               
+
+        # Add Button
+        self.btn_frame = Frame( self.body_frame )
+        Button( self.btn_frame, text='Add Row', command=self.add_row ).pack()
+        
+        self.add_row()
+
+    
+    def toggle( self ):
 
         if( self.visible.get() ):
-            self.sub_frame.pack( fill=X, expand=TRUE )
+            self.body_frame.pack( fill=X, expand=TRUE )
             self.toggle_btn.config( text='-' )
         else:
-            self.sub_frame.forget()
-            self.toggle_btn.config( text='+' )
+            self.body_frame.forget()
+            self.toggle_btn.config( text='+' )            
+
+
+    def add_row( self ):
+        
+        self.rows.append( StringVar() )
+        self.btn_frame.forget()
+
+        Entry( self.body_frame, textvariable=self.rows[self.row_index] ).pack( fill=X, expand=TRUE )
+
+        self.btn_frame.pack()
+
+        self.row_index += 1
