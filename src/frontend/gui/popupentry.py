@@ -162,12 +162,12 @@ class ModeEntry( PopupEntry ):
         Checkbutton( self, var=self.initial ).grid( row=3, column=1 )
 
         # Flows
-        self.flow_toggle = ToggleFrame( self, text='Flows' )
-        self.flow_toggle.grid( row=4, column=0, columnspan=2 )
+        self.flow_toggle = ToggleFrame( self, text='Flows:' )
+        self.flow_toggle.grid( row=4, column=0, columnspan=2, sticky=E+W )
 
         # Invariants
-        self.inv_toggle = ToggleFrame( self, text='Invariants' )
-        self.inv_toggle.grid( row=5, column=0, columnspan=2 )
+        self.inv_toggle = ToggleFrame( self, text='Invariants:' )
+        self.inv_toggle.grid( row=5, column=0, columnspan=2, sticky=E+W )
 
         
         # Buttons
@@ -208,7 +208,7 @@ class ModeEntry( PopupEntry ):
         for inv in self.mode.invs:
             self.inv_toggle.add_row( text=inv.raw )
         self.inv_toggle.toggle()
-        
+
 
     def _confirm( self ):
         """ Commit changes to Session. Does NOT save changes """

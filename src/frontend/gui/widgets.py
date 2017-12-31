@@ -163,6 +163,7 @@ class ToggleFrame( Frame ):
         
     
     def _btn_toggle( self ):
+        """ Toggle visibility when user clicks button """
 
         if( self.visible.get() ):
             self.body_frame.pack( fill=X, expand=TRUE )
@@ -173,6 +174,7 @@ class ToggleFrame( Frame ):
 
 
     def toggle( self ):
+        """ Toggle visibility ( simulates a button click ) """
 
         if( self.visible.get() ):
             self.visible.set( False )
@@ -183,6 +185,7 @@ class ToggleFrame( Frame ):
 
 
     def add_row( self, text='' ):
+        """ Add entry row, optionally filled in with text """
         
         self.rows.append( StringVar() )
         self.btn_frame.forget()
