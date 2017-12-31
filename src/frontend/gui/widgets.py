@@ -106,3 +106,53 @@ class SetText(Frame):
         self.text.delete('1.0', END)
         self.text.insert(END, str)
         self._callback()
+
+
+class PopupEntry( Toplevel ):
+
+    def __init__( self, parent ):
+        Toplevel.__init__( self, parent )
+
+        self.parent = parent
+        self.resizable( width=False, height=False )
+
+        self.title_label = Label( self, text='C2E2' )
+        self.title_label.grid( row=0, column=0, columnspan=2 )
+        
+        self.TEXTBOX_HEIGHT = 10
+        self.TEXTBOX_WIDTH = 30
+
+        # Prevent interaction with main window until Popup is Confirmed/Canceled
+        self.wait_visibility()
+        self.focus_set()
+        self.grab_set()
+
+        
+class ToggleFrame( Frame ):
+
+    def __init__( self, parent, title ):
+        Frame.__init__( self, parent )
+
+        self.visible = BooleanVar()
+        self.visible.set( False )
+
+        self.header_frame = Frame( self )
+
+        Label( self.header_frame, text=title ).pack( side=LEFT, fill=X, expand=TRUE )
+        
+        self.toggle_btn = Checkbutton( self.header_frame, width=2, text='+', command=self.toggle_visibile, variable=self.visible, style='Toolbutton' )
+        self.toggle_btn.pack( side=LEFT )
+        
+        self.header_frame.pack( fill=X, expand=TRUE )
+
+        self.sub_frame = Frame( self, relief='sunken', borderwidth=1 )
+
+
+    def toggle_visibile( self ):
+
+        if( self.visible.get() ):
+            self.sub_frame.pack( fill=X, expand=TRUE )
+            self.toggle_btn.config( text='-' )
+        else:
+            self.sub_frame.forget()
+            self.toggle_btn.config( text='+' )

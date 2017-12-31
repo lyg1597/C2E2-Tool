@@ -171,6 +171,8 @@ class TreeView(Treeview):
         if( context == VARIABLES ):
             entry = VariableEntry( self.master )
         elif( context == MODES ):
+            print( 'Mode (Treeview): ' )
+            print( self.mode_str_dict[self.item(parent_id)['text']] )
             entry = ModeEntry( self.master, self.mode_str_dict[self.item(parent_id)['text']] )
         elif( context == TRANSITIONS ):
             entry = TransitionEntry( self.master, parent_id )

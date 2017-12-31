@@ -1,29 +1,10 @@
 from tkinter import *
 from tkinter.ttk import *
+from frontend.gui.widgets import PopupEntry, ToggleFrame
 from frontend.mod.automaton import *
 from frontend.mod.constants import *
 from frontend.mod.hyir import *
 from frontend.mod.session import Session
-
-
-class PopupEntry( Toplevel ):
-
-    def __init__( self, parent ):
-        Toplevel.__init__( self, parent )
-
-        self.parent = parent
-        self.resizable( width=False, height=False )
-
-        self.title_label = Label( self, text='C2E2' )
-        self.title_label.grid( row=0, column=0, columnspan=2 )
-        
-        self.TEXTBOX_HEIGHT = 10
-        self.TEXTBOX_WIDTH = 30
-
-        # Prevent interaction with main window until Popup is Confirmed/Canceled
-        self.wait_visibility()
-        self.focus_set()
-        self.grab_set()
 
 
 class VariableEntry( PopupEntry ):
@@ -232,8 +213,19 @@ class ModeEntry( PopupEntry ):
     def _confirm( self ):
         """ Commit changes to Session. Does NOT save changes """
 
-        # TODO: Impelement Me Please!
+        # Name
+        self.mode.name = self.name.get()
+        
+        # ID
+        self.mode.id = self.mode_id.get()
+        
+        # Initial
+        self.mode.initial = self.initial.get()
 
+        # Flows
+
+        # Invariants
+        
         print( 'Mode Entry Confirmed\n' )
         self.destroy()
 
