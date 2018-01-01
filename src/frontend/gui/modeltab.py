@@ -77,12 +77,12 @@ class TreeView(Treeview):
             self.insert(thin_var_id, 'end', text=thin_var_str)
             self.item(thin_var_id, open=TRUE)
             
-        mode_dict = {}
-        self.mode_str_dict = {}  # LMB: Connect mode_str to mode for easier editing
+        self.mode_dict = {}  # LMB: Changed scope, TransitionEntry needs to use it
+        self.mode_str_dict = {}  # LMB: Connect mode_str to mode for editing
         modes_id = self.insert('', 'end', text=MODES)
         self.item(modes_id, open=TRUE)
         for mode in hybrid.automata[0].modes:
-            mode_dict[mode.id] = mode.name
+            self.mode_dict[mode.id] = mode.name
             mode_str = mode.name + ' (' + str(mode.id) + ')'
             self.mode_str_dict[mode_str] = mode  # LMB: Connect mode_str to mode
             mode_id = self.insert(modes_id, 'end', text=mode_str)
@@ -102,11 +102,13 @@ class TreeView(Treeview):
                 self.insert(inv_id, 'end', text=inv.raw)
 
         # Display transitions
+        self.tran_str_dict = {}  # LMB: Connect tran_str to tran for editing
         trans_id = self.insert('', 'end', text=TRANSITIONS)
         self.item(trans_id, open=TRUE)
         for tran in hybrid.automata[0].trans:
-            src, dest = mode_dict[tran.src], mode_dict[tran.dest]
+            src, dest = self.mode_dict[tran.src], self.mode_dict[tran.dest]
             tran_str = src + ' -> ' + dest
+            self.tran_str_dict[tran_str] = tran  # LMB: Connect tran_str to tran
             tran_id = self.insert(trans_id, 'end', text=tran_str)
 
             src_str = 'Source: ' + src + ' (' + str(tran.src) + ')'
@@ -175,7 +177,7 @@ class TreeView(Treeview):
             print( self.mode_str_dict[self.item(parent_id)['text']] )
             entry = ModeEntry( self.master, self.mode_str_dict[self.item(parent_id)['text']] )
         elif( context == TRANSITIONS ):
-            entry = TransitionEntry( self.master, parent_id )
+            entry = TransitionEntry( self.master, self.tran_str_dict[self.item(parent_id)['text']], self.mode_dict )
         else:
             return
         
@@ -1038,5 +1040,3 @@ class PropertyEditor(Frame):
         Session.cur_prop = Session.prop_list[0]
         Session.cur_prop.is_visible = True
         self._display_property(Session.cur_prop)
-
-

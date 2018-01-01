@@ -32,7 +32,6 @@ class VariableEntry( PopupEntry ):
         self.thins = []  # BoolVar()
         self.var_index = 0
 
-
         # Buttons
 
         self.btn_frame = Frame( self )
@@ -169,7 +168,6 @@ class ModeEntry( PopupEntry ):
         self.inv_toggle = ToggleFrame( self, text='Invariants:' )
         self.inv_toggle.grid( row=5, column=0, columnspan=2, sticky=E+W )
 
-        
         # Buttons
         
         self.btn_frame = Frame( self )
@@ -246,7 +244,57 @@ class ModeEntry( PopupEntry ):
 
 class TransitionEntry( PopupEntry ):
 
-    def __init__( self, parent ):
+    def __init__( self, parent, transition, mode_dict ):
+        PopupEntry.__init__( self, parent )
+        self.title_label.config( text='Transition' )
+
+        self.transition = transition
+        self.mode_dict = mode_dict  # mode_dict[mode.id] = mode.name
+
+        # Load Mode list for Source/Destination Option Menus
+        self.mode_list = []
+        for mode_id in mode_dict:
+            self.mode_list.append( mode_dict[mode_id] )
+
+        self._init_widgets()
+        #self._load_session()
+
+
+    def _init_widgets( self ):
+        """ Initialize GUI elements """
+
+        # Transition Label
+        self.transition_str = StringVar()
+        Label( self, textvariable=self.transition_str ).grid( row=1, column=0, columnspan=2 )
+
+        # Source and Destination
+        
+        Label( self, text='Source:' ).grid( row=2, column=0, sticky=W )
+        Label( self, text='Destination:' ).grid( row=3, column=0, sticky=W )
+
+        self.source_str = StringVar()
+        self.destination_str = StringVar()
+
+        self.source_str.trace_variable( 'w', self._callback_mode_select )
+        self.destination_str.trace_variable( 'w', self._callback_mode_select )
+
+        # Aribtrarily set default source/destination.
+        # These are overwritten to be correct in load_session
+        OptionMenu( self, self.source_str, self.mode_list[0], *self.mode_list )\
+            .grid( row=2, column=1, sticky=W+E )        
+        OptionMenu( self, self.destination_str, self.mode_list[1], *self.mode_list )\
+            .grid( row=3, column=1, sticky=W+E )
+
+
+    def _callback_mode_select( self, *args ):
+
+        self.transition_str.set( self.source_str.get() + " -> " + self.destination_str.get() )
+
+        
+
+class TransitionEntryOld( PopupEntry ):
+
+    def __init__( self, parent, transition, mode_dict ):
 
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Transition' )
@@ -256,7 +304,6 @@ class TransitionEntry( PopupEntry ):
 
         self.transition_var = StringVar()
         Label( self, textvariable=self.transition_var ).grid( row=1, column=0, columnspan=2 )
-
 
         # Source and Destination
 
@@ -275,7 +322,6 @@ class TransitionEntry( PopupEntry ):
         OptionMenu( self, self.source_var, self.mode_list[0], *self.mode_list ).grid( row=2, column=1, sticky=W+E )
         OptionMenu( self, self.destination_var, self.mode_list[1], *self.mode_list ).grid( row=3, column=1, sticky=W+E )
        
-
         # Guards
         
         Label( self, text='Guards: ' ).grid( row=4, column=0, sticky=W )
@@ -283,14 +329,12 @@ class TransitionEntry( PopupEntry ):
         self.guards = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
         self.guards.grid( row=5, column=0, columnspan=2, sticky=N+S+E+W )
 
-        
         # Actions 
         
         Label( self, text='Actions: ' ).grid( row=6, column=0, sticky=W )
 
         self.actions = Text( self, height=self.TEXTBOX_HEIGHT, width=self.TEXTBOX_WIDTH )
         self.actions.grid( row=7, column=0, columnspan=2, sticky=N+S+E+W )
-
 
         # Confirm / Cancel buttons
 
