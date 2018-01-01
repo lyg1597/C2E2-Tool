@@ -182,7 +182,7 @@ class ModeEntry( PopupEntry ):
 
 
     def _load_session( self ):
-        """ Load selected mode's values """
+        """ Load selected mode's Session values """
 
         # Name
         self.name.set( self.mode.name )
@@ -267,10 +267,15 @@ class TransitionEntry( PopupEntry ):
         self.trans_str = StringVar()
         Label( self, textvariable=self.trans_str ).grid( row=1, column=0, columnspan=2 )
 
+        # ID
+        Label( self, text='ID:' ).grid( row=2, column=0, sticky=W )
+        self.trans_id = IntVar()
+        Entry( self, textvariable=self.trans_id ).grid( row=2, column=1, sticky=E )
+
         # Source and Destination
         
-        Label( self, text='Source:' ).grid( row=2, column=0, sticky=W )
-        Label( self, text='Destination:' ).grid( row=3, column=0, sticky=W )
+        Label( self, text='Source:' ).grid( row=3, column=0, sticky=W )
+        Label( self, text='Destination:' ).grid( row=4, column=0, sticky=W )
 
         self.src_str = StringVar()
         self.dest_str = StringVar()
@@ -281,18 +286,18 @@ class TransitionEntry( PopupEntry ):
         # Aribtrarily set default source/destination.
         # These are overwritten to be correct in load_session
         OptionMenu( self, self.src_str, self.mode_list[0], *self.mode_list )\
-            .grid( row=2, column=1, sticky=W+E )        
+            .grid( row=3, column=1, sticky=W+E )        
         OptionMenu( self, self.dest_str, self.mode_list[1], *self.mode_list )\
-            .grid( row=3, column=1, sticky=W+E )
+            .grid( row=4, column=1, sticky=W+E )
 
         # Guards
-        Label( self, text='Guards:' ).grid( row=4, column=0, sticky=W )
+        Label( self, text='Guards:' ).grid( row=5, column=0, sticky=W )
         self.guard_str = StringVar()
-        Entry( self, textvariable=self.guard_str ).grid( row=4, column=1, sticky=E )
+        Entry( self, textvariable=self.guard_str ).grid( row=5, column=1, sticky=E )
 
         # Actions
         self.action_toggle = ToggleFrame( self, text='Actions:' )
-        self.action_toggle.grid( row=5, column=0, columnspan=2, sticky=E+W )
+        self.action_toggle.grid( row=6, column=0, columnspan=2, sticky=E+W )
 
         # Buttons
          
@@ -304,10 +309,14 @@ class TransitionEntry( PopupEntry ):
         self.cancel_btn.grid( row=0, column=0 )
         self.confirm_btn.grid( row=0, column=1 )
 
-        self.btn_frame.grid( row=8, column=0, columnspan=2 )
+        self.btn_frame.grid( row=7, column=0, columnspan=2 )
 
 
     def _load_session( self ):
+        """ Load selected transition's Session values """
+
+        # ID
+        self.trans_id.set( self.trans.id )
 
         # Source and Destination
         self.src_str.set( self.mode_dict[self.trans.src] )
@@ -328,8 +337,30 @@ class TransitionEntry( PopupEntry ):
 
 
     def _confirm( self ):
+        """" Commits changes to Session. Does NOT save changes """
 
-        print( 'Confirmed' )
+        # ID
+        self.trans.id = self.trans_id.get()
+        
+        # Source and Destination
+        for mode_id in self.mode_dict:
+            if( self.mode_dict[mode_id] == self.src_str.get() ):
+                self.trans.src = mode_id
+            elif( self.mode_dict[mode_id] == self.dest_str.get() ):
+                self.trans.dest = mode_id
+
+        # Guard
+        self.trans.guard = Guard( self.guard_str.get() )
+
+        # Actions
+        self.trans.clear_actions()
+        for action in self.action_toggle.rows:
+            if( (action.get()).strip() ):
+                self.trans.add_action( Action(action.get()) )
+                
+        print( 'Transition Entry Confirmed' )
+        self.destroy()
+
 
     def _cancel( self ):
         """ Cancels changes made in popup """

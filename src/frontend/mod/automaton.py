@@ -148,6 +148,14 @@ class Transition:
         self.src = src
         self.dest = dest
 
+    def clear_actions( self ):  # LMB: Added for GUI editing
+        self.actions = []
+
+    def add_action( self, action ):  # LMB: Added for GUI editing
+        self.actions.append( action )
+
+    
+
 class DAI:
     '''Deterministic algebraic inequalities'''
     def __init__(self, raw):
