@@ -285,11 +285,41 @@ class TransitionEntry( PopupEntry ):
         OptionMenu( self, self.destination_str, self.mode_list[1], *self.mode_list )\
             .grid( row=3, column=1, sticky=W+E )
 
+        # Guards
+        Label( self, text='Guards:' ).grid( row=4, column=0, sticky=W )
+        self.guards = StringVar()
+        Entry( self, textvariable=self.guards ).grid( row=4, column=1, sticky=E )
+
+        # Actions
+        self.action_toggle = ToggleFrame( self, text='Actions:' )
+        self.action_toggle.grid( row=5, column=0, columnspan=2, sticky=E+W )
+
+        # Buttons
+         
+        self.btn_frame = Frame( self )
+
+        self.cancel_btn = Button( self.btn_frame, text='Cancel', command=self._cancel )
+        self.confirm_btn = Button( self.btn_frame, text='Confirm', command=self._confirm )
+
+        self.cancel_btn.grid( row=0, column=0 )
+        self.confirm_btn.grid( row=0, column=1 )
+
+        self.btn_frame.grid( row=8, column=0, columnspan=2 )
+
 
     def _callback_mode_select( self, *args ):
-
+        """ OptionMenu callback, updates transition label at top of window """
         self.transition_str.set( self.source_str.get() + " -> " + self.destination_str.get() )
 
+
+    def _confirm( self ):
+
+        print( 'Confirmed' )
+
+    def _cancel( self ):
+        """ Cancels changes made in popup """
+        print( 'Transition Entry Canceled\n' )
+        self.destroy()
         
 
 class TransitionEntryOld( PopupEntry ):
