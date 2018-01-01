@@ -30,6 +30,7 @@ class VariableEntry( PopupEntry ):
         self.names = []  # StringVar()
         self.types = []  # StringVar()
         self.thins = []  # BoolVar()
+        self.scopes = [] # StringVar()
         self.var_index = 0
 
         # Buttons
@@ -47,24 +48,44 @@ class VariableEntry( PopupEntry ):
         # self.btn_frame is added to the grid in self._add_row()
 
     
+    def _init_scope_column( self, scope_options ):
+        """ Enable scope column - only used if there is already a non-local scope """
+
+        for i in range( self.var_index ):
+            OptionMenu( self, self.scopes[i], self.scopes[i].get(), *scope_options )\
+                .grid( row=i+2, column=3 )
+
+        # Increase columnspan to accomdate extra row
+        self.title_label.grid( row=0, column=0, columnspan=4 )
+
+    
     def _load_session( self ):
         """ Load current model's values """
         
         hybrid = Session.hybrid
 
+        scope_options = { 'LOCAL_DATA' }
+
         for var in hybrid.vars:
-            if( var.scope != 'LOCAL_DATA' ): continue
+            if( var.scope != 'LOCAL_DATA' ):
+                scope_options.add( var.scope )
             self._add_row()
             self.names[self.var_index-1].set( var.name )
             self.types[self.var_index-1].set( var.type )
             self.thins[self.var_index-1].set( False )
+            self.scopes[self.var_index-1].set( var.scope )
 
         for var in hybrid.thinvars:
-            if( var.scope != 'LOCAL_DATA' ): continue
+            if( var.scope != 'LOCAL_DATA' ): 
+                scope_options.add( var.scope )
             self._add_row()
             self.names[self.var_index-1].set( var.name )
             self.types[self.var_index-1].set( var.type )
             self.thins[self.var_index-1].set( True )
+            self.scopes[self.var_index-1].set( var.scope )
+
+        if( len( scope_options ) > 1 ):
+            self._init_scope_column( scope_options )
 
 
     def _add_row( self ):
@@ -76,13 +97,14 @@ class VariableEntry( PopupEntry ):
         self.names.append( StringVar() )
         self.types.append( StringVar() )
         self.thins.append( BooleanVar() )
+        self.scopes.append( StringVar() )
 
         # Name
         Entry( self, textvariable=self.names[self.var_index] )\
             .grid( row=self.var_index+2, column=0 )
 
         # Type
-        OptionMenu( self, self.types[self.var_index], *VARIABLE_TYPES )\
+        OptionMenu( self, self.types[self.var_index], self.types[self.var_index].get(), *VARIABLE_TYPES )\
             .grid( row=self.var_index+2, column=1 )
 
         # Thin
@@ -102,15 +124,15 @@ class VariableEntry( PopupEntry ):
               is no need for users to enter it (or for it to be anything else)
         """
         hybrid = Session.hybrid
-        hybrid.reset_local_vars()
-        hybrid.reset_local_thin_vars()
+        hybrid.reset_vars()
+        hybrid.reset_thin_vars()
 
         for i in range( 0, self.var_index ):
 
             name = ( self.names[i].get() ).strip()
             type_ = self.types[i].get()  # Reserved word
             thin = self.thins[i].get()
-            scope = 'LOCAL_DATA'
+            scope = self.scopes[i].get()
 
             if not name:  # Delete variables by erasing their name 
                 continue
