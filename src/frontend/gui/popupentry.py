@@ -153,7 +153,7 @@ class ModeEntry( PopupEntry ):
 
         # ID
         Label( self, text='ID:' ).grid( row=2, column=0, sticky=W )
-        self.mode_id = StringVar()
+        self.mode_id = IntVar()
         Entry( self, textvariable=self.mode_id ).grid( row=2, column=1, sticky=E )
 
         # Initial
@@ -223,8 +223,16 @@ class ModeEntry( PopupEntry ):
         self.mode.initial = self.initial.get()
 
         # Flows
+        self.mode.clear_dai()
+        for raw_text in self.flow_toggle.rows:
+            if( (raw_text.get()).strip() ): 
+                self.mode.add_dai( DAI( raw_text.get() ) )
 
         # Invariants
+        self.mode.clear_inv()
+        for raw_text in self.inv_toggle.rows:
+            if( (raw_text.get()).strip() ): 
+                self.mode.add_inv( Invariant( raw_text.get() ) )
         
         print( 'Mode Entry Confirmed\n' )
         self.destroy()

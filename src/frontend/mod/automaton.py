@@ -131,6 +131,9 @@ class Mode:
         self.dais.append(dai)
         if self.linear: self.linear = SymEq.is_linear(dai.expr.rhs)
  
+    def clear_dai(self):  # LMB: Added for GUI editing
+        self.dais = []
+
 class Transition:
     '''guard - node representing the guard for the transition
     actions - list of nodes representing the resets of the transition

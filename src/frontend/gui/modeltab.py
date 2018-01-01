@@ -84,7 +84,7 @@ class TreeView(Treeview):
         for mode in hybrid.automata[0].modes:
             mode_dict[mode.id] = mode.name
             mode_str = mode.name + ' (' + str(mode.id) + ')'
-            self.mode_str_dict[mode_str] = mode
+            self.mode_str_dict[mode_str] = mode  # LMB: Connect mode_str to mode
             mode_id = self.insert(modes_id, 'end', text=mode_str)
 
             # Display flows
