@@ -169,12 +169,41 @@ class HyIR:
         self.variables = Variables()
         self.varList = []
 
+    
+    def reset_local_vars( self ):
+        """ Reset local vars only. Preserve variable with other scopes. """
+        
+        nonlocal_vars = []
+        for var in self.vars:
+            if( var.scope != 'LOCAL_DATA' ):
+                nonlocal_vars.append( var )
+        
+        self.reset_vars()
+
+        for var in nonlocal_vars:
+            self.add_var( var )
+
 
     def reset_thin_vars( self ):
-        """ Reset thing variable lists. Used for editing. """
+        """ Reset thin variable lists. Used for editing. """
         self.thinvars = []
         self.thinvariables = ThinVariables()
         self.thinvarList = []
+
+
+    def reset_local_thin_vars( self ):
+        """ Reset local thin vars only. Presever variables with other scopes. """
+
+        nonlocal_vars = []
+        for var in self.thinvars:
+            if( var.scope != 'LOCAL_DATA' ):
+                nonlocal_vars.append( var )
+
+        self.reset_thin_vars()
+
+        for var in nonlocal_vars:
+            self.add_thin_var( var )
+
 
     def print_all(self):
         print("%s:" % self.name)
