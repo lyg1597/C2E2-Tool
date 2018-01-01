@@ -90,11 +90,12 @@ class TreeView(Treeview):
             # Display flows
             flow_id = self.insert(mode_id, 'end', text='Flows')
             for dai in mode.dais:
-                if '_dot' in dai.raw:
-                    dai_str = dai.raw[3:-1]
-                    idx = dai_str.index(',')
-                    dai_str = dai_str[:idx]+'='+dai_str[idx+1:]
-                    self.insert(flow_id, 'end', text=dai_str)
+                # LMB: Commenting out conditional from popup to avoid 'losing' equations when dialog is confirmed. Removing it here too for consistency. May need to go back and add it after talking with leadership. TODO
+                #if '_dot' in dai.raw:
+                dai_str = dai.raw[3:-1]
+                idx = dai_str.index(',')
+                dai_str = dai_str[:idx]+'='+dai_str[idx+1:]
+                self.insert(flow_id, 'end', text=dai_str)
 
             # Display invariants
             inv_id = self.insert(mode_id, 'end', text='Invariants')

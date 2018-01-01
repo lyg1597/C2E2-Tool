@@ -195,11 +195,12 @@ class ModeEntry( PopupEntry ):
 
         # Flows
         for dai in self.mode.dais:
-            if '_dot' in dai.raw:
-                dai_str = dai.raw[3:-1]
-                idx = dai_str.index(',')
-                dai_str = dai_str[:idx]+'='+dai_str[idx+1:]
-                self.flow_toggle.add_row( text=dai_str )
+            # LMB: Commenting out conditional from popup to avoid 'losing' equations when dialog is confirmed. May need to go back and add it after talking with leadership. TODO
+            #if '_dot' in dai.raw:
+            dai_str = dai.raw[3:-1]
+            idx = dai_str.index(',')
+            dai_str = dai_str[:idx]+'='+dai_str[idx+1:]
+            self.flow_toggle.add_row( text=dai_str )
         self.flow_toggle.toggle()
         
         # Invariants
