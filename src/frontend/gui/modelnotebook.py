@@ -10,11 +10,10 @@ from frontend.gui.editortab import EditorTab
 
 class ModelNotebook(Notebook):
 
-    def __init__(self, parent, menu_bar, **options):
+    def __init__(self, parent, **options):
         Notebook.__init__(self, parent, **options)
 
         self.parent = parent
-        self.menu_bar = menu_bar  # Pass menu to children
         self._init_widgets()
         self._bind_events()
         self.plot_tab_dic = {}
@@ -32,7 +31,7 @@ class ModelNotebook(Notebook):
 
         self.model_tab = ModelTab(self)
         self.add(self.model_tab, text='Model')
-        self.editor_tab = EditorTab( self, self.menu_bar )
+        self.editor_tab = EditorTab( self )
         self.add( self.editor_tab, text='Editor')
 
 

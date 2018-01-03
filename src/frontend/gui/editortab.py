@@ -9,11 +9,10 @@ from frontend.mod.session import Session, Property
 
 class EditorTab( Frame ):
 
-    def __init__( self, parent, menu_bar ):
+    def __init__( self, parent ):
         Frame.__init__( self, parent )
         
         self.parent = parent
-        self.menu_bar = menu_bar
 
         self._init_widgets()
         self._bind_events()

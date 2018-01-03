@@ -24,7 +24,7 @@ class ModelTab(Frame):
 
     def _init_widgets(self):
         print ("Initialize the Treeview and Property Editor")
-        self.tree = TreeView(self)  # Store the TreeView object
+        self.tree = TreeView(self, selectmode='browse' ) 
         self.tree.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
         PropertyEditor(self).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
 
@@ -40,9 +40,18 @@ class TreeView(Treeview):
         self.pack(fill=BOTH, expand=TRUE)
         self.master = master
 
+        self._init_selection_vars()
         self._bind_events()
-        self._init_rc_menus()  # Right-click menus
+        self._init_rc_menus()
         self.config(show='tree')
+    
+
+    def _init_selection_vars( self ):
+        self.selection_context = None
+        self.selection_parent = None
+        self.selection_root = None
+        self.selection_mode = None
+        self.selection_transition = None
 
 
     def _bind_events(self):
@@ -52,8 +61,9 @@ class TreeView(Treeview):
         self.bind(OPEN_EVENT, self._display_model)
         EventHandler.add_event_listeners(self, OPEN_EVENT)
 
-        # Double-click treeview element   LMB +2 12/11/2017  Working on tree interface
+        # Double-click treeview element 
         self.bind( '<Double-1>', self._on_double_click )
+        self.bind( '<Button-1>', self._on_left_click )
         self.bind( '<Button-3>', self._on_right_click )
 
 
@@ -125,99 +135,39 @@ class TreeView(Treeview):
             for act in tran.actions:
                 self.insert(act_id, 'end', text=act.raw)
 
-    
+
     def _init_rc_menus( self ):
         """Initialize right-click menus for Treeview"""  
 
         # Right-click 'Variables' parent
         self.variables_rc_menu = Menu( self, tearoff=0 )
-        self.variables_rc_menu.add_command( label='Add Variable' )
-        self.variables_rc_menu.add_command( label='Edit Variable' )
-        #self.variables_rc_menu.add_command( label='Delete Variable' )
+        self.variables_rc_menu.add_command( label='Edit Variables', command=lambda: self.launch_entry_popup( VARIABLES, EDIT ) )
         
         # Right-click 'Modes' parent
         self.modes_rc_menu = Menu( self, tearoff=0 )
-        self.modes_rc_menu.add_command( label='Add Mode' )
-        self.modes_rc_menu.add_command( label='Edit Mode' )
-        self.modes_rc_menu.add_command( label='Delete Mode' )
+        self.modes_rc_menu.add_command( label='Add Mode', command=lambda: self.launch_entry_popup( MODES, ADD ) )
+        self.modes_rc_menu.add_command( label='Edit Mode', command=lambda: self.launch_entry_popup( MODES, EDIT) )
+        self.modes_rc_menu.add_command( label='Delete Mode' )  # TODO
 
         # Right-click 'Transitions' parent
         self.transitions_rc_menu = Menu( self, tearoff=0 )
-        self.transitions_rc_menu.add_command( label='Add Transition' )
-        self.transitions_rc_menu.add_command( label='Edit Transition' )
-        self.transitions_rc_menu.add_command( label='Delete Transition' )
-    
-    
-    def _on_double_click( self, event ): 
-        """Pop-up edit menu (child) or add menu (root) depending on item double clicked"""
-
-        print( '<<Double-Click>>' )
-
-        item_id = self.identify_row( event.y )
-
-        # Do nothing is no Treeview item was selected
-        if( not item_id ):
-            print( 'No item selected\n' )
-            return
-
-        root_id, parent_id, context = self._get_root_and_context( item_id )
-
-        print( 'Item: ' + self.item( item_id )['text'] ) 
-
-        # Do nothing if a root was selected.
-        if( root_id == item_id ):
-            print( 'Context: None (root selected)\n' )
-            return 
-
-        print( 'Context: ' + context + '\n' )
-        
-        if( context == VARIABLES ):
-            entry = VariableEntry( self.master )
-        elif( context == MODES ):
-            print( 'Mode (Treeview): ' )
-            print( self.mode_str_dict[self.item(parent_id)['text']] )
-            entry = ModeEntry( self.master, self.mode_str_dict[self.item(parent_id)['text']] )
-        elif( context == TRANSITIONS ):
-            entry = TransitionEntry( self.master, self.tran_str_dict[self.item(parent_id)['text']], self.mode_dict )
-        else:
-            return
-        
-        # Wait for user response
-        self.master.wait_window( entry )
-        
-        # Refresh Model
-        self._clear_model()
-        self._display_model()
-        
-        print( 'Done!\n' )
+        self.transitions_rc_menu.add_command( label='Add Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, ADD ) )
+        self.transitions_rc_menu.add_command( label='Edit Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, EDIT ) )
+        self.transitions_rc_menu.add_command( label='Delete Transition' )  # TODO 
 
 
     def _on_right_click( self, event ):
-        """Display appropriate right-click menu based on what item is clicked"""
 
-        print( 'Right-Click Event' )  #TODO: Remove move, I'm here for dev 
+        print( '<<Right-Click>>' )
+        print( 'Currently rebuilding...\n' )
 
-        item_id = self.identify_row( event.y )
-  
-        # Do nothing is no Treeview item was selected
-        if( not item_id ):
-            print( 'No item selected' ) #TODO: Remove or polish me before release
-            print()  #TODO: Remove or polish me before release
-            return
+        self._identify_selection( event )
 
-        self.selection_set( item_id )  # Highlight item that was right-clicked
-
-        root_id, parent_id, context = self._get_root_and_context( item_id )
-
-        print( 'Item: ' + self.item( item_id )['text'] ) #TODO: Remove me, I'm here for dev
-        print( 'Context: ' + context ) #TODO: Remove me, I'm here for dev
-        print()  # TODO: Remove me, I'm here for dev
-
-        if( context == VARIABLES ):
+        if( self.selection_context == VARIABLES ):
             context_menu = self.variables_rc_menu
-        elif( context == MODES ):
+        elif( self.selection_context == MODES ):
             context_menu = self.modes_rc_menu
-        elif( context == TRANSITIONS ):
+        elif( self.selection_context == TRANSITIONS ):
             context_menu = self.transitions_rc_menu
         else:
             return  # The following lines depend on context_menu existing
@@ -225,15 +175,50 @@ class TreeView(Treeview):
         context_menu.tk_popup( event.x_root, event.y_root )
 
         # Diable/Enable appropriate depending on where user clicked
-        if( root_id == item_id ):  # User clicked on the root
+        if( self.selection_root == self.selection_parent ):  # User clicked on the root
             context_menu.entryconfig( 1, state=DISABLED )
             context_menu.entryconfig( 2, state=DISABLED )
         else:  # User clicked on a child
             context_menu.entryconfig( 1, state=NORMAL )
             context_menu.entryconfig( 2, state=NORMAL )
 
+    def _on_left_click( self, event ):
 
-    def _get_root_and_context( self, item_id ):
+        print( '<<Single-Click>>' )
+        self._identify_selection( event )
+
+
+    def _on_double_click( self, event ):
+
+        print( '<<Double-Click>>' )        
+        self._identify_selection( event )
+        self.launch_entry_popup( self.selection_context, EDIT )
+
+
+    def _identify_selection( self, event ):
+        """ Identify intended selection for right-click and double-click events """
+
+        self._init_selection_vars()
+
+        item_id = self.identify_row( event.y )
+        if( not item_id ):
+            print( 'No item selected ' )
+            self.selection_remove( self.selection() ) # Unselect any previously selected selection
+            return
+
+        self.selection_set( item_id )
+
+        self.selection_root, self.selection_parent, self.selection_context = self._get_parent_and_context( item_id )
+
+        if( self.selection_root == self.selection_parent ):
+            return  # If user clicks on a root (heading), there's no mode/transition selected
+        elif( self.selection_context == MODES ):
+            self.selection_mode = self.mode_str_dict[ self.item( self.selection_parent )['text']]
+        elif( self.selection_context == TRANSITIONS ):
+            self.selection_transition = self.tran_str_dict[ self.item( self.selection_parent )['text']]
+
+
+    def _get_parent_and_context( self, item_id ):
         """Returns the root and context of item_id (in that order)"""
 
         root_id = item_id
@@ -244,7 +229,46 @@ class TreeView(Treeview):
             root_id = self.parent( root_id )
         
         return root_id, parent_id, self.item( root_id )['text']
-                
+
+
+    def get_selection_parent( self ):
+        return self.selection_parent
+
+
+    def get_selection_root( self ):
+        return self.selection_root
+
+
+    def get_selection_context( self ):
+        return self.selection_context
+
+
+    def launch_entry_popup( self, context, action ):
+        
+        if( context == VARIABLES ):
+            # Selection not relevant for Variables context
+            self._init_selection_vars()
+            entry = VariableEntry( self.master )
+            return
+        elif( action == ADD ):
+            # Selection not relevant for adding Modes/Transitions
+            self._init_selection_vars()
+
+        if( context == MODES ):
+            entry = ModeEntry( self.master, action, self.selection_mode )   
+        elif( context == TRANSITIONS ):
+            entry = TransitionEntry( self.master, action, self.mode_dict, self.selection_transition )
+
+        # Wait for user response
+        self.master.wait_window( entry )
+        
+        # Refresh Model
+        self._clear_model()
+        self._display_model()
+
+        # Clear out selections vars
+        self._init_selection_vars()
+
 
 class PropertyEditor(Frame):
 

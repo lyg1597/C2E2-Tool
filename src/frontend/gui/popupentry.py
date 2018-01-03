@@ -154,14 +154,18 @@ class VariableEntry( PopupEntry ):
 
 class ModeEntry( PopupEntry ):
 
-    def __init__( self, parent, mode ):
+    def __init__( self, parent, action, mode=None ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Mode' )
 
         self.mode = mode
+        self.action = action
 
         self._init_widgets()
-        self._load_session()
+        if( action == EDIT ):
+            self._load_session()
+        else:
+            self._load_new()
 
 
     def _init_widgets( self ):
@@ -231,7 +235,30 @@ class ModeEntry( PopupEntry ):
         self.inv_toggle.toggle()
 
 
+    def _load_new( self ):
+        """ Load blank row and show toggle fields"""
+
+        self.flow_toggle.add_row()
+        self.flow_toggle.toggle()
+
+        self.inv_toggle.add_row()
+        self.inv_toggle.toggle()
+
+        self.mode_id.set( len( Session.hybrid.automata[0].modes ) )
+
+
     def _confirm( self ):
+        if( self.action == ADD ):
+            self._confirm_add()
+        else:
+            self._confirm_edit()
+
+
+    def _confirm_add( self ):
+        print( "CONFIRM NEW IN PROGRESS" )
+
+
+    def _confirm_edit( self ):
         """ Commit changes to Session. Does NOT save changes """
 
         # Name
@@ -267,7 +294,7 @@ class ModeEntry( PopupEntry ):
 
 class TransitionEntry( PopupEntry ):
 
-    def __init__( self, parent, trans, mode_dict ):
+    def __init__( self, parent, action, mode_dict, trans=None ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Transition' )
 
@@ -280,7 +307,10 @@ class TransitionEntry( PopupEntry ):
             self.mode_list.append( mode_dict[mode_id] )
 
         self._init_widgets()
-        self._load_session()
+        if( action == EDIT ): 
+            self._load_session()
+        else:
+            self._load_new()
 
 
     def _init_widgets( self ):
@@ -353,6 +383,15 @@ class TransitionEntry( PopupEntry ):
             self.action_toggle.add_row( text=action.raw )
         self.action_toggle.toggle()
 
+    
+    def _load_new( self ):
+        """ Load blank rows and show toggle fields """
+
+        self.action_toggle.add_row()
+        self.action_toggle.toggle()
+
+        self.trans_id.set( len( Session.hybrid.automata[0].trans ))
+
 
     def _callback_mode_select( self, *args ):
         """ OptionMenu callback, updates transition label at top of window """
@@ -360,6 +399,17 @@ class TransitionEntry( PopupEntry ):
 
 
     def _confirm( self ):
+        if( self.action == ADD ):
+            self._confirm_add()
+        else:
+            self._confirm_edit()
+
+
+    def _confirm_add( self ):
+        print( "CONFIRM NEW IN PROGRESS" )
+        
+
+    def _confirm_edit( self ):
         """" Commits changes to Session. Does NOT save changes """
 
         # ID

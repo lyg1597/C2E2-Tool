@@ -4,16 +4,18 @@ from tkinter.ttk import *
 import xml.dom.minidom
 
 from frontend.gui.eventhandler import EventHandler
+from frontend.gui.modeltab import *
 from frontend.mod.filehandler import FileHandler
 from frontend.mod.constants import *
 from frontend.mod.session import *
 
 class MenuBar(Menu):
 
-    def __init__(self, parent):
+    def __init__(self, parent, notebook):
         Menu.__init__(self, parent)
     
         self.parent = parent
+        self.tree = notebook.model_tab.tree  # LMB: Menu needs to interact with Notebook
 
         # Open file constants
         self.OPEN_OPT = {
@@ -54,41 +56,26 @@ class MenuBar(Menu):
 
         # Edit menu 
 
-        edit_menu = Menu(self, tearoff=0)
+        edit_menu = Menu( self, tearoff=0, postcommand=self._update_edit_menu )
 
-        variables_submenu = Menu( self, tearoff=0 )
-        variables_submenu.add_command( label='Add Variables' ) # TODO Add command
-        variables_submenu.add_command( label='Edit Variables' ) # TODO Add command
+        self.variables_submenu = Menu( self, tearoff=0 )
+        self.variables_submenu.add_command( label='Edit Variables', command=lambda: self.tree.launch_entry_popup( VARIABLES, EDIT ) )
+
+        self.modes_submenu = Menu( self, tearoff=0 )
+        self.modes_submenu.add_command( label='Add Mode', command=lambda: self.tree.launch_entry_popup( MODES, ADD ) )
+        self.modes_submenu.add_command( label='Edit Mode', command=lambda: 
+        self.tree.launch_entry_popup( MODES, EDIT ) )
+        self.modes_submenu.add_command( label='Remove Mode' ) # TODO Add command
         
-        modes_submenu = Menu( self, tearoff=0 )
-        modes_submenu.add_command( label='Add Mode' ) # TODO Add command
-        modes_submenu.add_command( label='Edit Mode' ) # TODO Add command
-        modes_submenu.add_command( label='Remove Mode' ) # TODO Add command
-        modes_submenu.add_separator()
-        modes_submenu.add_command( label='Add Flow' ) # TODO Add command
-        modes_submenu.add_command( label='Edit Flow' ) # TODO Add command
-        modes_submenu.add_command( label='Remove Flow' ) # TODO Add command
-        modes_submenu.add_separator()
-        modes_submenu.add_command( label='Add Invariants' ) # TODO Add command
-        modes_submenu.add_command( label='Edit Invariants' ) # TODO Add command
-        modes_submenu.add_command( label='Remove Invariants' ) # TODO Add command
-        
-        transitions_submenu = Menu( self, tearoff=0 )
-        transitions_submenu.add_command( label='Add Transition' ) # TODO Add command
-        transitions_submenu.add_command( label='Edit Transition' ) # TODO Add command
-        transitions_submenu.add_command( label='Remove Transition' ) # TODO Add command 
-        transitions_submenu.add_separator()
-        transitions_submenu.add_command( label='Edit Source' ) # TODO Add command
-        transitions_submenu.add_command( label='Edit Destination' ) # TODO Add command
-        transitions_submenu.add_command( label='Edit Guards' ) # TODO Add command 
-        transitions_submenu.add_separator()
-        transitions_submenu.add_command( label='Add Action' ) # TODO Add command
-        transitions_submenu.add_command( label='Edit Action' ) # TODO Add command
-        transitions_submenu.add_command( label='Remove Action' ) # TODO Add command 
+        self.transitions_submenu = Menu( self, tearoff=0 )
+        self.transitions_submenu.add_command( label='Add Transition', command=lambda: self.tree.launch_entry_popup( TRANSITIONS, ADD ) )
+        self.transitions_submenu.add_command( label='Edit Transition', command=lambda: 
+        self.tree.launch_entry_popup( TRANSITIONS, EDIT ) )
+        self.transitions_submenu.add_command( label='Remove Transition' ) # TODO Add Command
  
-        edit_menu.add_cascade( label='Variables', menu=variables_submenu )
-        edit_menu.add_cascade( label='Modes', menu=modes_submenu )
-        edit_menu.add_cascade( label='Transitions', menu=transitions_submenu )
+        edit_menu.add_cascade( label='Variables', menu=self.variables_submenu )
+        edit_menu.add_cascade( label='Modes', menu=self.modes_submenu )
+        edit_menu.add_cascade( label='Transitions', menu=self.transitions_submenu )
 
         self.add_cascade( label='Edit', menu=edit_menu )
 
@@ -109,6 +96,25 @@ class MenuBar(Menu):
         self.parent.bind_all('<Control-l>', lambda event: self.close_callback())
         self.parent.bind_all('<Control-q>', lambda event: self.quit_callback())
 
+
+    def _update_edit_menu( self ):
+        """ Disable menu options based on item selected in Treeview ( in ModelTab ) """
+
+        context = self.tree.get_selection_context()
+        root_selected = ( self.tree.get_selection_root() == self.tree.get_selection_parent() )
+
+        for i in range( 1, 3 ):
+            self.modes_submenu.entryconfig( i, state=DISABLED )
+            self.transitions_submenu.entryconfig( i, state=DISABLED )
+        
+        if( context == MODES and not root_selected ):       
+            self.modes_submenu.entryconfig( 1, state=NORMAL )
+            self.modes_submenu.entryconfig( 2, state=NORMAL )
+
+        elif( context == TRANSITIONS and not root_selected ):
+            self.transitions_submenu.entryconfig( 1, state=NORMAL )
+            self.transitions_submenu.entryconfig( 2, state=NORMAL )
+           
 
     def open_callback(self):
 
