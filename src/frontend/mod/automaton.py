@@ -33,11 +33,14 @@ class Automaton:
         
     def add_mode(self,mode):
         self.modes.append(mode)
+
+    def remove_mode( self, mode ):
+        self.modes.remove( mode )
     
     def add_trans(self,trans):
         self.trans.append(trans)
         
-    def remove_tran(self, tran):
+    def remove_trans(self, tran):
         self.trans.remove(tran)
         
     def new_mode_id(self):

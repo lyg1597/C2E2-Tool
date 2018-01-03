@@ -308,7 +308,7 @@ class ModeEntry( PopupEntry ):
         self.destroy()
 
     def _delete( self ):
-        print( 'IN PROGRESS\n' )
+        Session.hybrid.automata[0].remove_mode( self.mode )
         self.destroy()
 
     def _cancel( self ):
@@ -504,7 +504,8 @@ class TransitionEntry( PopupEntry ):
 
 
     def _delete( self ):
-        print( 'IN PROGRESS\n' )
+        
+        Session.hybrid.automata[0].remove_trans( self.trans )
         self.destroy()
 
     def _cancel( self ):
