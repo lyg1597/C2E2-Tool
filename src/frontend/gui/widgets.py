@@ -152,7 +152,8 @@ class ToggleFrame( Frame ):
 
         self.body_frame = Frame( self )
 
-        self.rows = []  # StringVar() 
+        self.rows = []  # StringVar()
+        self.entry_fields = []  # Entry fields 
         self.row_index = 0
                
 
@@ -193,8 +194,17 @@ class ToggleFrame( Frame ):
         if( text ):
             self.rows[self.row_index].set( text )
 
-        Entry( self.body_frame, textvariable=self.rows[self.row_index] ).pack( fill=X, expand=TRUE )
+        self.entry_fields.append( Entry( self.body_frame, textvariable=self.rows[self.row_index] ) )
+        self.entry_fields[self.row_index].pack( fill=X, expand=TRUE )
 
         self.btn_frame.pack()
 
         self.row_index += 1
+
+    
+    def disable_fields( self ):
+        """ Add readonly display row, must have text """
+
+        self.btn_frame.forget()
+        for entry in self.entry_fields:
+            entry.config( state=DISABLED )

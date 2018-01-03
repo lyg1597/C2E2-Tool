@@ -65,13 +65,13 @@ class MenuBar(Menu):
         self.modes_submenu.add_command( label='Add Mode', command=lambda: self.tree.launch_entry_popup( MODES, ADD ) )
         self.modes_submenu.add_command( label='Edit Mode', command=lambda: 
         self.tree.launch_entry_popup( MODES, EDIT ) )
-        self.modes_submenu.add_command( label='Remove Mode' ) # TODO Add command
+        self.modes_submenu.add_command( label='Delete Mode', command=lambda: self.tree.launch_entry_popup( MODES, DELETE ) )
         
         self.transitions_submenu = Menu( self, tearoff=0 )
         self.transitions_submenu.add_command( label='Add Transition', command=lambda: self.tree.launch_entry_popup( TRANSITIONS, ADD ) )
         self.transitions_submenu.add_command( label='Edit Transition', command=lambda: 
         self.tree.launch_entry_popup( TRANSITIONS, EDIT ) )
-        self.transitions_submenu.add_command( label='Remove Transition' ) # TODO Add Command
+        self.transitions_submenu.add_command( label='Delete Transition', command=lambda: self.tree.launch_entry_popup( TRANSITIONS, DELETE ) )
  
         edit_menu.add_cascade( label='Variables', menu=self.variables_submenu )
         edit_menu.add_cascade( label='Modes', menu=self.modes_submenu )

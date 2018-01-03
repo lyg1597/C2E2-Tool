@@ -147,19 +147,19 @@ class TreeView(Treeview):
         self.modes_rc_menu = Menu( self, tearoff=0 )
         self.modes_rc_menu.add_command( label='Add Mode', command=lambda: self.launch_entry_popup( MODES, ADD ) )
         self.modes_rc_menu.add_command( label='Edit Mode', command=lambda: self.launch_entry_popup( MODES, EDIT) )
-        self.modes_rc_menu.add_command( label='Delete Mode' )  # TODO
+        self.modes_rc_menu.add_command( label='Delete Mode', command=lambda:
+        self.launch_entry_popup( MODES, DELETE ) ) 
 
         # Right-click 'Transitions' parent
         self.transitions_rc_menu = Menu( self, tearoff=0 )
         self.transitions_rc_menu.add_command( label='Add Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, ADD ) )
         self.transitions_rc_menu.add_command( label='Edit Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, EDIT ) )
-        self.transitions_rc_menu.add_command( label='Delete Transition' )  # TODO 
+        self.transitions_rc_menu.add_command( label='Delete Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, DELETE ) )
 
 
     def _on_right_click( self, event ):
 
         print( '<<Right-Click>>' )
-        print( 'Currently rebuilding...\n' )
 
         self._identify_selection( event )
 
@@ -192,7 +192,10 @@ class TreeView(Treeview):
 
         print( '<<Double-Click>>' )        
         self._identify_selection( event )
-        self.launch_entry_popup( self.selection_context, EDIT )
+        if( self.selection_root == self.selection_parent ):
+            self.launch_entry_popup( self.selection_context, ADD )
+        else:
+            self.launch_entry_popup( self.selection_context, EDIT )
 
 
     def _identify_selection( self, event ):
@@ -209,6 +212,10 @@ class TreeView(Treeview):
         self.selection_set( item_id )
 
         self.selection_root, self.selection_parent, self.selection_context = self._get_parent_and_context( item_id )
+
+        print( 'Root: ', self.item( self.selection_root )['text'] )
+        print( 'Parent: ', self.item( self.selection_parent )['text'] )
+        print( 'Context: ', self.selection_context, '\n' )
 
         if( self.selection_root == self.selection_parent ):
             return  # If user clicks on a root (heading), there's no mode/transition selected

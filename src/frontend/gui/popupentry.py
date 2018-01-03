@@ -162,10 +162,13 @@ class ModeEntry( PopupEntry ):
         self.action = action
 
         self._init_widgets()
-        if( action == EDIT ):
-            self._load_session()
-        else:
+
+        if( action == ADD ): 
             self._load_new()
+        else:
+            self._load_session()
+            if( action == DELETE ):
+                self._disable_fields()
 
 
     def _init_widgets( self ):
@@ -174,17 +177,20 @@ class ModeEntry( PopupEntry ):
         # Name
         Label( self, text='Name:' ).grid( row=1, column=0, sticky=W )
         self.name = StringVar()
-        Entry( self, textvariable=self.name ).grid( row=1, column=1, sticky=E )
+        self.name_entry = Entry( self, textvariable=self.name )
+        self.name_entry.grid( row=1, column=1, sticky=E )
 
         # ID
         Label( self, text='ID:' ).grid( row=2, column=0, sticky=W )
         self.mode_id = IntVar()
-        Entry( self, textvariable=self.mode_id ).grid( row=2, column=1, sticky=E )
+        self.id_entry = Entry( self, textvariable=self.mode_id )
+        self.id_entry.grid( row=2, column=1, sticky=E )
 
         # Initial
         Label( self, text='Initial:' ).grid( row=3, column=0, sticky=W )
         self.initial = BooleanVar()
-        Checkbutton( self, var=self.initial ).grid( row=3, column=1 )
+        self.initial_checkbutton = Checkbutton( self, var=self.initial )
+        self.initial_checkbutton.grid( row=3, column=1 )
 
         # Flows
         self.flow_toggle = ToggleFrame( self, text='Flows:' )
@@ -247,6 +253,18 @@ class ModeEntry( PopupEntry ):
         self.mode_id.set( len( Session.hybrid.automata[0].modes ) )
 
 
+    def _disable_fields( self ):
+        """ Disable fields and reconfigure confirm button for deletion """
+
+        self.name_entry.config( state=DISABLED )
+        self.id_entry.config( state=DISABLED )
+        self.initial_checkbutton.config( state=DISABLED )
+        self.flow_toggle.disable_fields()
+        self.inv_toggle.disable_fields()
+
+        self.confirm_btn.config( text='DELETE', command=self._delete )
+
+
     def _confirm( self ):
         if( self.action == ADD ):
             self._confirm_add()
@@ -285,6 +303,9 @@ class ModeEntry( PopupEntry ):
         print( 'Mode Entry Confirmed\n' )
         self.destroy()
 
+    def _delete( self ):
+        print( 'IN PROGRESS\n' )
+        self.destroy()
 
     def _cancel( self ):
         """ Cancels changes made in popup """
@@ -300,6 +321,7 @@ class TransitionEntry( PopupEntry ):
 
         self.trans = trans
         self.mode_dict = mode_dict  # mode_dict[mode.id] = mode.name
+        self.action = action
 
         # Load Mode list for Source/Destination Option Menus
         self.mode_list = []
@@ -307,10 +329,13 @@ class TransitionEntry( PopupEntry ):
             self.mode_list.append( mode_dict[mode_id] )
 
         self._init_widgets()
-        if( action == EDIT ): 
-            self._load_session()
-        else:
+
+        if( action == ADD ): 
             self._load_new()
+        else:
+            self._load_session()
+            if( action == DELETE ):
+                self._disable_fields()
 
 
     def _init_widgets( self ):
@@ -323,7 +348,8 @@ class TransitionEntry( PopupEntry ):
         # ID
         Label( self, text='ID:' ).grid( row=2, column=0, sticky=W )
         self.trans_id = IntVar()
-        Entry( self, textvariable=self.trans_id ).grid( row=2, column=1, sticky=E )
+        self.id_entry = Entry( self, textvariable=self.trans_id )
+        self.id_entry.grid( row=2, column=1, sticky=E )
 
         # Source and Destination
         
@@ -338,15 +364,16 @@ class TransitionEntry( PopupEntry ):
 
         # Aribtrarily set default source/destination.
         # These are overwritten to be correct in load_session
-        OptionMenu( self, self.src_str, self.mode_list[0], *self.mode_list )\
-            .grid( row=3, column=1, sticky=W+E )        
-        OptionMenu( self, self.dest_str, self.mode_list[1], *self.mode_list )\
-            .grid( row=4, column=1, sticky=W+E )
+        self.src_opt_menu = OptionMenu( self, self.src_str, self.mode_list[0], *self.mode_list )
+        self.src_opt_menu.grid( row=3, column=1, sticky=W+E )        
+        self.dest_opt_menu = OptionMenu( self, self.dest_str, self.mode_list[1], *self.mode_list )
+        self.dest_opt_menu.grid( row=4, column=1, sticky=W+E )
 
         # Guards
         Label( self, text='Guards:' ).grid( row=5, column=0, sticky=W )
         self.guard_str = StringVar()
-        Entry( self, textvariable=self.guard_str ).grid( row=5, column=1, sticky=E )
+        self.guard_entry = Entry( self, textvariable=self.guard_str )
+        self.guard_entry.grid( row=5, column=1, sticky=E )
 
         # Actions
         self.action_toggle = ToggleFrame( self, text='Actions:' )
@@ -393,6 +420,19 @@ class TransitionEntry( PopupEntry ):
         self.trans_id.set( len( Session.hybrid.automata[0].trans ))
 
 
+    def _disable_fields( self ):
+        """ Disable fields and reconfigure confirm button for deletion """
+
+        self.id_entry.config( state=DISABLED )
+        self.src_opt_menu.config( state=DISABLED )
+        self.dest_opt_menu.config( state=DISABLED )
+        self.guard_entry.config( state=DISABLED )
+        self.action_toggle.disable_fields()
+
+        self.confirm_btn.config( text='DELETE', command=self._delete )
+
+
+
     def _callback_mode_select( self, *args ):
         """ OptionMenu callback, updates transition label at top of window """
         self.trans_str.set( self.src_str.get() + " -> " + self.dest_str.get() )
@@ -434,6 +474,10 @@ class TransitionEntry( PopupEntry ):
         print( 'Transition Entry Confirmed' )
         self.destroy()
 
+
+    def _delete( self ):
+        print( 'IN PROGRESS\n' )
+        self.destroy()
 
     def _cancel( self ):
         """ Cancels changes made in popup """
