@@ -201,6 +201,8 @@ class ToggleFrame( Frame ):
 
         self.row_index += 1
 
+    def get_rows( self ):
+        return self.rows
     
     def disable_fields( self ):
         """ Add readonly display row, must have text """

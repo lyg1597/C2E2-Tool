@@ -273,7 +273,11 @@ class ModeEntry( PopupEntry ):
 
 
     def _confirm_add( self ):
+        
         print( "CONFIRM NEW IN PROGRESS" )
+        self.mode = Mode()
+        self._confirm_edit()
+        Session.hybrid.automata[0].add_mode( self.mode )
 
 
     def _confirm_edit( self ):
@@ -290,13 +294,13 @@ class ModeEntry( PopupEntry ):
 
         # Flows
         self.mode.clear_dai()
-        for raw_text in self.flow_toggle.rows:
+        for raw_text in self.flow_toggle.get_rows():
             if( (raw_text.get()).strip() ): 
                 self.mode.add_dai( DAI( raw_text.get() ) )
 
         # Invariants
         self.mode.clear_inv()
-        for raw_text in self.inv_toggle.rows:
+        for raw_text in self.inv_toggle.get_rows():
             if( (raw_text.get()).strip() ): 
                 self.mode.add_inv( Invariant( raw_text.get() ) )
         
@@ -446,7 +450,31 @@ class TransitionEntry( PopupEntry ):
 
 
     def _confirm_add( self ):
-        print( "CONFIRM NEW IN PROGRESS" )
+        print( "CONFIRM ADD IN PROGRESS" )
+
+        # ID
+        trans_id = self.trans_id.get()
+
+        # Source and Destination
+        for mode_id in self.mode_dict:
+            if( self.mode_dict[mode_id] == self.src_str.get() ):
+                src = mode_id
+            elif( self.mode_dict[mode_id] == self.dest_str.get() ):
+                dest = mode_id
+
+        # Guard
+        guard = Guard( self.guard_str.get() )
+
+        # Actions
+        actions = []
+        for action in self.action_toggle.get_rows():
+            if( (action.get()).strip() ):
+                actions.append( Action( action.get() ) )
+
+        transition = Transition( guard, actions, trans_id, src, dest )
+        Session.hybrid.automata[0].add_trans( transition )
+
+        self.destroy()     
         
 
     def _confirm_edit( self ):
