@@ -8,6 +8,14 @@ from frontend.mod.session import Session
 
 
 class VariableEntry( PopupEntry ):
+    """ 
+    Popup window for Variable editing.    
+
+    The VariableEntry class is designed to be the popup displayed to users when editing their model's variables. It controls the GUI elements of the popup, and interacts with the Session variables to commit changes to the currently active model
+    
+    Args:
+        parent (obj): Popup's parent object
+    """
 
     def __init__( self, parent ):
         PopupEntry.__init__( self, parent )
@@ -47,20 +55,19 @@ class VariableEntry( PopupEntry ):
         
         # self.btn_frame is added to the grid in self._add_row()
 
-    
-    def _init_scope_column( self, scope_options ):
-        """ Enable scope column - only used if there is already a non-local scope """
-
-        for i in range( self.var_index ):
-            OptionMenu( self, self.scopes[i], self.scopes[i].get(), *scope_options )\
-                .grid( row=i+2, column=3 )
-
-        # Increase columnspan to accomdate extra row
-        self.title_label.grid( row=0, column=0, columnspan=4 )
-
-    
+       
     def _load_session( self ):
-        """ Load current model's values """
+        """ 
+        Load current model's values.
+        
+        NOTE: We only expect the scope to be LOCAL_DATA, but to prevent deleting
+              variables with other scopes (without warning), we display scopes and
+              make them editable fields if any other scopes are found.
+
+              This design decision is in line with the decision to display all mode
+              equations instead of only those containing '_dot', also meant to
+              prevent their deletion.
+        """
         
         hybrid = Session.hybrid
 
@@ -88,10 +95,21 @@ class VariableEntry( PopupEntry ):
             self._init_scope_column( scope_options )
 
 
+    def _init_scope_column( self, scope_options ):
+        """ Enable scope column - only used if there is already a non-local scope """
+
+        for i in range( self.var_index ):
+            OptionMenu( self, self.scopes[i], self.scopes[i].get(), *scope_options )\
+                .grid( row=i+2, column=3 )
+
+        # Increase columnspan to accomdate extra row
+        self.title_label.grid( row=0, column=0, columnspan=4 )
+
+
     def _add_row( self ):
         """ 
         Add a new variable row to VariableEntry popup. 
-        Grid new entry widgets and regrid button frame
+        Grid new entry widgets and regrid button frame.
         """
 
         self.names.append( StringVar() )
@@ -117,12 +135,8 @@ class VariableEntry( PopupEntry ):
 
 
     def _confirm( self ):
-        """ Commit changes to Session. Does NOT save these changes.
-        
-        NOTE: Scope hard-coded to LOCAL_DATA after discussions with leaderhsip.
-              LOCAL_DATA is the only scope we expect to use with editing, so there
-              is no need for users to enter it (or for it to be anything else)
-        """
+        """ Commit changes to Session. Does NOT save these changes. """
+
         hybrid = Session.hybrid
         hybrid.reset_vars()
         hybrid.reset_thin_vars()
@@ -145,14 +159,25 @@ class VariableEntry( PopupEntry ):
         print( 'Variable Entry Confirmed\n' )
         self.destroy()
 
-
+ 
     def _cancel( self ):
         """ Cancels changes made in popup """
+
         print( 'Variable Entry Canceled\n' )
         self.destroy()
 
 
 class ModeEntry( PopupEntry ):
+    """ 
+    Popup window for Mode adding, editing, and deleting.
+
+    The ModelEntry class is designed to be the popup displayed to users when editing their model's Modes, or adding/deleting Modes. It controls the GUI elements of the popup, and interacts with the Session variables to commit changes to the currently active models.
+    
+    Args:
+        parent (obj): Popup's parent object
+        action (str): Action to be performed (use constants ADD, EDIT, or DELETE)
+        mode (Mode obj): Mode to be edited or deleted, not required for ADD action
+    """
 
     def __init__( self, parent, action, mode=None ):
         PopupEntry.__init__( self, parent )
@@ -250,6 +275,7 @@ class ModeEntry( PopupEntry ):
         self.inv_toggle.add_row()
         self.inv_toggle.toggle()
 
+        # Prefill ID assuming IDs are sequential. Not doing this defaults it to 0.
         self.mode_id.set( len( Session.hybrid.automata[0].modes ) )
 
 
@@ -266,6 +292,8 @@ class ModeEntry( PopupEntry ):
 
 
     def _confirm( self ):
+        """ Confirm button callback - call confirm method based on action """
+
         if( self.action == ADD ):
             self._confirm_add()
         else:
@@ -273,8 +301,8 @@ class ModeEntry( PopupEntry ):
 
 
     def _confirm_add( self ):
+        """ Confirm new mode addition """
         
-        print( "CONFIRM NEW IN PROGRESS" )
         self.mode = Mode()
         self._confirm_edit()
         Session.hybrid.automata[0].add_mode( self.mode )
@@ -307,17 +335,36 @@ class ModeEntry( PopupEntry ):
         print( 'Mode Entry Confirmed\n' )
         self.destroy()
 
+
     def _delete( self ):
-        Session.hybrid.automata[0].remove_mode( self.mode )
+        """ Delete active Mode """
+
+        if( messagebox.askyesno( 'Delete Transition', 'Delete ' + self.mode.name + '(' + str(self.mode.id) + ') ' + '?' ) ):
+            Session.hybrid.automata[0].remove_mode( self.mode )
+        
+        print( 'Mode Deleted\n' )
         self.destroy()
+
 
     def _cancel( self ):
         """ Cancels changes made in popup """
+
         print( 'Mode Entry Canceled\n' )
         self.destroy()
 
 
 class TransitionEntry( PopupEntry ):
+    """ 
+    Popup window for Transition adding, editing, and deleting.
+
+    The TransitionEntry class is designed to be the popup displayed to users when editing their model's Modes, or adding/deleting Modes. It controls the GUI elements of the popup, and interacts with the Session variables to commit changes to the currently active models.
+    
+    Args:
+        parent (obj): Popup's parent object
+        action (str): Action to be performed (use constants ADD, EDIT, or DELETE)
+        mode_dict (dictionary: int keys, str values ): Dictionary connect mode IDs to mode names
+        trans (Transition obj): Transition to be edited or deleted, not required for ADD action
+    """    
 
     def __init__( self, parent, action, mode_dict, trans=None ):
         PopupEntry.__init__( self, parent )
@@ -366,8 +413,7 @@ class TransitionEntry( PopupEntry ):
         self.src_str.trace_variable( 'w', self._callback_mode_select )
         self.dest_str.trace_variable( 'w', self._callback_mode_select )
 
-        # Aribtrarily set default source/destination.
-        # These are overwritten to be correct in load_session
+        # Aribtrarily set default source/destination. These are overwritten to be correct in _load_session when appropriate
         self.src_opt_menu = OptionMenu( self, self.src_str, self.mode_list[0], *self.mode_list )
         self.src_opt_menu.grid( row=3, column=1, sticky=W+E )        
         self.dest_opt_menu = OptionMenu( self, self.dest_str, self.mode_list[1], *self.mode_list )
@@ -436,13 +482,15 @@ class TransitionEntry( PopupEntry ):
         self.confirm_btn.config( text='DELETE', command=self._delete )
 
 
-
     def _callback_mode_select( self, *args ):
         """ OptionMenu callback, updates transition label at top of window """
+
         self.trans_str.set( self.src_str.get() + " -> " + self.dest_str.get() )
 
 
     def _confirm( self ):
+        """ Confirm button callback - call confirm method based on action """
+        
         if( self.action == ADD ):
             self._confirm_add()
         else:
@@ -450,7 +498,7 @@ class TransitionEntry( PopupEntry ):
 
 
     def _confirm_add( self ):
-        print( "CONFIRM ADD IN PROGRESS" )
+        """ Confirm new mode addition """
 
         # ID
         trans_id = self.trans_id.get()
@@ -474,6 +522,7 @@ class TransitionEntry( PopupEntry ):
         transition = Transition( guard, actions, trans_id, src, dest )
         Session.hybrid.automata[0].add_trans( transition )
 
+        print( 'Transition Entry Confirmed\n' )
         self.destroy()     
         
 
@@ -499,16 +548,22 @@ class TransitionEntry( PopupEntry ):
             if( (action.get()).strip() ):
                 self.trans.add_action( Action(action.get()) )
                 
-        print( 'Transition Entry Confirmed' )
+        print( 'Transition Entry Confirmed\n' )
         self.destroy()
 
 
     def _delete( self ):
+        """ Delete active Transiiton """
         
-        Session.hybrid.automata[0].remove_trans( self.trans )
+        if( messagebox.askyesno( 'Delete Transition', 'Delete ' + self.trans_str.get() + '?' ) ):
+            Session.hybrid.automata[0].remove_trans( self.trans )
+        
+        print( 'Transition Deleted\n' )
         self.destroy()
+
 
     def _cancel( self ):
         """ Cancels changes made in popup """
+
         print( 'Transition Entry Canceled\n' )
         self.destroy()

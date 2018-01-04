@@ -152,12 +152,14 @@ class HyIR:
         return True
 
     def add_var(self, v):
+        """ Add variable """
         self.vars.append(v)
         self.variables.add_var(v)
         if v.scope=='LOCAL_DATA':
             self.varList.append(v.name)
 
     def add_thin_var(self, v):
+        """ Add thin variable """
         self.thinvars.append(v)
         self.thinvariables.add_thin_var(v)
         if v.scope=='LOCAL_DATA':
