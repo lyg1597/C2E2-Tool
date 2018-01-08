@@ -9,24 +9,29 @@ from frontend.mod.jacobiancalc import *
 
 from collections import defaultdict
 
+
 class HyIR:
+
     def __init__(self, name="hybrid_system", file_name=""):
+        
         self.name = name
         self.file_name = file_name
         
         self.vars = []
-        self.variables = Variables()
         self.varList = []
+        self.variables = Variables()
 
         self.thinvars = []
         self.thinvarList = []
         self.thinvariables = ThinVariables()
 
         self.automata = Automaton()
+        
         self.annotations = ""
         self.annotationsRaw = []
         ###self.treestore = gtk.TreeStore(str)
     
+
     @staticmethod
     def compose(hyir1, hyir2):
         composed = HyIR()

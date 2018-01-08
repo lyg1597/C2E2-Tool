@@ -64,11 +64,14 @@ class FileHandler:
 
     @staticmethod
     def open_file(file_path):
+        """ Open provided file """
+
         base_name = os.path.basename(file_path) 
         raw_name, ext = os.path.splitext(base_name)
 
         # Handle HyXML file
         if ext == '.hyxml':
+            
             # Get HyXML type and call corresponding function
             hyxml_tree = ET.parse(file_path)
             if hyxml_tree == None:
@@ -76,23 +79,30 @@ class FileHandler:
 
             hyxml_root = hyxml_tree.getroot()
             hyxml_type = hyxml_root.get('type')
+            
             thinvarprop = ""
             thinvarlist = ""
+
             if hyxml_type == 'Model':
+                
                 hybrid = FileHandler.open_hyxml_model(hyxml_root, raw_name)
                 prop_list = FileHandler.open_hyxml_properties(hyxml_root, hybrid)
+                
                 for var in hybrid.varList:
                     if var in hybrid.thinvarList:
                         thinvarlist += var + "\n"
                         thinvarprop += "1\n"
                     else:
                         thinvarprop += "0\n"
+                
                 writer = open("../work-dir/ThinVarProp","w")
                 writer.write(thinvarprop)
                 writer.close()
+                
                 writer = open("../work-dir/ThinVarList","w")
                 writer.write(thinvarlist)
                 writer.close()
+            
             # TODO
             #elif hyxml_type == 'Simulink':
             #    hybrid = self.open_hyxml_simulink(hyxml_root)
@@ -232,7 +242,8 @@ class FileHandler:
     
     @staticmethod
     def open_hyxml_model(root, file_name):
-        # Parse xml tree
+        """ Parse XML tree and build model """
+        
         hybrid_automata = {}
         for automata in root.iterfind("automaton"):
             hybrid = HyIR(file_name=file_name)
@@ -253,21 +264,23 @@ class FileHandler:
                 v = ThinVariable(name=v_name, type=v_type, scope=v_scope)
                 hybrid.add_thin_var(v)
 
-            modeIndex=0
-            for mode in automata.iterfind("mode"):
-                modeIndex+=1  
-                m=Mode()
-                m.name=mode.get("name")
-                m.id=int(mode.get("id"))
-                m.initial=(mode.get("initial")=="True")
+            for mode in automata.iterfind( "mode" ):
+                # LMB  1/8/2018  Updated to be consistent with var/thinvar/tran loops
+                #                Removed modeIndex incrementer that was never used
+                mode_name = mode.get( "name" )
+                mode_id = int( mode.get( "id" ) )
+                mode_initial = ( mode.get( "initial" ) == "True" )
+                m = Mode( name=mode_name, id=mode_id, initial=mode_initial )
 
-                for dai in mode.iterfind("dai"):
-                    v1 = dai.get("equation")
-                    m.add_dai(DAI(v1))
+                for dai in mode.iterfind( "dai" ):
+                    v1 = dai.get( "equation" )
+                    m.add_dai( DAI(v1) )
 
                 for inv in mode.iterfind("invariant"):
                     i = Invariant(FileHandler.clean_eq(inv.get("equation")))
-                    if i.expr: m.add_inv(i)
+                    # LMB  1/8/2018  Removed (if i.expr: ) requirement for m.add_inv(i)
+                    #                Moved functionaly to Mode.construct()
+                    m.add_inv(i)
 
                 hybrid.automata.add_mode(m)  
 
@@ -278,15 +291,24 @@ class FileHandler:
                 g_src = int(tran.get("source"))
                 g_dest = int(tran.get("destination"))
 
-                if g.expr:
-                  
-                    actions=[]
-                    for act in tran.iterfind("action"):
-                        a = FileHandler.clean_eq(act.get("equation"))
-                        actions.append(Action(a))
-                    t=Transition(g,actions,g_id,g_src,g_dest)
-                    hybrid.automata.add_trans(t)
-          
+                # LMB  1/8/2018  Removed (if g.expr: ) requirement for rest of tran loop
+                #                Functionality not directly added back, nor planned
+                #                Users should be given an error with work preserved      
+                actions=[]
+                for act in tran.iterfind("action"):
+                    a = FileHandler.clean_eq(act.get("equation"))
+                    actions.append(Action(a))
+                t=Transition(g,actions,g_id,g_src,g_dest)
+                hybrid.automata.add_trans(t)
+        
+        # Testing the construct() functions before moving the remainder of this function
+        # TODO: Remove this for loop
+        for name in hybrid_automata:
+            for mode in hybrid_automata[name].automata.modes:
+                mode.construct()
+            for tran in hybrid_automata[name].automata.trans:
+                tran.construct()
+
         composition = root.find("composition")
         automata_list = list(map(lambda x: hybrid_automata[x], composition.get("automata").split(";")))
         automata_list.reverse()

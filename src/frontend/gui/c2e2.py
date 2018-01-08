@@ -39,11 +39,12 @@ class C2E2(Tk):
         self.email.pack(fill=Y)
         self.manual.config(font=("Courier", 30))
         self.manual.bind("<Button-1>", callback)
+
         self._init_widgets()
     
 
-    # Initialize all widgets
     def _init_widgets(self):
+        """ Initialize Notebook and MenuBar widgets """
 
         self.notebook = ModelNotebook( self )
         self.menu = MenuBar( self, self.notebook )

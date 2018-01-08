@@ -9,13 +9,14 @@ from frontend.mod.filehandler import FileHandler
 from frontend.mod.constants import *
 from frontend.mod.session import *
 
+
 class MenuBar(Menu):
 
     def __init__(self, parent, notebook):
         Menu.__init__(self, parent)
     
         self.parent = parent
-        self.tree = notebook.model_tab.tree  # LMB: Menu needs to interact with Notebook
+        self.tree = notebook.model_tab.tree  # LMB: Menu needs to interact with Notebook and it's Treeview
 
         # Open file constants
         self.OPEN_OPT = {
@@ -117,17 +118,23 @@ class MenuBar(Menu):
            
 
     def open_callback(self):
+        """ Select and open file """
 
-        # Open selected file
+        # Forget welcome screen widgets
         self.parent.label.pack_forget() 
         self.parent.manual.pack_forget()
         self.parent.email.pack_forget()
+
+        # If a file is already open, close it.
         if Session.file_opened:
             self.close_callback()
+       
         file_path = filedialog.askopenfilename(**self.OPEN_OPT)
-        if file_path:
+        if file_path:            
             Session.file_path = file_path
+            
             file = FileHandler.open_file(file_path)
+
             if HYXML_FILE in file_path:
                 print ("hyxml file opened")
                 Session.file_type = HYXML_FILE
@@ -143,7 +150,9 @@ class MenuBar(Menu):
             Session.prop_list = file['prop_list']
             if len(Session.prop_list) == 0:
                 Session.prop_list.append(Property())
+
             Session.file_opened = True
+
             EventHandler.event_generate(OPEN_EVENT)
 
 
