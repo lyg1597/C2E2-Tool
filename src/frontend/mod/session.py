@@ -1,6 +1,9 @@
 from backend.lib.libc2e2 import Model
 from frontend.mod.constants import *
+
+
 class Property():
+
     def __init__(self):
         # Property values
         self.name = ''
@@ -36,6 +39,7 @@ class Property():
             return True 
         else:
             return False
+
 
 class PlotProperty():
 
@@ -76,18 +80,20 @@ class PlotProperty():
         return ""
 
 
-
-
-
 class Session():
+
     file_opened = False
     file_modified = False
     file_saved = False
     file_path = ''
 
-
     lib_compiled = False
 
+    # Pre-composition
+    hybrid_automata = None
+    composition_list = None
+
+    # Post-composition
     hybrid = None
     cur_prop = None
     prop_list = None
@@ -96,7 +102,42 @@ class Session():
 
     file_type = None
 
+    cpp_model = None
 
+    def compose():
+        
+        # LMB  1/8/2018  Originally took place in filehandler.py, this is a copy
+        
+        automata_list.reverse()
+        while len( automata_list ) > 1:
+            hyir1 = automata_list.pop()
+            hyir2 = automata_list.pop()
+            automata_list.apped( HyIR.compose( hyir1, hyir2 ) )
+        hybrid = automata_list[0]
 
+        hybrid.automata = [hybrid.automata]
+        hybrid.populateInvGuards()
+        hybrid.print_all()
 
-    cpp_model = Model()
+        hyxml_root = ET.parse( file_path ).getroot()
+        prop_list = FileHandler.open_hyxml_properties(hyxml_root, hybrid)
+        
+        thinvarprop = ""
+        thinvarlist = ""
+
+        for var in hybrid.varList:
+            if var in hybrid.thinvarList:
+                thinvarlist += var + "\n"
+                thinvarprop += "1\n"
+            else:
+                thinvarprop += "0\n"
+        
+        writer = open("../work-dir/ThinVarProp","w")
+        writer.write(thinvarprop)
+        writer.close()
+        
+        writer = open("../work-dir/ThinVarList","w")
+        writer.write(thinvarlist)
+        writer.close()
+
+        cpp_mode = Model()

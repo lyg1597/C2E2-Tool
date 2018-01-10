@@ -31,8 +31,8 @@ class ModelNotebook(Notebook):
 
         self.model_tab = ModelTab(self)
         self.add(self.model_tab, text='Model')
-        self.editor_tab = EditorTab( self )
-        self.add( self.editor_tab, text='Editor')
+        #self.editor_tab = EditorTab( self )
+        #self.add( self.editor_tab, text='Editor')
 
 
     def _init_plot_widgets(self,*args):

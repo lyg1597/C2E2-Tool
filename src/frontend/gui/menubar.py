@@ -146,10 +146,8 @@ class MenuBar(Menu):
                 return
 
             # Obtain parsed results
-            Session.hybrid = file['hybrid']
-            Session.prop_list = file['prop_list']
-            if len(Session.prop_list) == 0:
-                Session.prop_list.append(Property())
+            Session.hybrid_automata = file['hybrid_automata']
+            Session.composition_list = file['composition_list']
 
             Session.file_opened = True
 

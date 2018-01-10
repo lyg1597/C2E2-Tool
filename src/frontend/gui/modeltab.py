@@ -26,7 +26,7 @@ class ModelTab(Frame):
         print ("Initialize the Treeview and Property Editor")
         self.tree = TreeView(self, selectmode='browse' ) 
         self.tree.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
-        PropertyEditor(self).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
+        #PropertyEditor(self).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
 
 
 class TreeView(Treeview):
@@ -73,67 +73,75 @@ class TreeView(Treeview):
 
 
     def _display_model(self, event=None):
+
         print( 'Displaying Model...' )
-        hybrid = Session.hybrid
-        # Display variables
-        var_id = self.insert('', 'end', text=VARIABLES)
-        var_str = ', '.join(hybrid.varList)
-        self.insert(var_id, 'end', text=var_str)
-        self.item(var_id, open=TRUE)
-        
-        if len(hybrid.thinvarList)!=0:
-            thin_var_id = self.insert('', 'end', text='Thin Variables')
-            thin_var_str = ', '.join(hybrid.thinvarList)
-            self.insert(thin_var_id, 'end', text=thin_var_str)
-            self.item(thin_var_id, open=TRUE)
+        hybrid_automata = Session.hybrid_automata
+
+        for name in hybrid_automata:
+
+            hybrid = hybrid_automata[name]
             
-        self.mode_dict = {}  # LMB: Changed scope, TransitionEntry needs to use it
-        self.mode_str_dict = {}  # LMB: Connect mode_str to mode for editing
-        modes_id = self.insert('', 'end', text=MODES)
-        self.item(modes_id, open=TRUE)
-        for mode in hybrid.automata[0].modes:
-            self.mode_dict[mode.id] = mode.name
-            mode_str = mode.name + ' (' + str(mode.id) + ')'
-            self.mode_str_dict[mode_str] = mode  # LMB: Connect mode_str to mode
-            mode_id = self.insert(modes_id, 'end', text=mode_str)
+            # Display variables
+            var_id = self.insert('', 'end', text=VARIABLES)
+            var_str = ', '.join(hybrid.varList)
+            self.insert(var_id, 'end', text=var_str)
+            self.item(var_id, open=TRUE)
+            
+            if len(hybrid.thinvarList)!=0:
+                thin_var_id = self.insert('', 'end', text='Thin Variables')
+                thin_var_str = ', '.join(hybrid.thinvarList)
+                self.insert(thin_var_id, 'end', text=thin_var_str)
+                self.item(thin_var_id, open=TRUE)
+                
+            self.mode_dict = {}  # LMB: Changed scope, TransitionEntry needs to use it
+            self.mode_str_dict = {}  # LMB: Connect mode_str to mode for editing
+            modes_id = self.insert('', 'end', text=MODES)
+            self.item(modes_id, open=TRUE)
+            for mode in hybrid.automata.modes:
+                self.mode_dict[mode.id] = mode.name
+                mode_str = mode.name + ' (' + str(mode.id) + ')'
+                self.mode_str_dict[mode_str] = mode  # LMB: Connect mode_str to mode
+                mode_id = self.insert(modes_id, 'end', text=mode_str)
 
-            # Display flows
-            flow_id = self.insert(mode_id, 'end', text='Flows')
-            for dai in mode.dais:
-                # LMB: Commenting out conditional from popup to avoid 'losing' equations when dialog is confirmed. Removing it here too for consistency. May need to go back and add it after talking with leadership. TODO
-                #if '_dot' in dai.raw:
-                dai_str = dai.raw[3:-1]
-                idx = dai_str.index(',')
-                dai_str = dai_str[:idx]+'='+dai_str[idx+1:]
-                self.insert(flow_id, 'end', text=dai_str)
+                # Display flows
+                flow_id = self.insert(mode_id, 'end', text='Flows')
+                for dai in mode.dais:
+                    # LMB: Commenting out conditional from popup to avoid 'losing' equations when dialog is confirmed. Removing it here too for consistency. May need to go back and add it after talking with leadership. TODO
+                    #if '_dot' in dai.raw:
+                    dai_str = dai.raw
+                    '''
+                    dai_str = dai.raw[3:-1]
+                    idx = dai_str.index(',')
+                    dai_str = dai_str[:idx]+'='+dai_str[idx+1:]'''
+                    self.insert(flow_id, 'end', text=dai_str)
 
-            # Display invariants
-            inv_id = self.insert(mode_id, 'end', text='Invariants')
-            for inv in mode.invs:
-                self.insert(inv_id, 'end', text=inv.raw)
+                # Display invariants
+                inv_id = self.insert(mode_id, 'end', text='Invariants')
+                for inv in mode.invs:
+                    self.insert(inv_id, 'end', text=inv.raw)
 
-        # Display transitions
-        self.tran_str_dict = {}  # LMB: Connect tran_str to tran for editing
-        trans_id = self.insert('', 'end', text=TRANSITIONS)
-        self.item(trans_id, open=TRUE)
-        for tran in hybrid.automata[0].trans:
-            src, dest = self.mode_dict[tran.src], self.mode_dict[tran.dest]
-            tran_str = src + ' -> ' + dest
-            self.tran_str_dict[tran_str] = tran  # LMB: Connect tran_str to tran
-            tran_id = self.insert(trans_id, 'end', text=tran_str)
+            # Display transitions
+            self.tran_str_dict = {}  # LMB: Connect tran_str to tran for editing
+            trans_id = self.insert('', 'end', text=TRANSITIONS)
+            self.item(trans_id, open=TRUE)
+            for tran in hybrid.automata.trans:
+                src, dest = self.mode_dict[tran.src], self.mode_dict[tran.dest]
+                tran_str = src + ' -> ' + dest
+                self.tran_str_dict[tran_str] = tran  # LMB: Connect tran_str to tran
+                tran_id = self.insert(trans_id, 'end', text=tran_str)
 
-            src_str = 'Source: ' + src + ' (' + str(tran.src) + ')'
-            self.insert(tran_id, 'end', text=src_str)
+                src_str = 'Source: ' + src + ' (' + str(tran.src) + ')'
+                self.insert(tran_id, 'end', text=src_str)
 
-            dest_str = 'Destination: ' + dest + ' (' + str(tran.dest) + ')'
-            self.insert(tran_id, 'end', text=dest_str)
+                dest_str = 'Destination: ' + dest + ' (' + str(tran.dest) + ')'
+                self.insert(tran_id, 'end', text=dest_str)
 
-            guard_str = 'Guards: ' + tran.guard.raw
-            self.insert(tran_id, 'end', text=guard_str)
+                guard_str = 'Guards: ' + tran.guard.raw
+                self.insert(tran_id, 'end', text=guard_str)
 
-            act_id = self.insert(tran_id, 'end', text='Actions')
-            for act in tran.actions:
-                self.insert(act_id, 'end', text=act.raw)
+                act_id = self.insert(tran_id, 'end', text='Actions')
+                for act in tran.actions:
+                    self.insert(act_id, 'end', text=act.raw)
 
 
     def _init_rc_menus( self ):
