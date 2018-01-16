@@ -145,12 +145,13 @@ class MenuBar(Menu):
             if file == None:
                 return
 
-            # Obtain parsed results
-            Session.hybrid_automata = file['hybrid_automata']
-            Session.composition_list = file['composition_list']
+            # LMB 1/15/2018 -- Operations now handled in filehandler.py or a later time
+            #Session.hybrid_automata = file['hybrid_automata']
+            #Session.prop_list = file['prop_list']
+            #if( len( Session.prop_list ) == 0 ):
+            #    Session.prop_list.append( Property() )
 
             Session.file_opened = True
-
             EventHandler.event_generate(OPEN_EVENT)
 
 

@@ -26,7 +26,7 @@ class ModelTab(Frame):
         print ("Initialize the Treeview and Property Editor")
         self.tree = TreeView(self, selectmode='browse' ) 
         self.tree.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
-        #PropertyEditor(self).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
+        ModelSidebar(self).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
 
 
 class TreeView(Treeview):
@@ -77,10 +77,8 @@ class TreeView(Treeview):
         print( 'Displaying Model...' )
         hybrid_automata = Session.hybrid_automata
 
-        for name in hybrid_automata:
+        for hybrid in hybrid_automata:
 
-            hybrid = hybrid_automata[name]
-            
             # Display variables
             var_id = self.insert('', 'end', text=VARIABLES)
             var_str = ', '.join(hybrid.varList)
@@ -285,15 +283,15 @@ class TreeView(Treeview):
         self._init_selection_vars()
 
 
-class PropertyEditor(Frame):
+class ModelSidebar(Frame):
 
     def __init__(self, parent, **options):
         Frame.__init__(self, parent, **options)
         self.parent = parent
         self.sel_iid = None
 
-        self._bind_events()
-        self._init_widgets()
+        #self._bind_events()
+        #self._init_widgets()
 
 
     def _bind_events(self):
@@ -1066,7 +1064,7 @@ class PropertyEditor(Frame):
     def _display_properties(self, event=None):
         st = 'constant'
         path = '../work-dir/simulator.cpp'
-        gen_simulator(path, Session.hybrid, step_type=st)
+        gen_simulator(path, Session.hybrid, step_type=st)   
 
         for prop in Session.prop_list:
             if self.sel_iid:

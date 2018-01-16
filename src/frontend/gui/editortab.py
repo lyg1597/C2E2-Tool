@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from frontend.gui.eventhandler import EventHandler
-from frontend.gui.modeltab import PropertyEditor
+from frontend.gui.modeltab import ModelSidebar
 from frontend.mod.constants import *
 from frontend.mod.filehandler import FileHandler
 from frontend.mod.session import Session, Property
@@ -127,7 +127,7 @@ class EditorTab( Frame ):
         self._open_xml()
 
 
-class PropertyList( PropertyEditor ):
+class PropertyList( ModelSidebar ):
 
     def __init__( self, parent, **options ):
         PropertyEditor.__init__( self, parent, **options )

@@ -5,12 +5,14 @@ from scipy import optimize as opt
 class Automaton:
 
     def __init__(self, name="default_automaton"):
+
         self.name = name
         self.next_mode_id = 0
         self.next_transition_id = 0
         self.initial_mode_id = 0
         self.modes = []
         self.trans = []
+
 
     def print_trans(self):
         print("--- Transitions ---")
@@ -35,10 +37,10 @@ class Automaton:
         
     def add_mode(self,mode):
         self.modes.append(mode)
-
+    
     def remove_mode( self, mode ):
         self.modes.remove( mode )
-    
+
     def add_trans(self,trans):
         self.trans.append(trans)
         
@@ -57,9 +59,9 @@ class Automaton:
 
 
 class Variables:
-
+    
     def __init__(self):
-
+    
         self.local = []
         self.input = []
         self.output = []
@@ -84,12 +86,12 @@ class Variable:
         self.scope = scope
         self.update_type = type
 
-    def __eq__(self, other):       
+    def __eq__(self, other):
         return self.name==other.name and self.update_type==other.update_type and self.type==other.type
 
 
 class ThinVariables:
-    
+
     def __init__(self):
         self.local = []
         self.input = []
@@ -109,7 +111,7 @@ class ThinVariables:
 
 class ThinVariable:
 
-    def __init__(self,name="",update_type="",type="",scope=""):    
+    def __init__(self,name="",update_type="",type="",scope=""):
         self.name = name
         self.type = type
         self.scope = scope
@@ -126,31 +128,33 @@ class Mode:
     invs - list of Invariant objects representing the mode's invariants
     dais - list of DAI objects representing the mode's governing differential equations
     '''
-    def __init__(self,name='',id=-1,initial=False):   
+    def __init__( self, name='UNNAMED', id=-1, initial=False ):
         self.name = name
         self.id = id
         self.initial = initial
         self.initialConditions = []
         self.invs = []
         self.dais = []
-        self.linear = False
+        self.linear = True
+            
+    def add_inv( self, inv ):
+        self.invs.append( inv )
 
-    def add_inv(self,inv):
-        self.invs.append(inv)
+    def remove_inv( self, inv ):
+        self.invs.remove( inv )
     
-    def clear_inv(self):
+    def clear_inv( self ):
         self.invs = []
-
+    
     def add_dai( self, dai ):
-        self.dais.append(dai)
+        self.dais.append( dai )
 
-    def clear_dai(self):
-        self.dais = []
+    def remove_dai( self, dai ):
+        self.dais.remove( dai )
 
     def construct( self ):
-        """ Construct DAI equation and Invariant equations """
-
-        # DAI
+        """ Construct DAI equation and Invariant Equations """
+        
         if( len( self.dais ) == 0 ):
             self.linear = False
         else:
@@ -160,41 +164,11 @@ class Mode:
                 if self.linear:
                     self.linear = SymEq.is_linear( dai.expr.rhs )
 
-        # Invariant
-        if( len( self.invs ) != 0 ):
-            for inv in self.invs:
-                inv.construct()
-                if not inv.expr:  # Moved conditional removal from filehandler.py
-                    self.invs.remove( inv )
-
-
-class DAI:
-    '''Deterministic algebraic inequalities'''
-    def __init__(self, raw):
-        self.raw = raw
-
-    def construct( self ):
-        self.expr = SymEq.construct_eqn(self.raw, True, False)
-        self.raw = str( self.expr ) 
-
-
-class Invariant:
-
-    def __init__(self, raw):
-        self.raw = raw
-        
-    def construct( self ):
-
-        eqns = self.raw.split( '||' )
-        self.expr = [SymEq.construct_eqn(eqn, False, True) for eqn in eqns]
-        # Filter out equations that evaluate to False
-        self.expr = filter(lambda eqn: eqn is not False, self.expr)
-        self.expr = list(self.expr)
-        if True in self.expr: 
-            print('Redundant Inv: ' + raw)
-            self.expr = []
-
-
+        for inv in self.invs:
+            inv.construct()
+            if not inv.expr:
+                self.remove_inv( inv )
+ 
 class Transition:
     '''guard - node representing the guard for the transition
     actions - list of nodes representing the resets of the transition
@@ -202,51 +176,68 @@ class Transition:
     src - the source of the transition
     dest - the destination of the transition
     ''' 
-    def __init__(self,guard,actions,id=-1,src=-1,dest=-1):
+    def __init__( self, guard, actions, id=-1, src=-1, dest=-1 ):
         self.guard = guard
         self.actions = actions
         self.id = id
         self.src = src
         self.dest = dest
 
-    def clear_actions( self ):  # LMB: Added for GUI editing
-        self.actions = []
-
-    def add_action( self, action ):  # LMB: Added for GUI editing
-        self.actions.append( action )
-
     def construct( self ):
         self.guard.construct()
-        for action in self.actions:
+        for action in actions:
             action.construct()
 
+    def add_action( self, action ):
+        self.actions.append( action )
 
+class DAI:
+    '''Deterministic algebraic inequalities'''
+    def __init__( self, raw ):
+        self.raw = raw
+    
+    def construct( self ):
+        self.expr = SymEq.construct_eqn( raw, True, False )
+
+class Invariant:
+
+    def __init__( self, raw ):
+        self.raw = raw
+
+    def construct( self ):
+        eqns = self.raw.split( '||' )
+        self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
+        # Filter out equations that evaluate to False
+        self.expr = filter( lambda eqn: eqn is not False, self.expr )
+        self.expr = list( self.expr )
+        if True in self.expr: 
+            print('Redundant Inv: ' + self.raw)
+            self.expr = []
+        
 class Guard:
 
     def __init__(self, raw):
         self.raw = raw
 
     def construct( self ):
-        eqns = self.raw.split('&&')
-        self.expr = [SymEq.construct_eqn(eqn, False, True) for eqn in eqns]
+        eqns = self.raw.split( '&&' )
+        self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
         # Filter out equations that evaluate to True
-        self.expr = filter(lambda eqn: eqn is not True, self.expr)
-        self.expr = list(self.expr)
+        self.expr = filter( lambda eqn: eqn is not True, self.expr )
+        self.expr = list( self.expr )
         if False in self.expr: 
-            print('Redundant Guard: ' + raw)
-            print ("there is a false in expr")
+            print( 'Redundant Guard: ' + self.raw )
             self.expr = []
 
         
 class Action:
 
-    def __init__(self, raw):
+    def __init__( self, raw ):
         self.raw = raw
 
     def construct( self ):
         eqns = self.raw.split('&&')
         self.expr = [SymEq.construct_eqn(eqn, True, True) for eqn in eqns]
-
 
 #Symbolic Equation library
 class SymEq:

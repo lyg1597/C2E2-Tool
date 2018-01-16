@@ -2,7 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 
 from frontend.mod.hyir import *
-from frontend.mod.session import Property
+from frontend.mod.session import Session, Property
 from frontend.mod.constants import * 
 from frontend.mod.SFParse import extract_sf
 from frontend.mod.hierarchy import IsHierarchical,RemoveHierarchy
@@ -14,7 +14,7 @@ import pdb
 class FileHandler:
 
     @staticmethod
-    def save_model(hybrid, propertyList,file_path):
+    def save_model(hybrid, propertyList, file_path):
         #print ("Starting to convert file to hyxml format string")
         hyxml = ET.Element("hyxml", {"type":"Model"})
         auto = ET.SubElement(hyxml, 'automaton', {"name": hybrid.automata[0].name})
@@ -62,16 +62,17 @@ class FileHandler:
         tree.write(file_path)
         return    
 
+
     @staticmethod
     def open_file(file_path):
-        """ Open provided file """
+        """ Open file entry point. """
 
         base_name = os.path.basename(file_path) 
         raw_name, ext = os.path.splitext(base_name)
 
         # Handle HyXML file
         if ext == '.hyxml':
-            
+
             # Get HyXML type and call corresponding function
             hyxml_tree = ET.parse(file_path)
             if hyxml_tree == None:
@@ -79,17 +80,35 @@ class FileHandler:
 
             hyxml_root = hyxml_tree.getroot()
             hyxml_type = hyxml_root.get('type')
-            
+
+            thinvarprop = ""
+            thinvarlist = ""
+
             if hyxml_type == 'Model':
+
+                hybrid_automata = FileHandler.open_hyxml_model(hyxml_root, raw_name)
+                """
+                prop_list = FileHandler.open_hyxml_properties(hyxml_root, hybrid)
                 
-                hybrid_automata, composition_list = FileHandler.open_hyxml_model(hyxml_root, raw_name)
-            
+                for var in hybrid.varList:
+                    if var in hybrid.thinvarList:
+                        thinvarlist += var + "\n"
+                        thinvarprop += "1\n"
+                    else:
+                        thinvarprop += "0\n"
+
+                writer = open("../work-dir/ThinVarProp","w")
+                writer.write(thinvarprop)
+                writer.close()
+                writer = open("../work-dir/ThinVarList","w")
+                writer.write(thinvarlist)
+                writer.close()
+                """
             # TODO
             #elif hyxml_type == 'Simulink':
             #    hybrid = self.open_hyxml_simulink(hyxml_root)
             else:
                 return None
-
 
         # Handle MDL file
         elif ext == '.mdl':
@@ -100,8 +119,7 @@ class FileHandler:
         else:
             return None
 
-        # TODO: Confirm return values, propogate those up to MenuBar.py
-        return { 'hybrid_automata': hybrid_automata, 'composition_list': composition_list }
+        return hybrid_automata
 
     # Open HyXML Model file
     @staticmethod
@@ -223,83 +241,132 @@ class FileHandler:
         
     
     @staticmethod
-    def open_hyxml_model(root, file_name):
-        """ Parse XML tree and build model """
+    def open_hyxml_model( root, file_name ):
+        """ Parse xml tree """
         
-        hybrid_automata = {}
-        
-        for automata in root.iterfind("automaton"):
-            hybrid = HyIR(file_name=file_name)
-            name = automata.get("name")
-            hybrid_automata[name] = hybrid
+        hybrid_automata = []
 
-            for var in automata.iterfind("variable"):
-                v_name = var.get("name")
-                v_scope = var.get("scope")
-                v_type = var.get("type")
+        for automata in root.iterfind( "automaton" ):
+            # Create new HyIR object for each automaton
+            name = automata.get( "name" )
+            hybrid = HyIR( name=name, file_name=file_name )
+            hybrid_automata.append( hybrid )
+
+            for var in automata.iterfind( "variable" ):
+                
+                # Load variables
+                v_name = var.get( "name" )
+                v_scope = var.get( "scope" )
+                v_type = var.get( "type" )
+
+                print( "Variable Read" )
+                print( "Name: " + v_name )
+                print( "Scope: " + v_scope )
+                print( "Type: " + v_type + "\n" )
+                
                 v = Variable( name=v_name, type=v_type, scope=v_scope )
-                hybrid.add_var(v)
+                hybrid.add_var( v )
 
-            for thinvar in automata.iterfind("thin_variable"):
-                v_name = thinvar.get("name")
-                v_scope = thinvar.get("scope")
-                v_type = thinvar.get("type")
+            for thinvar in automata.iterfind( "thin_variable" ):
+                
+                # Load thin variables
+                v_name = thinvar.get( "name" )
+                v_scope = thinvar.get( "scope" )
+                v_type = thinvar.get( "type")
+
+                print( "Thin Variable Read" )
+                print( "Name: " + v_name )
+                print( "Scope: " + v_scope )
+                print( "Type: " + v_type + "\n" )
+                
                 v = ThinVariable( name=v_name, type=v_type, scope=v_scope )
-                hybrid.add_thin_var(v)
+                hybrid.add_thin_var( v )
 
             for mode in automata.iterfind( "mode" ):
-                # LMB  1/8/2018  Updated to be consistent with var/thinvar/tran loops
-                #                Removed modeIndex incrementer that was never used
+                
+                # Load modes
                 mode_name = mode.get( "name" )
                 mode_id = int( mode.get( "id" ) )
                 mode_initial = ( mode.get( "initial" ) == "True" )
-                m = Mode( name=mode_name, id=mode_id, initial=mode_initial )
 
+                print( "Mode Read" )
+                print( "Name: " + mode_name )
+                print( "ID: " + str( mode_id ) )
+                print( "Initial: " + str( mode_initial ) + "\n" )
+                
+                mode_obj = Mode( name=mode_name, id=mode_id, initial=mode_initial )
+        
                 for dai in mode.iterfind( "dai" ):
-                    v1 = dai.get( "equation" )
-                    m.add_dai( DAI(v1) )
 
-                for inv in mode.iterfind("invariant"):
-                    i = Invariant( FileHandler.clean_eq( inv.get("equation" ) ) )
-                    # LMB  1/8/2018  Removed (if i.expr: ) requirement for m.add_inv(i)
-                    #                Moved functionaly to Mode.construct()
-                    m.add_inv(i)
+                    # Load Flows 
+                    raw_eq = dai.get( "equation" )
+                    
+                    print( "    DAI Read: " + raw_eq )
+                    
+                    mode_obj.add_dai( DAI(raw_eq) )
+                print()
+                
+                for inv in mode.iterfind( "invariant" ):
+                    
+                    # Load Invariants
+                    raw_eq = inv.get( "equation" )
+                    
+                    print( "    Invariant Read: " + raw_eq )
 
-                hybrid.automata.add_mode(m)  
+                    # Equation 'cleaning' is needed for inequalities
+                    clean_eq = FileHandler.clean_eq( raw_eq )
+                    mode_obj.add_inv( Invariant( clean_eq ) )
+                print()
 
-            for tran in automata.iterfind("transition"):
-                guard = tran.find("guard")
-                g = Guard( FileHandler.clean_eq( guard.get("equation") ) )
-                g_id = int(tran.get("id"))
-                g_src = int(tran.get("source"))
-                g_dest = int(tran.get("destination"))
+                hybrid.automata.add_mode( mode_obj )  
 
-                # LMB  1/8/2018  Removed (if g.expr: ) requirement for rest of tran loop
-                #                Functionality not directly added back, nor planned
-                #                Users should be given an error with work preserved      
+            for tran in automata.iterfind( "transition" ):
+
+                # Load transitions
+                g = tran.find( "guard" )
+                guard = Guard( FileHandler.clean_eq( g.get("equation") ) )
+
+                tran_id = int( tran.get( "id" ) )
+                tran_src = int( tran.get( "source" ) )
+                tran_dest = int( tran.get( "destination" ) )
+
+                print( "Transition Read" )
+                print( "Source: " + str( tran_src ) )
+                print( "Destination: " + str( tran_dest ) )
+                print( "ID: " + str( tran_id ) + "\n" )
+                
+                # Actions
                 actions = []
-                for act in tran.iterfind("action"):
-                    a = FileHandler.clean_eq( act.get("equation") )
-                    actions.append( Action(a) )
-                t = Transition( g, actions, g_id, g_src, g_dest )
-                hybrid.automata.add_trans( t )
-        
+                for act in tran.iterfind( "action" ):
+                    raw_eq = act.get( "equation" )
+                    print( "    Action Read: " + raw_eq )
+                    clean_eq = FileHandler.clean_eq( raw_eq )
+                    actions.append( Action(clean_eq) )
+                print()
 
-        composition = root.find("composition")
-        composition_list = list(map(lambda x: hybrid_automata[x], composition.get("automata").split(";")))
+                transition = Transition( guard, actions, tran_id, tran_src, tran_dest )
+                hybrid.automata.add_trans( transition )
+
+        Session.hybrid_automata = hybrid_automata
+
         """
-        automata_list.reverse()
-        while len(automata_list) > 1:
-            hyir1 = automata_list.pop()
-            hyir2 = automata_list.pop()
-            automata_list.append(HyIR.compose(hyir1, hyir2))
-        hybrid = automata_list[0]
+        LMB 1/15/2018  I don't know if we necessarily need to specify composition
+                       Shouldn't we just include every automata listed?
+        composition = root.find( "composition" )
+        composition_list = list( map( lambda x: hybrid_automata[x], composition.get("automata").split(";") ) )
+        composition_list.reverse()
+        while len(composition_list) > 1:
+            hyir1 = composition_list.pop()
+            hyir2 = composition_list.pop()
+            composiiton_list.append(HyIR.compose(hyir1, hyir2))
+
+        hybrid = composition_list[0]
         
-        hybrid.automata = [hybrid.automata]
         hybrid.populateInvGuards()
         hybrid.print_all()
         """
-        return hybrid_automata, composition_list
+
+        return hybrid_automata
 
     """
     # FIXME move this up before the previous method

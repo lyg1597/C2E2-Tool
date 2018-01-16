@@ -91,12 +91,12 @@ class Session():
 
     # Pre-composition
     hybrid_automata = None
-    composition_list = None
 
     # Post-composition
     hybrid = None
     cur_prop = None
     prop_list = None
+
     simulator = ODEINT_FIX
     refine_strat = DEF_STRAT
 
@@ -104,18 +104,28 @@ class Session():
 
     cpp_model = None
 
+
+    def parse():
+
+        for hybrid in hybrid_automata:
+            for mode in hybrid.automata.modes:
+                mode.compose()
+            for tran in hybrid.automata.trans:
+                trans.compose()
+
     def compose():
         
-        # LMB  1/8/2018  Originally took place in filehandler.py, this is a copy
-        
+        # LMB  1/16/2018  Originally took place in filehandler.py, this is a copy
+        parse()
+
+        automata_list = hybrid_automata
         automata_list.reverse()
         while len( automata_list ) > 1:
             hyir1 = automata_list.pop()
             hyir2 = automata_list.pop()
             automata_list.apped( HyIR.compose( hyir1, hyir2 ) )
+        
         hybrid = automata_list[0]
-
-        hybrid.automata = [hybrid.automata]
         hybrid.populateInvGuards()
         hybrid.print_all()
 

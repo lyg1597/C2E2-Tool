@@ -13,24 +13,23 @@ from collections import defaultdict
 class HyIR:
 
     def __init__(self, name="hybrid_system", file_name=""):
-        
+
         self.name = name
         self.file_name = file_name
         
-        self.vars = []
-        self.varList = []
-        self.variables = Variables()
+        self.vars = []  # List of Variable objects
+        self.varList = []  # List of Variable objects with scope LOCAL_DATA
+        self.variables = Variables()  # Single Variables object
 
-        self.thinvars = []
-        self.thinvarList = []
-        self.thinvariables = ThinVariables()
+        self.thinvars = []  # List of ThinVariable objects
+        self.thinvarList = []  # List of ThinVariable objects with scope LOCAL_DATA
+        self.thinvariables = ThinVariables()  # Single ThinVariables object
 
         self.automata = Automaton()
         
         self.annotations = ""
         self.annotationsRaw = []
         ###self.treestore = gtk.TreeStore(str)
-    
 
     @staticmethod
     def compose(hyir1, hyir2):
@@ -92,7 +91,7 @@ class HyIR:
         composed.varList = [v.name for v in composed.variables.local]
 
         return composed
-        
+
     def print_vars(self):
         print("--- Variables ---")
         for i in self.vars:
@@ -156,7 +155,7 @@ class HyIR:
             return False
         return True
 
-    def add_var(self, v):
+       def add_var(self, v):
         """ Add variable """
         self.vars.append(v)
         self.variables.add_var(v)
@@ -210,7 +209,7 @@ class HyIR:
 
         for var in nonlocal_vars:
             self.add_thin_var( var )
-
+        
 
     def print_all(self):
         print("%s:" % self.name)
