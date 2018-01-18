@@ -155,7 +155,7 @@ class HyIR:
             return False
         return True
 
-       def add_var(self, v):
+    def add_var(self, v):
         """ Add variable """
         self.vars.append(v)
         self.variables.add_var(v)

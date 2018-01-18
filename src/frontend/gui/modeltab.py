@@ -287,14 +287,16 @@ class ModelSidebar(Frame):
 
     def __init__(self, parent, **options):
         Frame.__init__(self, parent, **options)
+        
         self.parent = parent
         self.sel_iid = None
 
-        #self._bind_events()
-        #self._init_widgets()
+        self._bind_events()
+        self._init_widgets()
 
 
     def _bind_events(self):
+
         self.bind(CLOSE_EVENT, self._clear_properties)
         EventHandler.add_event_listeners(self, CLOSE_EVENT)
 
@@ -303,6 +305,7 @@ class ModelSidebar(Frame):
 
 
     def _init_widgets(self):
+        
         self._init_prop_view()
         self._init_prop_list()
 
@@ -314,6 +317,7 @@ class ModelSidebar(Frame):
 
     ''' PROPERTY VIEW GUI AND FUNCTIONS '''
     def _init_prop_view(self):
+        
         # Regex building blocks
         flt = '(-?(\d*\.?\d+))'
         int = '(-?(\d+))'
@@ -542,7 +546,8 @@ class ModelSidebar(Frame):
 
             # Validate mode
             mode = re.search(self.re_var, is_sep[0]).group(0)
-            mode_list = [m.name for m in Session.hybrid.automata[0].modes]
+            mode_list = Session.get_mode_names()
+
             if mode not in mode_list:
                 self.is_err.set('No matching modes')
                 self.is_vl.set_state(False)
@@ -552,7 +557,7 @@ class ModelSidebar(Frame):
 
             # Validate vars
             vars = re.findall(self.re_var, is_sep[1])
-            var_list = Session.hybrid.varList
+            var_list = Session.get_varList()
             var_union = set(vars) | set(var_list)
             if len(var_union) > len(var_list):
                 self.is_err.set('Variable mismatch')
@@ -602,7 +607,7 @@ class ModelSidebar(Frame):
         # Validate vars
         else:
             vars = re.findall(self.re_var, input)
-            var_list = Session.hybrid.varList
+            var_list = Session.get_varList()
             var_union = set(vars) | set(var_list)
             if len(var_union) > len(var_list):
                 self.us_err.set('Variable mismatch')
@@ -788,8 +793,8 @@ class ModelSidebar(Frame):
         file_path = '../work-dir/'+Session.cur_prop.name
         time_step = Session.cur_prop.time_step
         time_horizon = Session.cur_prop.time_horizon
-        varlist = Session.hybrid.varList
-        modelist = [m.name for m in Session.hybrid.automata[0].modes]
+        varlist = Session.get_varList()
+        modelist = Session.get_mode_names()
 
         self.parent.parent._init_plot_widgets(varlist,modelist,time_step,time_horizon,unsafe_set,file_path,sim_adpative,Session.cur_prop.name)
         
@@ -922,7 +927,7 @@ class ModelSidebar(Frame):
         initial_eqns = initial_set_obj[3]
         initial_matrix = self._extract_matrix(initial_set_obj[1], initial_eqns)
         initial_b = self._extract_matrix(initial_set_obj[2], initial_eqns)
-        mode_names = [m.name for m in Session.hybrid.automata[0].modes]
+        mode_names = Session.get_mode_names()
         initial_mode_idx = mode_names.index(initial_mode) + 1
 
         # Unsafe set variables
@@ -936,7 +941,7 @@ class ModelSidebar(Frame):
         mode_linear = []
         gammas = []
         k_consts = []
-        for m_i, m in enumerate(Session.hybrid.automata[0].modes):
+        for m_i, m in enumerate( Session.get_modes() ):
             fn = '../work-dir/jacobiannature' + str(m_i+1) + '.txt'
             fid = open(fn, 'r').read().split('\n')
             num_var = int(fid[0])
@@ -995,8 +1000,8 @@ class ModelSidebar(Frame):
             k_consts.append(k)
 
         # Unsigned integers
-        model.dimensions = len(Session.hybrid.varList)
-        model.modes = len(Session.hybrid.automata[0].modes)
+        model.dimensions = len(Session.get_varList())
+        model.modes = len(Session.hybrid.get_modes())
         model.initial_mode = initial_mode_idx
         model.initial_eqns = len(initial_eqns)
         model.unsafe_eqns = len(unsafe_eqns)
@@ -1062,9 +1067,10 @@ class ModelSidebar(Frame):
 
 
     def _display_properties(self, event=None):
-        st = 'constant'
-        path = '../work-dir/simulator.cpp'
-        gen_simulator(path, Session.hybrid, step_type=st)   
+
+        #TODO st = 'constant'
+        #TODO path = '../work-dir/simulator.cpp'
+        #TODO gen_simulator(path, Session.hybrid, step_type=st)   
 
         for prop in Session.prop_list:
             if self.sel_iid:

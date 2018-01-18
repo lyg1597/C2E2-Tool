@@ -109,9 +109,12 @@ class Session():
 
         for hybrid in hybrid_automata:
             for mode in hybrid.automata.modes:
-                mode.compose()
+                mode.construct()
             for tran in hybrid.automata.trans:
-                trans.compose()
+                trans.construct()
+
+        if( len( hybrid_automata ) == 1 ):
+            hybrid = hybrid_automata[0]
 
     def compose():
         
@@ -150,4 +153,45 @@ class Session():
         writer.write(thinvarlist)
         writer.close()
 
+        composed = True
+
         cpp_mode = Model()
+
+    @classmethod
+    def get_mode_names( cls ):
+
+        mode_list = cls.get_modes()
+        mode_name_list = []
+        
+        for mode in mode_list:
+            mode_name_list.append( mode.get_name() )
+
+        return mode_name_list
+
+    @classmethod
+    def get_modes( cls ):
+
+        mode_list = []
+
+        if( cls.hybrid ):
+            return cls.hybrid.automata.modes
+
+        for hybrid in cls.hybrid_automata:
+            for mode in hybrid.automata.modes:
+                mode_list.append( mode )
+
+        return mode_list
+
+    @classmethod
+    def get_varList( cls ):
+
+        varList = []
+
+        if( cls.hybrid ):
+            return cls.hybrid.automata.varList
+
+        for hybrid in cls.hybrid_automata:
+            for local_var in hybrid.varList:
+                varList.append( local_var )
+
+        return varList

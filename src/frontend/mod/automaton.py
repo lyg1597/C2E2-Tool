@@ -152,6 +152,9 @@ class Mode:
     def remove_dai( self, dai ):
         self.dais.remove( dai )
 
+    def get_name( self ):
+        return self.name
+
     def construct( self ):
         """ Construct DAI equation and Invariant Equations """
         

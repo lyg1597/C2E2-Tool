@@ -87,6 +87,8 @@ class FileHandler:
             if hyxml_type == 'Model':
 
                 hybrid_automata = FileHandler.open_hyxml_model(hyxml_root, raw_name)
+
+                prop_list = FileHandler.open_hyxml_properties( hyxml_root )
                 """
                 prop_list = FileHandler.open_hyxml_properties(hyxml_root, hybrid)
                 
@@ -118,7 +120,9 @@ class FileHandler:
         # Handle all other extensions
         else:
             return None
-
+        
+        Session.hybrid_automata = hybrid_automata
+        Session.prop_list = prop_list
         return hybrid_automata
 
     # Open HyXML Model file
@@ -347,7 +351,6 @@ class FileHandler:
                 transition = Transition( guard, actions, tran_id, tran_src, tran_dest )
                 hybrid.automata.add_trans( transition )
 
-        Session.hybrid_automata = hybrid_automata
 
         """
         LMB 1/15/2018  I don't know if we necessarily need to specify composition
@@ -413,7 +416,7 @@ class FileHandler:
     """
 
     @staticmethod
-    def open_hyxml_properties(root, hybrid):
+    def open_hyxml_properties( root ):
         prop_list = []
         for prop in root.iterfind('property'):
             p = Property()
@@ -423,10 +426,10 @@ class FileHandler:
 
             p.initial_set_str = FileHandler.clean_eq(prop.get('initialSet'))
             init_set_split = p.initial_set_str.split(':')
-            p.initial_set_obj = [init_set_split[0]] + SymEq.get_eqn_matrix(init_set_split[1], hybrid.varList)
+            #TODO p.initial_set_obj = [init_set_split[0]] + SymEq.get_eqn_matrix(init_set_split[1], hybrid.varList)
             
             p.unsafe_set_str = FileHandler.clean_eq(prop.get('unsafeSet'))
-            p.unsafe_set_obj = SymEq.get_eqn_matrix(p.unsafe_set_str, hybrid.varList)    
+            #TODO p.unsafe_set_obj = SymEq.get_eqn_matrix(p.unsafe_set_str, hybrid.varList)    
 
             # Handle properties parameters
             param = prop.find('parameters')
