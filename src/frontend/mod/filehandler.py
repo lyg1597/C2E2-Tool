@@ -14,27 +14,44 @@ import pdb
 class FileHandler:
 
     @staticmethod
-    def save_model(hybrid, propertyList, file_path):
+    def save_model(hybrid_automata, propertyList, file_path):
+
         #print ("Starting to convert file to hyxml format string")
         hyxml = ET.Element("hyxml", {"type":"Model"})
-        auto = ET.SubElement(hyxml, 'automaton', {"name": hybrid.automata[0].name})
-        for var in hybrid.vars:
-            ET.SubElement(auto,"variable",{"name":var.name,"scope":var.scope,"type":var.type})
-        modeIndex = 0
-        for mode in hybrid.automata[0].modes:
-            modeIndex+=1
-            m=ET.SubElement(auto,"mode",{"id":str(mode.id),"initial":str(mode.initial),"name":mode.name})
-            for dai in mode.dais:
-                equ = dai.raw[3:-1]
-                ET.SubElement(m,"dai",{"equation":equ.replace(",","=",1)})
-            for inv in mode.invs:
-                ET.SubElement(m,"invariant",{"equation":inv.raw})
-        for tran in hybrid.automata[0].trans:
-            t = ET.SubElement(auto,"transition",{"id":str(tran.id),"destination":str(tran.dest),"source":str(tran.src)})
-            ET.SubElement(t,"guard",{"equation":tran.guard.raw})
-            for act in tran.actions:
-                ET.SubElement(t,"action",{"equation":act.raw})
-        ET.SubElement(hyxml,"composition", {"automata":hybrid.automata[0].name})
+
+        for hybrid in hybrid_automata:
+
+            auto = ET.SubElement(hyxml, 'automaton', {"name": hybrid.automata.name})
+            
+            # Variables
+            for var in hybrid.vars:
+                ET.SubElement(auto,"variable",{"name":var.name,"scope":var.scope,"type":var.type})
+
+            # Thin Variables
+            for thinvar in hybrid.thinvars:
+                ET.SubElement( auto, "thin_variable", { "name":thinvar.name, "scope":thinvar.scope, "type":thinvar.type } )
+
+            # Modes
+            for mode in hybrid.automata.modes:
+                m=ET.SubElement(auto,"mode",{"id":str(mode.id),"initial":str(mode.initial),"name":mode.name})
+                for dai in mode.dais:
+                    #equ = dai.raw[3:-1]
+                    #ET.SubElement(m,"dai",{"equation":equ.replace(",","=",1)})
+                    ET.SubElement( m, "dai", {"equation":dai.raw} )
+                for inv in mode.invs:
+                    ET.SubElement(m,"invariant",{"equation":inv.raw} )
+            
+            # Transitions
+            for tran in hybrid.automata.trans:
+                t = ET.SubElement(auto,"transition",{"id":str(tran.id),"destination":str(tran.dest),"source":str(tran.src)})
+                ET.SubElement(t,"guard",{"equation":tran.guard.raw})
+                for act in tran.actions:
+                    ET.SubElement(t,"action",{"equation":act.raw})
+
+        # Composition    
+        #ET.SubElement(hyxml,"composition", {"automata":hybrid.automata[0].name})
+            
+        # Properties
         for prop in propertyList:
             if not prop.initial_set_str:
                 continue
@@ -253,7 +270,9 @@ class FileHandler:
         for automata in root.iterfind( "automaton" ):
             # Create new HyIR object for each automaton
             name = automata.get( "name" )
-            hybrid = HyIR( name=name, file_name=file_name )
+            hybrid_name = name + " HyIR"
+            hybrid = HyIR( name=hybrid_name, file_name=file_name )
+            hybrid.automata.name = name
             hybrid_automata.append( hybrid )
 
             for var in automata.iterfind( "variable" ):

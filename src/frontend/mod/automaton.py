@@ -197,6 +197,9 @@ class Transition:
     def add_action( self, action ):
         self.actions.append( action )
 
+    def clear_actions( self ):
+        self.actions = []
+
 class DAI:
     '''Deterministic algebraic inequalities'''
     def __init__( self, raw ):
