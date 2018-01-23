@@ -71,11 +71,11 @@ class VariableEntry( PopupEntry ):
               prevent their deletion.
         """
         
-        scope_options = { 'LOCAL_DATA' }
+        self.scope_options = { 'LOCAL_DATA' }
 
         for var in self.automaton.vars:
             if( var.scope != 'LOCAL_DATA' ):
-                scope_options.add( var.scope )
+                self.scope_options.add( var.scope )
             self._add_row()
             self.names[self.var_index-1].set( var.name )
             self.types[self.var_index-1].set( var.type )
@@ -84,22 +84,22 @@ class VariableEntry( PopupEntry ):
 
         for var in self.automaton.thinvars:
             if( var.scope != 'LOCAL_DATA' ): 
-                scope_options.add( var.scope )
+                self.scope_options.add( var.scope )
             self._add_row()
             self.names[self.var_index-1].set( var.name )
             self.types[self.var_index-1].set( var.type )
             self.thins[self.var_index-1].set( True )
             self.scopes[self.var_index-1].set( var.scope )
 
-        if( len( scope_options ) > 1 ):
-            self._init_scope_column( scope_options )
+        if( len( self.scope_options ) > 1 ):
+            self._init_scope_column()
 
 
-    def _init_scope_column( self, scope_options ):
+    def _init_scope_column( self ):
         """ Enable scope column - only used if there is already a non-local scope """
 
         for i in range( self.var_index ):
-            OptionMenu( self, self.scopes[i], self.scopes[i].get(), *scope_options )\
+            OptionMenu( self, self.scopes[i], self.scopes[i].get(), *self.scope_options )\
                 .grid( row=i+2, column=3 )
 
         # Increase columnspan to accomdate extra row
@@ -122,12 +122,19 @@ class VariableEntry( PopupEntry ):
             .grid( row=self.var_index+2, column=0 )
 
         # Type
+        self.types[self.var_index].set( REAL )
         OptionMenu( self, self.types[self.var_index], self.types[self.var_index].get(), *VARIABLE_TYPES )\
             .grid( row=self.var_index+2, column=1 )
 
         # Thin
         Checkbutton( self, var=self.thins[self.var_index] )\
             .grid( row=self.var_index+2, column=2 )
+
+        # Scope
+        self.scopes[self.var_index].set( 'LOCAL_DATA' )
+        if( len( self.scope_options ) > 1 ):
+            OptionMenu( self, self.scopes[self.var_index], self.scopes[self.var_index].get(), *self.scope_options )\
+            .grid( row=self.var_index+2, column=3 )
 
         self.btn_frame.grid( row=self.var_index+3, columnspan=3 )
 
