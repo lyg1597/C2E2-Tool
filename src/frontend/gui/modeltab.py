@@ -318,7 +318,7 @@ class TreeView( Treeview ):
         elif( context == MODES ):
             entry = ModeEntry( self.master, action, self.slct_mode, self.slct_automaton )   
         elif( context == TRANSITIONS ):
-            entry = TransitionEntry( self.master, action, self.mode_dict, self.slct_transition, self.slct_automaton )
+            entry = TransitionEntry( self.master, action, self.mode_name_dict, self.slct_transition, self.slct_automaton )
         elif( context == AUTOMATON ):
             print( 'Automaton entry not yet built' )
             return

@@ -369,12 +369,12 @@ class TransitionEntry( PopupEntry ):
         trans (Transition obj): Transition to be edited or deleted, not required for ADD action
     """    
 
-    def __init__( self, parent, action, mode_dict, trans=None, automatn=None ):
+    def __init__( self, parent, action, mode_dict, trans=None, hybrid=None ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Transition' )
 
         self.trans = trans
-        self.automaton = automaton
+        self.hybrid = hybrid
         self.mode_dict = mode_dict  # mode_dict[mode.id] = mode.name
         self.action = action
 
@@ -471,7 +471,7 @@ class TransitionEntry( PopupEntry ):
         self.action_toggle.add_row()
         self.action_toggle.toggle()
 
-        self.trans_id.set( len( Session.hybrid.automata[0].trans ))
+        self.trans_id.set( len( self.hybrid.automata.trans ))
 
 
     def _disable_fields( self ):
@@ -524,7 +524,7 @@ class TransitionEntry( PopupEntry ):
                 actions.append( Action( action.get() ) )
 
         transition = Transition( guard, actions, trans_id, src, dest )
-        Session.hybrid.automata[0].add_trans( transition )
+        self.hybrid.automata.add_trans( transition )
 
         print( 'Transition Entry Confirmed\n' )
         self.destroy()     
@@ -560,7 +560,7 @@ class TransitionEntry( PopupEntry ):
         """ Delete active Transiiton """
         
         if( messagebox.askyesno( 'Delete Transition', 'Delete ' + self.trans_str.get() + '?' ) ):
-            Session.hybrid.automata[0].remove_trans( self.trans )
+            self.hybrid.automata.remove_trans( self.trans )
         
         print( 'Transition Deleted\n' )
         self.destroy()
