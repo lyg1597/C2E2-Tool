@@ -31,7 +31,9 @@ INTEGER = 'Integer'
 VARIABLE_TYPES = [ REAL, INTEGER ]
 
 # Contexts / LMB 12/21/2017 / Used to determine right-click menus and popup entry/edit menus in the ModelTab Treeview
+AUTOMATON = 'Automaton'
 VARIABLES = 'Variables'
+THINVARIABLES = 'Thin Variables'
 MODES = 'Modes'
 TRANSITIONS = 'Transitions'
 

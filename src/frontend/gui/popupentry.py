@@ -17,9 +17,11 @@ class VariableEntry( PopupEntry ):
         parent (obj): Popup's parent object
     """
 
-    def __init__( self, parent ):
+    def __init__( self, parent, automaton ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Variables' )
+
+        self.automaton = automaton 
 
         self._init_widgets()
         self._load_session()
@@ -69,11 +71,9 @@ class VariableEntry( PopupEntry ):
               prevent their deletion.
         """
         
-        hybrid = Session.hybrid
-
         scope_options = { 'LOCAL_DATA' }
 
-        for var in hybrid.vars:
+        for var in self.automaton.vars:
             if( var.scope != 'LOCAL_DATA' ):
                 scope_options.add( var.scope )
             self._add_row()
@@ -82,7 +82,7 @@ class VariableEntry( PopupEntry ):
             self.thins[self.var_index-1].set( False )
             self.scopes[self.var_index-1].set( var.scope )
 
-        for var in hybrid.thinvars:
+        for var in self.automaton.thinvars:
             if( var.scope != 'LOCAL_DATA' ): 
                 scope_options.add( var.scope )
             self._add_row()
@@ -137,7 +137,7 @@ class VariableEntry( PopupEntry ):
     def _confirm( self ):
         """ Commit changes to Session. Does NOT save these changes. """
 
-        hybrid = Session.hybrid
+        hybrid = self.automaton
         hybrid.reset_vars()
         hybrid.reset_thin_vars()
 
@@ -179,11 +179,12 @@ class ModeEntry( PopupEntry ):
         mode (Mode obj): Mode to be edited or deleted, not required for ADD action
     """
 
-    def __init__( self, parent, action, mode=None ):
+    def __init__( self, parent, action, mode=None, automaton=None ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Mode' )
 
         self.mode = mode
+        self.automaton = automaton
         self.action = action
 
         self._init_widgets()
@@ -252,12 +253,7 @@ class ModeEntry( PopupEntry ):
 
         # Flows
         for dai in self.mode.dais:
-            # LMB: Commenting out conditional from popup to avoid 'losing' equations when dialog is confirmed. May need to go back and add it after talking with leadership. TODO
-            #if '_dot' in dai.raw:
-            dai_str = dai.raw[3:-1]
-            idx = dai_str.index(',')
-            dai_str = dai_str[:idx]+'='+dai_str[idx+1:]
-            self.flow_toggle.add_row( text=dai_str )
+            self.flow_toggle.add_row( text=dai.raw )
         self.flow_toggle.toggle()
         
         # Invariants
@@ -276,7 +272,7 @@ class ModeEntry( PopupEntry ):
         self.inv_toggle.toggle()
 
         # Prefill ID assuming IDs are sequential. Not doing this defaults it to 0.
-        self.mode_id.set( len( Session.hybrid.automata[0].modes ) )
+        self.mode_id.set( len( self.automaton.modes ) )
 
 
     def _disable_fields( self ):
@@ -305,7 +301,7 @@ class ModeEntry( PopupEntry ):
         
         self.mode = Mode()
         self._confirm_edit()
-        Session.hybrid.automata[0].add_mode( self.mode )
+        self.automaton.add_mode( self.mode )
 
 
     def _confirm_edit( self ):
@@ -340,7 +336,7 @@ class ModeEntry( PopupEntry ):
         """ Delete active Mode """
 
         if( messagebox.askyesno( 'Delete Transition', 'Delete ' + self.mode.name + '(' + str(self.mode.id) + ') ' + '?' ) ):
-            Session.hybrid.automata[0].remove_mode( self.mode )
+            self.automaton.remove_mode( self.mode )
         
         print( 'Mode Deleted\n' )
         self.destroy()
@@ -366,11 +362,12 @@ class TransitionEntry( PopupEntry ):
         trans (Transition obj): Transition to be edited or deleted, not required for ADD action
     """    
 
-    def __init__( self, parent, action, mode_dict, trans=None ):
+    def __init__( self, parent, action, mode_dict, trans=None, automatn=None ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Transition' )
 
         self.trans = trans
+        self.automaton = automaton
         self.mode_dict = mode_dict  # mode_dict[mode.id] = mode.name
         self.action = action
 

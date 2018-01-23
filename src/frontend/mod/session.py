@@ -182,16 +182,74 @@ class Session():
 
         return mode_list
 
+
+    @classmethod
+    def get_vars( cls ):
+        """ Get variable objects from composed hybrid, or from all automata for a non-composed sytem """
+
+        vars = []
+
+        if( cls.hybrid ):
+            return cls.hybrid.automata.vars
+
+        for hybrid in cls.hybrid_automata:
+            for var in hybrid.vars:
+                vars.append( var )
+
+        return vars
+
+
     @classmethod
     def get_varList( cls ):
+        """ 
+        Get varList ( variable objects with scope LOCAL_DATA ) from composed hybrid, or fram all automata in a non-composed system 
+        
+        NOTE: The unusual naming convention is a blend of the underscore standard and the camelCase used in the HyIR object. -- LMB, 1/22/2018
+        """
 
         varList = []
 
         if( cls.hybrid ):
-            return cls.hybrid.automata.varList
+            return cls.hybrid.varList
 
         for hybrid in cls.hybrid_automata:
             for local_var in hybrid.varList:
                 varList.append( local_var )
 
         return varList
+
+
+    @classmethod
+    def get_thinvars( cls ):
+        """ Get thin variable objects from composed hybrid, or from all automata for a non-composed system """
+
+        thinvars = []
+
+        if( cls.hybrid ):
+            return cls.hyrid.thinvars
+
+        for hybrid in cls.hybrid_automata:
+            for thinvar in hybrid.thinvars:
+                thinvars.append( thinvar )
+
+        return thinvars
+
+
+    @classmethod
+    def get_thinvarList( cls ):
+        """ 
+        Get thinvarList ( thin variable objects with scope LOCAL_DATA ) from composed hybrid, or from all automata in a non-composed system 
+        
+        NOTE: The unusual naming convention is a blend of the underscore standard and the camelCase used in the HyIR object. -- LMB, 1/22/2018
+        """
+
+        thinvarList = []
+
+        if( cls.hybrid ):
+            return cls.hybrid.thinvarList
+
+        for hybrid in cls.hybrid_automata:
+            for local_thinvar in hybrid.thinvarList:
+                thinvarList.append( local_thinvar )
+
+        return thinvarList

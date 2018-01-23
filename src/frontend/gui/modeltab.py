@@ -29,37 +29,44 @@ class ModelTab(Frame):
         ModelSidebar(self).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
 
 
-class TreeView(Treeview):
+class TreeView( Treeview ):
         
-    def __init__(self, master, **options):
+    def __init__( self, master, **options ):
         """ 
         Note: We use 'master' here instead of 'parent' due to naming conflict
               with the parent() function in the Treeview class. 
         """
-        Treeview.__init__(self, master, **options)
-        self.pack(fill=BOTH, expand=TRUE)
+        Treeview.__init__( self, master, **options )
+        self.pack( fill=BOTH, expand=TRUE )
         self.master = master
 
         self._init_selection_vars()
         self._bind_events()
         self._init_rc_menus()
-        self.config(show='tree')
+        self.config( show='tree' )
     
 
     def _init_selection_vars( self ):
-        self.selection_context = None
-        self.selection_parent = None
-        self.selection_root = None
-        self.selection_mode = None
-        self.selection_transition = None
+        """ Initialize variables used to parse selected object """
+
+        self.slct_root = None
+        self.slct_child = None
+        self.slct_grandchild = None
+        
+        self.slct_automaton = None
+        self.slct_context = None
+        self.slct_mode = None
+        self.slct_transition = None
 
 
-    def _bind_events(self):
-        self.bind(CLOSE_EVENT, self._clear_model)
-        EventHandler.add_event_listeners(self, CLOSE_EVENT)
+    def _bind_events( self ):
+        """ Bind open and close file events and click events """
 
-        self.bind(OPEN_EVENT, self._display_model)
-        EventHandler.add_event_listeners(self, OPEN_EVENT)
+        self.bind( CLOSE_EVENT, self._clear_model )
+        EventHandler.add_event_listeners( self, CLOSE_EVENT )
+
+        self.bind( OPEN_EVENT, self._display_model )
+        EventHandler.add_event_listeners( self, OPEN_EVENT )
 
         # Double-click treeview element 
         self.bind( '<Double-1>', self._on_double_click )
@@ -67,42 +74,59 @@ class TreeView(Treeview):
         self.bind( '<Button-3>', self._on_right_click )
 
 
-    def _clear_model(self, event=None):
+    def _clear_model( self, event=None ):
+        """ Clear treeview display """
         print( 'Clearing Model...' )
         self.delete(*self.get_children())
 
 
-    def _display_model(self, event=None):
-
+    def _display_model( self, event=None ):
+        """ Display Session automata in Treeview """
+        
         print( 'Displaying Model...' )
         hybrid_automata = Session.hybrid_automata
 
+        self.automaton_dict = {}  # dict[item_id] = automaton object
+        self.mode_dict = {}  # dict[item_id] = mode object
+        self.trans_dict = {}  # dict[item_id] = transition object
+
+        self.mode_name_dict = {}  # dict[mode.id] = mode.name
+        
         for hybrid in hybrid_automata:
 
-            # Display variables
-            var_id = self.insert('', 'end', text=VARIABLES)
-            var_str = ', '.join(hybrid.varList)
-            self.insert(var_id, 'end', text=var_str)
-            self.item(var_id, open=TRUE)
+            # Display automaton name
+            automaton_id = self.insert( '', 'end', text=hybrid.name )
+            self.item( automaton_id, open=TRUE )
+
+            self.automaton_dict[automaton_id] = hybrid
             
-            if len(hybrid.thinvarList)!=0:
-                thin_var_id = self.insert('', 'end', text='Thin Variables')
-                thin_var_str = ', '.join(hybrid.thinvarList)
-                self.insert(thin_var_id, 'end', text=thin_var_str)
-                self.item(thin_var_id, open=TRUE)
-                
-            self.mode_dict = {}  # LMB: Changed scope, TransitionEntry needs to use it
-            self.mode_str_dict = {}  # LMB: Connect mode_str to mode for editing
-            modes_id = self.insert('', 'end', text=MODES)
-            self.item(modes_id, open=TRUE)
+            # Display variables
+            var_id = self.insert( automaton_id, 'end', text=VARIABLES )
+            var_str = ', '.join( hybrid.varList )
+            self.insert( var_id, 'end', text=var_str )
+            self.item( var_id, open=TRUE )
+
+            # Display thin variables
+            if( len( hybrid.thinvarList ) !=0 ):
+                thin_var_id = self.insert( automaton_id, 'end', text='Thin Variables' )
+                thin_var_str = ', '.join( hybrid.thinvarList )
+                self.insert( thin_var_id, 'end', text=thin_var_str )
+                self.item( thin_var_id, open=TRUE )
+
+            # Display modes
+            modes_id = self.insert( automaton_id, 'end', text=MODES )
+            self.item( modes_id, open=TRUE )
+    
             for mode in hybrid.automata.modes:
-                self.mode_dict[mode.id] = mode.name
+
                 mode_str = mode.name + ' (' + str(mode.id) + ')'
-                self.mode_str_dict[mode_str] = mode  # LMB: Connect mode_str to mode
-                mode_id = self.insert(modes_id, 'end', text=mode_str)
+                mode_id = self.insert( modes_id, 'end', text=mode_str )
+
+                self.mode_dict[mode_id] = mode
+                self.mode_name_dict[mode.id] = mode.name
 
                 # Display flows
-                flow_id = self.insert(mode_id, 'end', text='Flows')
+                flow_id = self.insert( mode_id, 'end', text='Flows' )
                 for dai in mode.dais:
                     # LMB: Commenting out conditional from popup to avoid 'losing' equations when dialog is confirmed. Removing it here too for consistency. May need to go back and add it after talking with leadership. TODO
                     #if '_dot' in dai.raw:
@@ -111,35 +135,37 @@ class TreeView(Treeview):
                     dai_str = dai.raw[3:-1]
                     idx = dai_str.index(',')
                     dai_str = dai_str[:idx]+'='+dai_str[idx+1:]'''
-                    self.insert(flow_id, 'end', text=dai_str)
+                    self.insert( flow_id, 'end', text=dai_str )
 
                 # Display invariants
-                inv_id = self.insert(mode_id, 'end', text='Invariants')
+                inv_id = self.insert( mode_id, 'end', text='Invariants' )
                 for inv in mode.invs:
-                    self.insert(inv_id, 'end', text=inv.raw)
+                    self.insert( inv_id, 'end', text=inv.raw )
 
             # Display transitions
-            self.tran_str_dict = {}  # LMB: Connect tran_str to tran for editing
-            trans_id = self.insert('', 'end', text=TRANSITIONS)
-            self.item(trans_id, open=TRUE)
+            trans_id = self.insert( automaton_id, 'end', text=TRANSITIONS )
+            self.item( trans_id, open=TRUE )
+            
             for tran in hybrid.automata.trans:
-                src, dest = self.mode_dict[tran.src], self.mode_dict[tran.dest]
+
+                src, dest = self.mode_name_dict[tran.src], self.mode_name_dict[tran.dest]
                 tran_str = src + ' -> ' + dest
-                self.tran_str_dict[tran_str] = tran  # LMB: Connect tran_str to tran
-                tran_id = self.insert(trans_id, 'end', text=tran_str)
+                tran_id = self.insert( trans_id, 'end', text=tran_str )
+
+                self.trans_dict[tran_id] = tran
 
                 src_str = 'Source: ' + src + ' (' + str(tran.src) + ')'
-                self.insert(tran_id, 'end', text=src_str)
+                self.insert( tran_id, 'end', text=src_str )
 
                 dest_str = 'Destination: ' + dest + ' (' + str(tran.dest) + ')'
-                self.insert(tran_id, 'end', text=dest_str)
+                self.insert( tran_id, 'end', text=dest_str )
 
                 guard_str = 'Guards: ' + tran.guard.raw
-                self.insert(tran_id, 'end', text=guard_str)
+                self.insert( tran_id, 'end', text=guard_str )
 
-                act_id = self.insert(tran_id, 'end', text='Actions')
+                act_id = self.insert( tran_id, 'end', text='Actions' )
                 for act in tran.actions:
-                    self.insert(act_id, 'end', text=act.raw)
+                    self.insert( act_id, 'end', text=act.raw )
 
 
     def _init_rc_menus( self ):
@@ -169,24 +195,29 @@ class TreeView(Treeview):
 
         self._identify_selection( event )
 
-        if( self.selection_context == VARIABLES ):
+        if( self.slct_context == VARIABLES or self.slct_context == THINVARIABLES ):
             context_menu = self.variables_rc_menu
-        elif( self.selection_context == MODES ):
+        elif( self.slct_context == MODES ):
             context_menu = self.modes_rc_menu
-        elif( self.selection_context == TRANSITIONS ):
+        elif( self.slct_context == TRANSITIONS ):
             context_menu = self.transitions_rc_menu
+        elif( self.slct_context == AUTOMATON ):
+            # TODO LMB
+            print( 'Automaton right-click menu not yet built' )
+            return
         else:
             return  # The following lines depend on context_menu existing
 
         context_menu.tk_popup( event.x_root, event.y_root )
 
         # Diable/Enable appropriate depending on where user clicked
-        if( self.selection_root == self.selection_parent ):  # User clicked on the root
+        if( self.slct_child == self.slct_grandchild ):  # User clicked on a context
             context_menu.entryconfig( 1, state=DISABLED )
             context_menu.entryconfig( 2, state=DISABLED )
-        else:  # User clicked on a child
+        else:  # User clicked on an object
             context_menu.entryconfig( 1, state=NORMAL )
             context_menu.entryconfig( 2, state=NORMAL )
+
 
     def _on_left_click( self, event ):
 
@@ -198,10 +229,17 @@ class TreeView(Treeview):
 
         print( '<<Double-Click>>' )        
         self._identify_selection( event )
-        if( self.selection_root == self.selection_parent ):
-            self.launch_entry_popup( self.selection_context, ADD )
+
+        if( self.slct_automaton == None ): return
+
+        if( self.slct_context == AUTOMATON ):
+            action = ADD
+        elif( ( self.slct_mode == None ) and ( self.slct_transition == None ) ):
+            action = ADD
         else:
-            self.launch_entry_popup( self.selection_context, EDIT )
+            action = EDIT
+
+        self.launch_entry_popup( self.slct_context, action )
 
 
     def _identify_selection( self, event ):
@@ -212,65 +250,78 @@ class TreeView(Treeview):
         item_id = self.identify_row( event.y )
         if( not item_id ):
             print( 'No item selected ' )
-            self.selection_remove( self.selection() ) # Unselect any previously selected selection
+            self.selection_remove( self.selection() ) # Unselect selection
             return
 
         self.selection_set( item_id )
+        self._get_slct_vars( item_id )
 
-        self.selection_root, self.selection_parent, self.selection_context = self._get_parent_and_context( item_id )
+        # Dev Prints (Here until the end of function )
+        print( 'Selection:  ', self.item( item_id )['text'] )
+        print( 'Root:       ', self.item( self.slct_root )['text'] )
+        print( 'Child:      ', self.item( self.slct_child )['text'] )
+        print( 'Grandchild: ', self.item( self.slct_grandchild )['text'], '\n' )
 
-        print( 'Root: ', self.item( self.selection_root )['text'] )
-        print( 'Parent: ', self.item( self.selection_parent )['text'] )
-        print( 'Context: ', self.selection_context, '\n' )
+        print( 'Automaton:  ', self.slct_automaton.name )
+        print( 'Context:    ', self.slct_context )
 
-        if( self.selection_root == self.selection_parent ):
-            return  # If user clicks on a root (heading), there's no mode/transition selected
-        elif( self.selection_context == MODES ):
-            self.selection_mode = self.mode_str_dict[ self.item( self.selection_parent )['text']]
-        elif( self.selection_context == TRANSITIONS ):
-            self.selection_transition = self.tran_str_dict[ self.item( self.selection_parent )['text']]
+        slct_obj = "None"
+        if( self.slct_mode ):
+            slct_obct = self.slct_mode.name
+        elif( self.slct_transition ):
+            slct_objct = 'Transition ID: ' + str(self.slct_transition.id)
+
+        print( 'Object:     ', slct_obj )
+            
 
 
-    def _get_parent_and_context( self, item_id ):
-        """Returns the root and context of item_id (in that order)"""
+    def _get_slct_vars( self, item_id ):
+        """ Returns the ids of the automaton, context, and object of selection (item_id) in that order """
 
-        root_id = item_id
-        parent_id = item_id
+        root = item_id
+        child = item_id
+        grandchild = item_id
 
-        while( self.parent( root_id ) != '' ):
-            parent_id = root_id
-            root_id = self.parent( root_id )
+        while( self.parent( root ) != '' ):
+            grandchild = child
+            child = root
+            root = self.parent( root )
+
+        self.slct_root = root
+        self.slct_child = child
+        self.slct_grandchild = grandchild
+
+        self.slct_automaton = self.automaton_dict[root]
         
-        return root_id, parent_id, self.item( root_id )['text']
+        if( child == root ):
+            # User clicked on an automaton name
+            self.slct_context == AUTOMATON
+            return
+        self.slct_context = self.item( child )['text']
 
+        if( grandchild == child ): 
+            # User clicked on Context heading, no object selected
+            return
 
-    def get_selection_parent( self ):
-        return self.selection_parent
-
-
-    def get_selection_root( self ):
-        return self.selection_root
-
-
-    def get_selection_context( self ):
-        return self.selection_context
+        if( self.slct_context == MODES ):
+            self.slct_mode = self.mode_dict[grandchild]
+        elif( self.slct_context == TRANSITIONS ):
+            self.slct_transition = self.trans_dict[grandchild]
+        
+        return 
 
 
     def launch_entry_popup( self, context, action ):
         
-        if( context == VARIABLES ):
-            # Selection not relevant for Variables context
-            self._init_selection_vars()
-            entry = VariableEntry( self.master )
-            return
-        elif( action == ADD ):
-            # Selection not relevant for adding Modes/Transitions
-            self._init_selection_vars()
-
-        if( context == MODES ):
-            entry = ModeEntry( self.master, action, self.selection_mode )   
+        if( context == VARIABLES or context == THINVARIABLES ):
+            entry = VariableEntry( self.master, self.slct_automaton )
+        elif( context == MODES ):
+            entry = ModeEntry( self.master, action, self.slct_mode, self.slct_automaton )   
         elif( context == TRANSITIONS ):
-            entry = TransitionEntry( self.master, action, self.mode_dict, self.selection_transition )
+            entry = TransitionEntry( self.master, action, self.mode_dict, self.slct_transition, self.slct_automaton )
+        elif( context == AUTOMATON ):
+            print( 'Automaton entry not yet built' )
+            return
 
         # Wait for user response
         self.master.wait_window( entry )
