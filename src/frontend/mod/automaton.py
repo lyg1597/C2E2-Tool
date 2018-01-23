@@ -143,7 +143,7 @@ class Mode:
     def remove_inv( self, inv ):
         self.invs.remove( inv )
     
-    def clear_inv( self ):
+    def clear_invs( self ):
         self.invs = []
     
     def add_dai( self, dai ):
@@ -151,6 +151,9 @@ class Mode:
 
     def remove_dai( self, dai ):
         self.dais.remove( dai )
+
+    def clear_dais( self ):
+        self.dais = []
 
     def get_name( self ):
         return self.name

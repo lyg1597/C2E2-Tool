@@ -186,12 +186,12 @@ class ModeEntry( PopupEntry ):
         mode (Mode obj): Mode to be edited or deleted, not required for ADD action
     """
 
-    def __init__( self, parent, action, mode=None, automaton=None ):
+    def __init__( self, parent, action, mode=None, hybrid=None ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Mode' )
 
         self.mode = mode
-        self.automaton = automaton
+        self.hybrid = hybrid
         self.action = action
 
         self._init_widgets()
@@ -279,7 +279,7 @@ class ModeEntry( PopupEntry ):
         self.inv_toggle.toggle()
 
         # Prefill ID assuming IDs are sequential. Not doing this defaults it to 0.
-        self.mode_id.set( len( self.automaton.modes ) )
+        self.mode_id.set( len( self.hybrid.automata.modes ) )
 
 
     def _disable_fields( self ):
@@ -308,7 +308,7 @@ class ModeEntry( PopupEntry ):
         
         self.mode = Mode()
         self._confirm_edit()
-        self.automaton.add_mode( self.mode )
+        self.hybrid.automata.add_mode( self.mode )
 
 
     def _confirm_edit( self ):
@@ -324,13 +324,13 @@ class ModeEntry( PopupEntry ):
         self.mode.initial = self.initial.get()
 
         # Flows
-        self.mode.clear_dai()
+        self.mode.clear_dais()
         for raw_text in self.flow_toggle.get_rows():
             if( (raw_text.get()).strip() ): 
                 self.mode.add_dai( DAI( raw_text.get() ) )
 
         # Invariants
-        self.mode.clear_inv()
+        self.mode.clear_invs()
         for raw_text in self.inv_toggle.get_rows():
             if( (raw_text.get()).strip() ): 
                 self.mode.add_inv( Invariant( raw_text.get() ) )
@@ -343,7 +343,7 @@ class ModeEntry( PopupEntry ):
         """ Delete active Mode """
 
         if( messagebox.askyesno( 'Delete Transition', 'Delete ' + self.mode.name + '(' + str(self.mode.id) + ') ' + '?' ) ):
-            self.automaton.remove_mode( self.mode )
+            self.hybrid.automata.remove_mode( self.mode )
         
         print( 'Mode Deleted\n' )
         self.destroy()
