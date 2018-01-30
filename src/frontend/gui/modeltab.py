@@ -23,15 +23,19 @@ class ModelTab(Frame):
         self._init_widgets()
 
     def _init_widgets(self):
+        """ Initialize the Treeview and Property Editory """
+
         print ("Initialize the Treeview and Property Editor")
-        self.tree = TreeView(self, selectmode='browse' ) 
+        self.sidebar = ModelSidebar( self ) 
+        self.tree = TreeView(self, self.sidebar, selectmode='browse' )
+
         self.tree.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
-        ModelSidebar(self).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
+        self.sidebar.pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
 
 
 class TreeView( Treeview ):
         
-    def __init__( self, master, **options ):
+    def __init__( self, master, sidebar, **options ):
         """ 
         Note: We use 'master' here instead of 'parent' due to naming conflict
               with the parent() function in the Treeview class. 
@@ -39,6 +43,7 @@ class TreeView( Treeview ):
         Treeview.__init__( self, master, **options )
         self.pack( fill=BOTH, expand=TRUE )
         self.master = master
+        self.sidebar = sidebar
 
         self._init_selection_vars()
         self._bind_events()
@@ -95,7 +100,7 @@ class TreeView( Treeview ):
         for hybrid in hybrid_automata:
 
             # Display automaton name
-            automaton_id = self.insert( '', 'end', text=hybrid.name )
+            automaton_id = self.insert( '', 'end', text=hybrid.automata.name )
             self.item( automaton_id, open=TRUE )
 
             self.automaton_dict[automaton_id] = hybrid
@@ -322,9 +327,13 @@ class TreeView( Treeview ):
         elif( context == AUTOMATON ):
             print( 'Automaton entry not yet built' )
             return
-
+        
         # Wait for user response
         self.master.wait_window( entry )
+
+        # Update property status if the model was changed
+        if( entry.is_changed() ):
+            self.sidebar._update_property_status( 0, 0, 1 )
         
         # Refresh Model
         self._clear_model()
@@ -729,6 +738,16 @@ class ModelSidebar(Frame):
         self.ver_btn = Button(row, text='Verify', command=self._callback_ver)
         self.ver_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
+        # Parse and Compose buttons
+        row = Frame( self.prop_list )
+        row.pack( fill=X )
+
+        self.parse_btn = Button( row, text='Parse', command=self._callback_parse )
+        self.parse_btn.pack( expand=TRUE, fill=X, side=LEFT )
+
+        self.compose_btn = Button( row, text='Compose', command=self._callback_compose )
+        self.compose_btn.pack( expand=TRUE, fill=X, side=LEFT )
+
 
     def _add_property(self, prop):
         iid = self.list_view.insert('', 'end', values=(prop.name, prop.status, prop.result))
@@ -810,21 +829,40 @@ class ModelSidebar(Frame):
         self._display_property(Session.cur_prop)
 
 
+    def _callback_parse( self ):
+        HyIR.parse_all( Session.hybrid_automata )
+
+
+    def _callback_compose( self ):
+        HyIR.parse_all( Session.hybrid_automata )
+        HyIR.compose_all( Session.hybrid_automata )
+
+
     # TODO implement me
     def _callback_sim(self):
+
+        HyIR.parse_all( Session.hybrid_automata )
+        HyIR.compose_all( Session.hybrid_automata )
+
+        st = 'constant'
+        path = '../work-dir/simulator.cpp'
+        gen_simulator(path, Session.hybrid, step_type=st)
+
         if not Session.cur_prop.is_valid():
             return
 
         self._disable_enable_button(1)
         
-        Session.hybrid.printHybridSimGuardsInvariants()
+        Session.hybrid.printHybridSimGuardsInvariants();
         Session.hybrid.printBloatedSimGuardsInvariants()
 
         # Simulate the selected model
+        print( "Initialize CPP Model" )
         self._initialize_cpp_model(1)
+        print( "Compile Executable" )
         self._compile_executable()
   
-        
+        print( "Simulate Verify" )
         result = Session.cpp_model.simulate_verify()
         self._disable_enable_button(0)
         self._update_property_status(1,result,0)
@@ -939,15 +977,26 @@ class ModelSidebar(Frame):
 
 
     def _callback_ver(self):
+        
+        HyIR.parse_all( Session.hybrid_automata )
+        HyIR.compose_all( Session.hybrid_automata )
+
+        st = 'constant'
+        path = '../work-dir/simulator.cpp'
+        gen_simulator(path, Session.hybrid, step_type=st)
+
         if not Session.cur_prop.is_valid():
             return
+
         self._disable_enable_button(1)
+        
         Session.hybrid.printHybridSimGuardsInvariants();
         Session.hybrid.printBloatedSimGuardsInvariants()
 
         # Simulate the selected model
         self._initialize_cpp_model(0)
         Session.cpp_model.print_model()
+
         Session.cur_prop.simulator = self.sim_var.get()
         #FIXME for debug use
         self._compile_executable()
@@ -1052,7 +1101,7 @@ class ModelSidebar(Frame):
 
         # Unsigned integers
         model.dimensions = len(Session.get_varList())
-        model.modes = len(Session.hybrid.get_modes())
+        model.modes = len(Session.get_modes())
         model.initial_mode = initial_mode_idx
         model.initial_eqns = len(initial_eqns)
         model.unsafe_eqns = len(unsafe_eqns)

@@ -21,10 +21,16 @@ class VariableEntry( PopupEntry ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Variables' )
 
-        self.automaton = automaton 
+        self.automaton = automaton
+        self.changed = False 
 
         self._init_widgets()
         self._load_session()
+
+
+    def is_changed( self ):
+        """ Returns whether or not the popup changed the model (True/False """
+        return self.changed
 
 
     def _init_widgets( self ):
@@ -164,6 +170,7 @@ class VariableEntry( PopupEntry ):
                 hybrid.add_var( Variable( name=name, type=type_, scope=scope ) )
             
         print( 'Variable Entry Confirmed\n' )
+        self.changed = True
         self.destroy()
 
  
@@ -171,6 +178,7 @@ class VariableEntry( PopupEntry ):
         """ Cancels changes made in popup """
 
         print( 'Variable Entry Canceled\n' )
+        self.changed = False
         self.destroy()
 
 
@@ -193,6 +201,7 @@ class ModeEntry( PopupEntry ):
         self.mode = mode
         self.hybrid = hybrid
         self.action = action
+        self.changed = False
 
         self._init_widgets()
 
@@ -202,6 +211,11 @@ class ModeEntry( PopupEntry ):
             self._load_session()
             if( action == DELETE ):
                 self._disable_fields()
+
+
+    def is_changed( self ):
+        """ Returns whether or not the popup changed the model (True/False """
+        return self.changed
 
 
     def _init_widgets( self ):
@@ -336,6 +350,7 @@ class ModeEntry( PopupEntry ):
                 self.mode.add_inv( Invariant( raw_text.get() ) )
         
         print( 'Mode Entry Confirmed\n' )
+        self.changed = True
         self.destroy()
 
 
@@ -346,6 +361,7 @@ class ModeEntry( PopupEntry ):
             self.hybrid.automata.remove_mode( self.mode )
         
         print( 'Mode Deleted\n' )
+        self.changed = True
         self.destroy()
 
 
@@ -353,6 +369,7 @@ class ModeEntry( PopupEntry ):
         """ Cancels changes made in popup """
 
         print( 'Mode Entry Canceled\n' )
+        self.changed = False
         self.destroy()
 
 
@@ -377,6 +394,7 @@ class TransitionEntry( PopupEntry ):
         self.hybrid = hybrid
         self.mode_dict = mode_dict  # mode_dict[mode.id] = mode.name
         self.action = action
+        self.changed = False
 
         # Load Mode list for Source/Destination Option Menus
         self.mode_list = []
@@ -391,6 +409,11 @@ class TransitionEntry( PopupEntry ):
             self._load_session()
             if( action == DELETE ):
                 self._disable_fields()
+
+    
+    def is_changed( self ):
+        """ Returns whether or not the popup changed the model (True/False """
+        return self.changed
 
 
     def _init_widgets( self ):
@@ -527,6 +550,7 @@ class TransitionEntry( PopupEntry ):
         self.hybrid.automata.add_trans( transition )
 
         print( 'Transition Entry Confirmed\n' )
+        self.changed = True
         self.destroy()     
         
 
@@ -553,6 +577,7 @@ class TransitionEntry( PopupEntry ):
                 self.trans.add_action( Action(action.get()) )
                 
         print( 'Transition Entry Confirmed\n' )
+        self.changed = True
         self.destroy()
 
 
@@ -563,6 +588,7 @@ class TransitionEntry( PopupEntry ):
             self.hybrid.automata.remove_trans( self.trans )
         
         print( 'Transition Deleted\n' )
+        self.changed = True
         self.destroy()
 
 
@@ -570,4 +596,5 @@ class TransitionEntry( PopupEntry ):
         """ Cancels changes made in popup """
 
         print( 'Transition Entry Canceled\n' )
+        self.changed = False
         self.destroy()

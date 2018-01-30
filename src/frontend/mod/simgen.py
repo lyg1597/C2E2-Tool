@@ -54,7 +54,7 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
     del_list = []
 
     # FIXME allow for more automata in the future
-    automata = hybrid_rep.automata[0] 
+    automata = hybrid_rep.automata
 
     for i, cur_mode in enumerate(automata.modes):
         modes.append(cur_mode.name) 

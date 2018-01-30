@@ -158,20 +158,17 @@ class Mode:
     def get_name( self ):
         return self.name
 
-    def construct( self ):
-        """ Construct DAI equation and Invariant Equations """
+    def parse( self ):
+        """ Parse DAI equation and Invariant Equations """
         
-        if( len( self.dais ) == 0 ):
-            self.linear = False
-        else:
-            self.linear = True
-            for dai in self.dais:
-                dai.construct()
-                if self.linear:
-                    self.linear = SymEq.is_linear( dai.expr.rhs )
+        self.linear = True  # LMB: Default to True, based on original code
+        for dai in self.dais:
+            dai.parse()
+            if self.linear:
+                self.linear = SymEq.is_linear( dai.expr.rhs )
 
         for inv in self.invs:
-            inv.construct()
+            inv.parse()
             if not inv.expr:
                 self.remove_inv( inv )
  
@@ -189,10 +186,13 @@ class Transition:
         self.src = src
         self.dest = dest
 
-    def construct( self ):
-        self.guard.construct()
-        for action in actions:
-            action.construct()
+    def parse( self ):
+        self.guard.parse()
+        if( self.guard.expr ):
+            for action in self.actions:
+                action.parse()
+        else:
+            self.clear_actions
 
     def add_action( self, action ):
         self.actions.append( action )
@@ -205,15 +205,15 @@ class DAI:
     def __init__( self, raw ):
         self.raw = raw
     
-    def construct( self ):
-        self.expr = SymEq.construct_eqn( raw, True, False )
+    def parse( self ):
+        self.expr = SymEq.construct_eqn( self.raw, True, False )
 
 class Invariant:
 
     def __init__( self, raw ):
         self.raw = raw
 
-    def construct( self ):
+    def parse( self ):
         eqns = self.raw.split( '||' )
         self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
         # Filter out equations that evaluate to False
@@ -228,7 +228,7 @@ class Guard:
     def __init__(self, raw):
         self.raw = raw
 
-    def construct( self ):
+    def parse( self ):
         eqns = self.raw.split( '&&' )
         self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
         # Filter out equations that evaluate to True
@@ -244,7 +244,7 @@ class Action:
     def __init__( self, raw ):
         self.raw = raw
 
-    def construct( self ):
+    def parse( self ):
         eqns = self.raw.split('&&')
         self.expr = [SymEq.construct_eqn(eqn, True, True) for eqn in eqns]
 

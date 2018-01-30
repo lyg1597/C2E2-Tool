@@ -91,6 +91,7 @@ class Session():
 
     # Pre-composition
     hybrid_automata = None
+    composed = False
 
     # Post-composition
     hybrid = None
@@ -104,58 +105,11 @@ class Session():
 
     cpp_model = None
 
-
-    def parse():
-
-        for hybrid in hybrid_automata:
-            for mode in hybrid.automata.modes:
-                mode.construct()
-            for tran in hybrid.automata.trans:
-                trans.construct()
-
-        if( len( hybrid_automata ) == 1 ):
-            hybrid = hybrid_automata[0]
-
-    def compose():
+    @classmethod
+    def compose( cls ):
         
-        # LMB  1/16/2018  Originally took place in filehandler.py, this is a copy
-        parse()
-
-        automata_list = hybrid_automata
-        automata_list.reverse()
-        while len( automata_list ) > 1:
-            hyir1 = automata_list.pop()
-            hyir2 = automata_list.pop()
-            automata_list.apped( HyIR.compose( hyir1, hyir2 ) )
-        
-        hybrid = automata_list[0]
-        hybrid.populateInvGuards()
-        hybrid.print_all()
-
-        hyxml_root = ET.parse( file_path ).getroot()
-        prop_list = FileHandler.open_hyxml_properties(hyxml_root, hybrid)
-        
-        thinvarprop = ""
-        thinvarlist = ""
-
-        for var in hybrid.varList:
-            if var in hybrid.thinvarList:
-                thinvarlist += var + "\n"
-                thinvarprop += "1\n"
-            else:
-                thinvarprop += "0\n"
-        
-        writer = open("../work-dir/ThinVarProp","w")
-        writer.write(thinvarprop)
-        writer.close()
-        
-        writer = open("../work-dir/ThinVarList","w")
-        writer.write(thinvarlist)
-        writer.close()
-
-        composed = True
-
-        cpp_mode = Model()
+        cls.composed = True
+        cls.cpp_model = Model()
 
     @classmethod
     def get_mode_names( cls ):

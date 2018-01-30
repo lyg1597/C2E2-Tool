@@ -81,11 +81,12 @@ class FileHandler:
 
 
     @staticmethod
-    def open_file(file_path):
+    def open_file( file_path ):
         """ Open file entry point. """
+        print( "Opening File..." )
 
-        base_name = os.path.basename(file_path) 
-        raw_name, ext = os.path.splitext(base_name)
+        base_name = os.path.basename( file_path ) 
+        raw_name, ext = os.path.splitext( base_name )
 
         # Handle HyXML file
         if ext == '.hyxml':
@@ -103,29 +104,13 @@ class FileHandler:
 
             if hyxml_type == 'Model':
 
-                hybrid_automata = FileHandler.open_hyxml_model(hyxml_root, raw_name)
-
+                hybrid_automata = FileHandler.open_hyxml_model( hyxml_root, raw_name )
                 prop_list = FileHandler.open_hyxml_properties( hyxml_root )
-                """
-                prop_list = FileHandler.open_hyxml_properties(hyxml_root, hybrid)
-                
-                for var in hybrid.varList:
-                    if var in hybrid.thinvarList:
-                        thinvarlist += var + "\n"
-                        thinvarprop += "1\n"
-                    else:
-                        thinvarprop += "0\n"
 
-                writer = open("../work-dir/ThinVarProp","w")
-                writer.write(thinvarprop)
-                writer.close()
-                writer = open("../work-dir/ThinVarList","w")
-                writer.write(thinvarlist)
-                writer.close()
-                """
-            # TODO
+            # LMB  1/29/2018  No plans to support Simulink
             #elif hyxml_type == 'Simulink':
             #    hybrid = self.open_hyxml_simulink(hyxml_root)
+
             else:
                 return None
 
@@ -140,6 +125,8 @@ class FileHandler:
         
         Session.hybrid_automata = hybrid_automata
         Session.prop_list = prop_list
+
+        print( "File opened!" )
         return hybrid_automata
 
     # Open HyXML Model file
@@ -263,11 +250,13 @@ class FileHandler:
     
     @staticmethod
     def open_hyxml_model( root, file_name ):
-        """ Parse xml tree """
-        
+        """ Load model from hyxml """
+        print( "Loading hyxml model..." )
+
         hybrid_automata = []
 
         for automata in root.iterfind( "automaton" ):
+
             # Create new HyIR object for each automaton
             name = automata.get( "name" )
             hybrid_name = name + " HyIR"
@@ -281,12 +270,7 @@ class FileHandler:
                 v_name = var.get( "name" )
                 v_scope = var.get( "scope" )
                 v_type = var.get( "type" )
-
-                print( "Variable Read" )
-                print( "Name: " + v_name )
-                print( "Scope: " + v_scope )
-                print( "Type: " + v_type + "\n" )
-                
+               
                 v = Variable( name=v_name, type=v_type, scope=v_scope )
                 hybrid.add_var( v )
 
@@ -296,11 +280,6 @@ class FileHandler:
                 v_name = thinvar.get( "name" )
                 v_scope = thinvar.get( "scope" )
                 v_type = thinvar.get( "type")
-
-                print( "Thin Variable Read" )
-                print( "Name: " + v_name )
-                print( "Scope: " + v_scope )
-                print( "Type: " + v_type + "\n" )
                 
                 v = ThinVariable( name=v_name, type=v_type, scope=v_scope )
                 hybrid.add_thin_var( v )
@@ -311,36 +290,23 @@ class FileHandler:
                 mode_name = mode.get( "name" )
                 mode_id = int( mode.get( "id" ) )
                 mode_initial = ( mode.get( "initial" ) == "True" )
-
-                print( "Mode Read" )
-                print( "Name: " + mode_name )
-                print( "ID: " + str( mode_id ) )
-                print( "Initial: " + str( mode_initial ) + "\n" )
                 
                 mode_obj = Mode( name=mode_name, id=mode_id, initial=mode_initial )
         
                 for dai in mode.iterfind( "dai" ):
 
                     # Load Flows 
-                    raw_eq = dai.get( "equation" )
-                    
-                    print( "    DAI Read: " + raw_eq )
-                    
+                    raw_eq = dai.get( "equation" )                    
                     mode_obj.add_dai( DAI(raw_eq) )
-                print()
-                
+
                 for inv in mode.iterfind( "invariant" ):
                     
                     # Load Invariants
                     raw_eq = inv.get( "equation" )
-                    
-                    print( "    Invariant Read: " + raw_eq )
-
                     # Equation 'cleaning' is needed for inequalities
                     clean_eq = FileHandler.clean_eq( raw_eq )
                     mode_obj.add_inv( Invariant( clean_eq ) )
-                print()
-
+                
                 hybrid.automata.add_mode( mode_obj )  
 
             for tran in automata.iterfind( "transition" ):
@@ -352,42 +318,19 @@ class FileHandler:
                 tran_id = int( tran.get( "id" ) )
                 tran_src = int( tran.get( "source" ) )
                 tran_dest = int( tran.get( "destination" ) )
-
-                print( "Transition Read" )
-                print( "Source: " + str( tran_src ) )
-                print( "Destination: " + str( tran_dest ) )
-                print( "ID: " + str( tran_id ) + "\n" )
                 
                 # Actions
                 actions = []
                 for act in tran.iterfind( "action" ):
+
                     raw_eq = act.get( "equation" )
-                    print( "    Action Read: " + raw_eq )
                     clean_eq = FileHandler.clean_eq( raw_eq )
                     actions.append( Action(clean_eq) )
-                print()
 
                 transition = Transition( guard, actions, tran_id, tran_src, tran_dest )
                 hybrid.automata.add_trans( transition )
 
-
-        """
-        LMB 1/15/2018  I don't know if we necessarily need to specify composition
-                       Shouldn't we just include every automata listed?
-        composition = root.find( "composition" )
-        composition_list = list( map( lambda x: hybrid_automata[x], composition.get("automata").split(";") ) )
-        composition_list.reverse()
-        while len(composition_list) > 1:
-            hyir1 = composition_list.pop()
-            hyir2 = composition_list.pop()
-            composiiton_list.append(HyIR.compose(hyir1, hyir2))
-
-        hybrid = composition_list[0]
-        
-        hybrid.populateInvGuards()
-        hybrid.print_all()
-        """
-
+        print( "Model Loaded!" )
         return hybrid_automata
 
     """
@@ -436,19 +379,18 @@ class FileHandler:
 
     @staticmethod
     def open_hyxml_properties( root ):
+        """ Load properties from hyxml """
+        print( "Loading hyxml properties..." )
+
         prop_list = []
         for prop in root.iterfind('property'):
+            
             p = Property()
             p.name = prop.get('name')
 
             p.type = SAFETY # TODO implement the logic for this
-
             p.initial_set_str = FileHandler.clean_eq(prop.get('initialSet'))
-            init_set_split = p.initial_set_str.split(':')
-            #TODO p.initial_set_obj = [init_set_split[0]] + SymEq.get_eqn_matrix(init_set_split[1], hybrid.varList)
-            
             p.unsafe_set_str = FileHandler.clean_eq(prop.get('unsafeSet'))
-            #TODO p.unsafe_set_obj = SymEq.get_eqn_matrix(p.unsafe_set_str, hybrid.varList)    
 
             # Handle properties parameters
             param = prop.find('parameters')

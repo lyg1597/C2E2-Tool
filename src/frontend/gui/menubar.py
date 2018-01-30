@@ -38,6 +38,7 @@ class MenuBar(Menu):
         
 
     def _init_widgets(self):
+        """ Initialize menus """
 
         # File menu
 
@@ -53,7 +54,6 @@ class MenuBar(Menu):
         file_menu.add_command(label='Quit', accelerator='Ctrl+Q', underline=0, 
                 command=self.quit_callback)
         self.add_cascade(label='File', menu=file_menu)
-
 
         # Edit menu 
 
@@ -80,14 +80,12 @@ class MenuBar(Menu):
 
         self.add_cascade( label='Edit', menu=edit_menu )
 
-
         # Help menu
 
         help_menu = Menu(self, tearoff=0)
         help_menu.add_command(label='About')
         self.add_cascade(label='Help', menu=help_menu)
         self.parent.config(menu=self)
-
 
         # Bind accelerators
         
@@ -133,7 +131,7 @@ class MenuBar(Menu):
         if file_path:            
             Session.file_path = file_path
             
-            file = FileHandler.open_file(file_path)
+            hybrid_automata = FileHandler.open_file(file_path)
 
             if HYXML_FILE in file_path:
                 print ("hyxml file opened")
@@ -142,14 +140,8 @@ class MenuBar(Menu):
                 print ("mdl file opened")
                 Session.file_type = MDL_FILE
 
-            if file == None:
+            if hybrid_automata == None:
                 return
-
-            # LMB 1/15/2018 -- Operations now handled in filehandler.py or a later time
-            #Session.hybrid_automata = file['hybrid_automata']
-            #Session.prop_list = file['prop_list']
-            #if( len( Session.prop_list ) == 0 ):
-            #    Session.prop_list.append( Property() )
 
             Session.file_opened = True
             EventHandler.event_generate(OPEN_EVENT)

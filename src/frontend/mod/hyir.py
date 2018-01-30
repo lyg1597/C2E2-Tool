@@ -6,13 +6,14 @@ from frontend.mod.automaton import *
 
 # FIXME these don't have to be written to a file anymore b/c of transition to boost::python
 from frontend.mod.jacobiancalc import *
+from frontend.mod.session import Session, Property
 
 from collections import defaultdict
 
 
 class HyIR:
 
-    def __init__(self, name="hybrid_system", file_name=""):
+    def __init__( self, name="hybrid_system", file_name="" ):
 
         self.name = name
         self.file_name = file_name
@@ -31,8 +32,88 @@ class HyIR:
         self.annotationsRaw = []
         ###self.treestore = gtk.TreeStore(str)
 
+    @classmethod
+    def parse_all( cls, hybrid_automata ):
+
+        for hybrid in hybrid_automata:
+            cls.parse( hybrid )
+
+    @classmethod
+    def parse( cls, hyir ):
+
+        print( "Parsing..." )
+
+        cls.parse_modes( hyir )
+        cls.parse_transitions( hyir )
+
+        print( "Parsing complete" )
+
+    @classmethod
+    def parse_modes( cls, hyir ):
+
+        print( "Parsing modes..." )
+        for mode in hyir.automata.modes:
+            mode.parse()
+        print( "Modes parsed" )
+
+    @classmethod
+    def parse_transitions( cls, hyir ):
+        
+        print( "Parsing transitions..." )
+        for tran in hyir.automata.trans:
+            tran.parse()
+        print( "Transitions parsed" )
+
+    @classmethod
+    def parse_properties( cls, hybrid, prop_list ):
+
+        for p in prop_list:
+
+            init_set_split = p.initial_set_str.split(':')
+            p.initial_set_obj = [init_set_split[0]] + SymEq.get_eqn_matrix( init_set_split[1], hybrid.varList )
+
+            p.unsafe_set_obj = SymEq.get_eqn_matrix(p.unsafe_set_str, hybrid.varList)
+
+    @classmethod
+    def compose_all( cls, hybrid_automata ):
+
+        cls.parse_all( hybrid_automata )
+
+        automata_list = hybrid_automata
+        automata_list.reverse()
+        while len( automata_list ) > 1:
+            hyir1 = automata_list.pop()
+            hyir2 = automata_list.pop()
+            automata_list.apped( HyIR.compose( hyir1, hyir2 ) )
+        
+        hybrid = automata_list[0]
+        hybrid.populateInvGuards()
+        hybrid.print_all()
+        
+        thinvarprop = ""
+        thinvarlist = ""
+
+        for var in hybrid.varList:
+            if var in hybrid.thinvarList:
+                thinvarlist += var + "\n"
+                thinvarprop += "1\n"
+            else:
+                thinvarprop += "0\n"
+        
+        writer = open("../work-dir/ThinVarProp","w")
+        writer.write(thinvarprop)
+        writer.close()
+        
+        writer = open("../work-dir/ThinVarList","w")
+        writer.write(thinvarlist)
+        writer.close()
+
+        Session.hybrid = hybrid
+        Session.compose()
+
+
     @staticmethod
-    def compose(hyir1, hyir2):
+    def compose( hyir1, hyir2 ):
         composed = HyIR()
         m1_len = len(hyir1.automata.modes)
         m2_len = len(hyir2.automata.modes)
@@ -120,13 +201,14 @@ class HyIR:
                         dai.expr = dai.expr.func(dai.expr.lhs, dai.expr.rhs.subs(var, dai_dict[var_name]))
                 dai.raw = str(dai.expr)
 
-    # Populate the guard and invariant dictionaries we use to generate PPL files
+    
     def populateInvGuards(self):
+        """ Populate the guard and invariant dictionaries we use to generate PPL files """
         guardResets = defaultdict(list)
         invariants = defaultdict(list)
         varList = self.varList
 
-        for m in self.automata[0].modes:
+        for m in self.automata.modes:
           inv_eqs = []
           inv_vars = set()
           for inv in m.invs:
@@ -134,7 +216,7 @@ class HyIR:
             inv_vars = inv_vars.union(SymEq.vars_used(inv.expr))
           invariants[m.id] = (inv_eqs, inv_vars)
 
-        for t in self.automata[0].trans:
+        for t in self.automata.trans:
           g_eqs = t.guard.expr
           g_vars = SymEq.vars_used(t.guard.expr)
           print (g_vars)
@@ -155,12 +237,14 @@ class HyIR:
             return False
         return True
 
+
     def add_var(self, v):
         """ Add variable """
         self.vars.append(v)
         self.variables.add_var(v)
         if v.scope=='LOCAL_DATA':
             self.varList.append(v.name)
+
 
     def add_thin_var(self, v):
         """ Add thin variable """
@@ -214,8 +298,7 @@ class HyIR:
     def print_all(self):
         print("%s:" % self.name)
         self.print_vars()
-        for automaton in self.automata:
-            automaton.print_all()
+        self.automata.print_all()
 
     def modesnumber(self):
         return len(self.automata[0].modes)
@@ -781,4 +864,3 @@ def collapse2(node):
             return collapse2(node.children[0]) + node.value + collapse2(node.children[1])
     elif len(node.children) == 1:
         return node.value + collapse2(node.children[0])
-
