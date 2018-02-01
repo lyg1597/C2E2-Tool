@@ -301,7 +301,7 @@ class HyIR:
         self.automata.print_all()
 
     def modesnumber(self):
-        return len(self.automata[0].modes)
+        return len(self.automata.modes)
     
     def printHybridSimGuardsInvariants(self):
         self.printGuardsInvariants("../work-dir/hybridSimGI.cpp", True)
@@ -578,7 +578,7 @@ class HyIR:
         file.write(infoFile)
         declarationsReqd = ''' #include <iostream> \n #include "capd/capdlib.h" \n using namespace std; \n using namespace capd; \n '''
         file.write(declarationsReqd)
-        curAut = self.automata[0]
+        curAut = self.automata
         
         declarationsReqd = "\nint getNextMode(int curMode, interval curModeTime);\n"
         file.write(declarationsReqd)

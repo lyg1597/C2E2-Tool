@@ -14,32 +14,36 @@ from frontend.mod.session import Session, Property
 from frontend.mod.simgen import * # FIXME
 
 
-class ModelTab(Frame):
+class ModelTab( Frame ):
 
-    def __init__(self, parent):
-        Frame.__init__(self, parent)
+    def __init__( self, parent ):
+        
+        Frame.__init__( self, parent )
         self.parent = parent
-
         self._init_widgets()
 
-    def _init_widgets(self):
+    def _init_widgets( self ):
         """ Initialize the Treeview and Property Editory """
-
+        
         print ("Initialize the Treeview and Property Editor")
+
         self.sidebar = ModelSidebar( self ) 
         self.tree = TreeView(self, self.sidebar, selectmode='browse' )
 
-        self.tree.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
-        self.sidebar.pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
+        self.tree.pack( expand=TRUE, fill=BOTH, side=LEFT, anchor=E ) 
+        self.sidebar.pack( expand=TRUE, fill=Y, side=TOP, anchor=E )
+
+        return
 
 
 class TreeView( Treeview ):
         
     def __init__( self, master, sidebar, **options ):
         """ 
-        Note: We use 'master' here instead of 'parent' due to naming conflict
+        NOTE: We use 'master' here instead of 'parent' due to naming conflict
               with the parent() function in the Treeview class. 
         """
+        
         Treeview.__init__( self, master, **options )
         self.pack( fill=BOTH, expand=TRUE )
         self.master = master
@@ -50,7 +54,6 @@ class TreeView( Treeview ):
         self._init_rc_menus()
         self.config( show='tree' )
     
-
     def _init_selection_vars( self ):
         """ Initialize variables used to parse selected object """
 
@@ -63,6 +66,7 @@ class TreeView( Treeview ):
         self.slct_mode = None
         self.slct_transition = None
 
+        return
 
     def _bind_events( self ):
         """ Bind open and close file events and click events """
@@ -73,55 +77,61 @@ class TreeView( Treeview ):
         self.bind( OPEN_EVENT, self._display_model )
         EventHandler.add_event_listeners( self, OPEN_EVENT )
 
-        # Double-click treeview element 
         self.bind( '<Double-1>', self._on_double_click )
         self.bind( '<Button-1>', self._on_left_click )
         self.bind( '<Button-3>', self._on_right_click )
 
+        return
 
     def _clear_model( self, event=None ):
         """ Clear treeview display """
-        print( 'Clearing Model...' )
-        self.delete(*self.get_children())
 
+        print( 'Clearing Model...' )
+
+        self.delete( *self.get_children() )
+
+        return
 
     def _display_model( self, event=None ):
         """ Display Session automata in Treeview """
         
         print( 'Displaying Model...' )
+
         hybrid_automata = Session.hybrid_automata
 
         self.automaton_dict = {}  # dict[item_id] = automaton object
-        self.mode_dict = {}  # dict[item_id] = mode object
-        self.trans_dict = {}  # dict[item_id] = transition object
+        self.mode_dict = {}       # dict[item_id] = mode object
+        self.trans_dict = {}      # dict[item_id] = transition object
 
         self.mode_name_dict = {}  # dict[mode.id] = mode.name
         
         for hybrid in hybrid_automata:
 
-            # Display automaton name
+            # Create automaton parent item
             automaton_id = self.insert( '', 'end', text=hybrid.automata.name )
             self.item( automaton_id, open=TRUE )
-
+            
+            # Store automaton in dictionary
             self.automaton_dict[automaton_id] = hybrid
             
-            # Display variables
+            # Create variable parent and variable items
             var_id = self.insert( automaton_id, 'end', text=VARIABLES )
             var_str = ', '.join( hybrid.varList )
             self.insert( var_id, 'end', text=var_str )
             self.item( var_id, open=TRUE )
 
-            # Display thin variables
+            # Create thin variable parent and thin variable items
             if( len( hybrid.thinvarList ) !=0 ):
                 thin_var_id = self.insert( automaton_id, 'end', text='Thin Variables' )
                 thin_var_str = ', '.join( hybrid.thinvarList )
                 self.insert( thin_var_id, 'end', text=thin_var_str )
                 self.item( thin_var_id, open=TRUE )
 
-            # Display modes
+            # Create mode parent item
             modes_id = self.insert( automaton_id, 'end', text=MODES )
             self.item( modes_id, open=TRUE )
     
+            # Create mode items
             for mode in hybrid.automata.modes:
 
                 mode_str = mode.name + ' (' + str(mode.id) + ')'
@@ -130,48 +140,51 @@ class TreeView( Treeview ):
                 self.mode_dict[mode_id] = mode
                 self.mode_name_dict[mode.id] = mode.name
 
-                # Display flows
+                # Create flow itmes
                 flow_id = self.insert( mode_id, 'end', text='Flows' )
                 for dai in mode.dais:
-                    # LMB: Commenting out conditional from popup to avoid 'losing' equations when dialog is confirmed. Removing it here too for consistency. May need to go back and add it after talking with leadership. TODO
+                    # LMB: Commenting out conditional from popup to avoid 'losing' equations when dialog is confirmed. Removing it here too for consistency. May need to go back and add it after talking with leadership.
                     #if '_dot' in dai.raw:
                     dai_str = dai.raw
-                    '''
-                    dai_str = dai.raw[3:-1]
-                    idx = dai_str.index(',')
-                    dai_str = dai_str[:idx]+'='+dai_str[idx+1:]'''
                     self.insert( flow_id, 'end', text=dai_str )
 
-                # Display invariants
+                # Create invariant items
                 inv_id = self.insert( mode_id, 'end', text='Invariants' )
                 for inv in mode.invs:
                     self.insert( inv_id, 'end', text=inv.raw )
 
-            # Display transitions
+            # Create transition parent items
             trans_id = self.insert( automaton_id, 'end', text=TRANSITIONS )
             self.item( trans_id, open=TRUE )
             
+            # Create transition items
             for tran in hybrid.automata.trans:
 
+                # Build transition string
                 src, dest = self.mode_name_dict[tran.src], self.mode_name_dict[tran.dest]
                 tran_str = src + ' -> ' + dest
                 tran_id = self.insert( trans_id, 'end', text=tran_str )
 
                 self.trans_dict[tran_id] = tran
 
+                # Source
                 src_str = 'Source: ' + src + ' (' + str(tran.src) + ')'
                 self.insert( tran_id, 'end', text=src_str )
 
+                # Destination
                 dest_str = 'Destination: ' + dest + ' (' + str(tran.dest) + ')'
                 self.insert( tran_id, 'end', text=dest_str )
 
+                # Guard
                 guard_str = 'Guards: ' + tran.guard.raw
                 self.insert( tran_id, 'end', text=guard_str )
 
+                # Actions
                 act_id = self.insert( tran_id, 'end', text='Actions' )
                 for act in tran.actions:
                     self.insert( act_id, 'end', text=act.raw )
 
+        return
 
     def _init_rc_menus( self ):
         """Initialize right-click menus for Treeview"""  
@@ -193,13 +206,17 @@ class TreeView( Treeview ):
         self.transitions_rc_menu.add_command( label='Edit Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, EDIT ) )
         self.transitions_rc_menu.add_command( label='Delete Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, DELETE ) )
 
+        return
 
     def _on_right_click( self, event ):
+        """ Right-click event callback """
 
         print( '<<Right-Click>>' )
 
+        # Populate selection variables
         self._identify_selection( event )
 
+        # Display appropriate menu popup
         if( self.slct_context == VARIABLES or self.slct_context == THINVARIABLES ):
             context_menu = self.variables_rc_menu
         elif( self.slct_context == MODES ):
@@ -211,8 +228,9 @@ class TreeView( Treeview ):
             print( 'Automaton right-click menu not yet built' )
             return
         else:
-            return  # The following lines depend on context_menu existing
+            return
 
+        # Popup menu
         context_menu.tk_popup( event.x_root, event.y_root )
 
         # Diable/Enable appropriate depending on where user clicked
@@ -223,20 +241,32 @@ class TreeView( Treeview ):
             context_menu.entryconfig( 1, state=NORMAL )
             context_menu.entryconfig( 2, state=NORMAL )
 
+        return
 
     def _on_left_click( self, event ):
+        """ Left-click event callback """
 
         print( '<<Single-Click>>' )
+
+        # Populate selection variables
         self._identify_selection( event )
 
+        return
 
     def _on_double_click( self, event ):
+        """ Double-click event callback """
 
-        print( '<<Double-Click>>' )        
+        print( '<<Double-Click>>' )
+
+        # Populate selection variables        
         self._identify_selection( event )
 
-        if( self.slct_automaton == None ): return
-
+        # Do nothing if no automaton was selected (user didn't click on an item)
+        if( self.slct_automaton == None ): 
+            return
+        
+        # Double-click on a parent (heading), launch add popup.
+        # Double-click on an object, launch edit popup.
         if( self.slct_context == AUTOMATON ):
             action = ADD
         elif( ( self.slct_mode == None ) and ( self.slct_transition == None ) ):
@@ -246,39 +276,28 @@ class TreeView( Treeview ):
 
         self.launch_entry_popup( self.slct_context, action )
 
+        return
 
     def _identify_selection( self, event ):
         """ Identify intended selection for right-click and double-click events """
 
+        # Clear selection variables
         self._init_selection_vars()
 
+        # Return if no item selected
         item_id = self.identify_row( event.y )
         if( not item_id ):
             print( 'No item selected ' )
-            self.selection_remove( self.selection() ) # Unselect selection
+            self.selection_remove( self.selection() ) # Unselect previous selections
             return
 
+        # Highlight selected item
         self.selection_set( item_id )
+        
+        # Set selection varialbes
         self._get_slct_vars( item_id )
-
-        # Dev Prints (Here until the end of function )
-        print( 'Selection:  ', self.item( item_id )['text'] )
-        print( 'Root:       ', self.item( self.slct_root )['text'] )
-        print( 'Child:      ', self.item( self.slct_child )['text'] )
-        print( 'Grandchild: ', self.item( self.slct_grandchild )['text'], '\n' )
-
-        print( 'Automaton:  ', self.slct_automaton.name )
-        print( 'Context:    ', self.slct_context )
-
-        slct_obj = "None"
-        if( self.slct_mode ):
-            slct_obct = self.slct_mode.name
-        elif( self.slct_transition ):
-            slct_objct = 'Transition ID: ' + str(self.slct_transition.id)
-
-        print( 'Object:     ', slct_obj )
-            
-
+           
+        return
 
     def _get_slct_vars( self, item_id ):
         """ Returns the ids of the automaton, context, and object of selection (item_id) in that order """
@@ -315,7 +334,6 @@ class TreeView( Treeview ):
         
         return 
 
-
     def launch_entry_popup( self, context, action ):
         
         if( context == VARIABLES or context == THINVARIABLES ):
@@ -342,11 +360,13 @@ class TreeView( Treeview ):
         # Clear out selections vars
         self._init_selection_vars()
 
+        return
 
-class ModelSidebar(Frame):
 
-    def __init__(self, parent, **options):
-        Frame.__init__(self, parent, **options)
+class ModelSidebar( Frame ):
+
+    def __init__( self, parent, **options ):
+        Frame.__init__( self, parent, **options )
         
         self.parent = parent
         self.sel_iid = None
@@ -354,29 +374,33 @@ class ModelSidebar(Frame):
         self._bind_events()
         self._init_widgets()
 
+    def _bind_events( self ):
+        """ Bind open and close file events and click events """
 
-    def _bind_events(self):
+        self.bind( CLOSE_EVENT, self._clear_properties )
+        EventHandler.add_event_listeners( self, CLOSE_EVENT )
 
-        self.bind(CLOSE_EVENT, self._clear_properties)
-        EventHandler.add_event_listeners(self, CLOSE_EVENT)
+        self.bind( OPEN_EVENT, self._display_properties )
+        EventHandler.add_event_listeners( self, OPEN_EVENT ) 
 
-        self.bind(OPEN_EVENT, self._display_properties)
-        EventHandler.add_event_listeners(self, OPEN_EVENT) 
-
+        return
 
     def _init_widgets(self):
+        """ Initialize Property View and Property List """
         
         self._init_prop_view()
         self._init_prop_list()
 
         # Pack child frames
-        self.prop_view.pack(fill=X)
-        self.prop_view.columnconfigure(1, weight=1)
-        self.prop_list.pack(expand=TRUE, fill=BOTH)
+        self.prop_view.pack( fill=X )
+        self.prop_view.columnconfigure( 1, weight=1 )
+        self.prop_list.pack( expand=TRUE, fill=BOTH )
 
+        return
 
     ''' PROPERTY VIEW GUI AND FUNCTIONS '''
     def _init_prop_view(self):
+        """ Initialize Property View """
         
         # Regex building blocks
         flt = '(-?(\d*\.?\d+))'
@@ -475,32 +499,44 @@ class ModelSidebar(Frame):
         self.unsafe_set = SetText(self.prop_view, height=65, callback=self._callback_us)
         self.unsafe_set.grid(row=13, rowspan=4, columnspan=3, sticky=N+S+E+W)
 
-    
-    def _callback_name(self, *args):
-        name = self.name_var.get()
-        if name != Session.cur_prop.name:
-            if Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified:
-                self._update_property_status(0,0,1)
+        return 
 
+    def _callback_name( self, *args ):
+        """ Verify property name, update Session, and conditionally update property status """
+
+        name = self.name_var.get()
+        
+        # Update property status if name changed and model is Simulated or Verified
+        if( name != Session.cur_prop.name ):
+            if( Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified ):
+                self._update_property_status( 0, 0, 1 )
+
+        # Validate name
         valid = True
-        if name == '':
+        if( name == '' ):
             valid = False
         else:
             for prop in Session.prop_list:
-                if prop.is_visible:
+                if( prop.is_visible ):
                     continue
-                elif name == prop.name:
+                elif( name == prop.name ):
                     valid = False
                     break
 
+        # Update Session
         Session.cur_prop.name = name
         Session.cur_prop.name_valid = valid
-        self.name_vl.set_state(valid)
-        self.list_view.set(self.sel_iid, 0, name)
 
+        # Update GUI elements
+        self.name_vl.set_state( valid )
+        self.list_view.set( self.sel_iid, 0, name )
+
+        return
     
-    def _callback_time_step(self, *args):
+    def _callback_time_step( self, *args ):
+        """ Verify time step, update Session, and conditionally update property status """
 
+        # Validate time step
         try:
             time_step = self.time_step_var.get()
             valid = True
@@ -508,34 +544,49 @@ class ModelSidebar(Frame):
             time_step = 0.0
             valid = False
 
-        if Session.cur_prop.time_step != time_step: 
-            if Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified:
-                self._update_property_status(0,0,1)
+        # Update property status if time step changed and model is Simulated or Verified
+        if( Session.cur_prop.time_step != time_step ): 
+            if( Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified ):
+                self._update_property_status( 0, 0, 1 )
 
+        # Update Session
         Session.cur_prop.time_step = time_step
         Session.cur_prop.time_step_valid = valid
-        self.ts_vl.set_state(valid)
+        
+        # Update GUI Elements
+        self.ts_vl.set_state( valid) 
 
+        return
     
-    def _callback_time_horizon(self, *args):
+    def _callback_time_horizon( self, *args ):
+        """ Verify time horizon, update Session, and conditionally update property status """
 
+        # Validate time horizon
         try:
             time_horizon = self.time_horizon_var.get()
             valid = True
         except ValueError:
             time_horizon = 0.0
             valid = False
-        if Session.cur_prop.time_horizon != time_horizon: 
-            if Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified:
-                self._update_property_status(0,0,1)
 
+        # Update property status if time horizon changed and model is Simulated or Verified
+        if( Session.cur_prop.time_horizon != time_horizon ): 
+            if( Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified ):
+                self._update_property_status( 0, 0, 1 )
+
+        # Update Session
         Session.cur_prop.time_horizon = time_horizon
         Session.cur_prop.time_horizon_valid = valid
-        self.th_vl.set_state(valid)
+        
+        # Update GUI Elements
+        self.th_vl.set_state( valid )
 
-    
-    def _callback_k_value(self, *args):
+        return
 
+    def _callback_k_value( self, *args ):
+        """ Verify k value, update Session, and conditionally update property status """
+
+        # Validate k value
         try:
             k_value = self.k_value_var.get()
             valid = True
@@ -543,38 +594,29 @@ class ModelSidebar(Frame):
             k_value = 0.0
             valid = False
 
+        # Update property status if k value changed and model is Simulated or Verified
         if Session.cur_prop.k_value != k_value: 
             if Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified:
                 self._update_property_status(0,0,1)
 
+        # Update Session
         Session.cur_prop.k_value = k_value
         Session.cur_prop.k_value_valid = valid
+        
+        # Update GUI Elements
         self.kv_vl.set_state(valid)
 
+        return
     
-    def _callback_simulator(self, *args):
+    def _callback_simulator( self, *args ):
+        """ Update Session simulator """
+        Session.simulator = self.sim_var.get()
+        return
 
-        if Session.simulator != self.sim_var.get():
-            Session.simulator = self.sim_var.get()
-            Session.lib_compiled = False
-            if Session.simulator == ODEINT_FIX:
-                st = 'constant'
-                path = '../work-dir/simulator.cpp'
-                gen_simulator(path, Session.hybrid, step_type=st)
-
-            elif Session.simulator == ODEINT_ADP:
-                st = 'adaptive'
-                path = '../work-dir/simulator.cpp'
-                gen_simulator(path, Session.hybrid, step_type=st)
-
-            else:
-                Session.hybrid.convertToCAPD("simulator")
-
-
-    def _callback_refine_strat(self, *args):
-        #change the refine strategy
+    def _callback_refine_strat( self, *args ):
+        """ Update Session refine strategy """
         Session.refine_strat = self.ref_var.get()
-
+        return
 
     # TODO optimize this
     def _callback_is(self, input):
@@ -844,16 +886,24 @@ class ModelSidebar(Frame):
         HyIR.parse_all( Session.hybrid_automata )
         HyIR.compose_all( Session.hybrid_automata )
 
-        st = 'constant'
-        path = '../work-dir/simulator.cpp'
-        gen_simulator(path, Session.hybrid, step_type=st)
-
         if not Session.cur_prop.is_valid():
             return
 
+        # Disable button
         self._disable_enable_button(1)
+
+        # Generate simulator
+        if( Session.simulator == CAPD ):
+            Session.hybrid.convertToCAPD( 'simulator' )
+        else:
+            if( Session.simulator == ODEINT_FIX ):
+                st = 'constant'
+            elif( Session.simulator == ODEINT_ADP ):
+                st = 'adaptive'
+            path = '../work-dir/simulator.cpp'
+            gen_simulator( path, Session.hybrid, step_type=st )
         
-        Session.hybrid.printHybridSimGuardsInvariants();
+        Session.hybrid.printHybridSimGuardsInvariants()
         Session.hybrid.printBloatedSimGuardsInvariants()
 
         # Simulate the selected model
