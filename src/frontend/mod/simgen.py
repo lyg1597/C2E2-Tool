@@ -1,8 +1,11 @@
+import shlex, subprocess
 import sympy
 
+from backend.lib.libc2e2 import IntegerVector, DoubleVector
+from frontend.mod.constants import *
 from frontend.mod.hyir import *
 from frontend.mod.jacobiancalc import *
-# import re
+from frontend.mod.session import Session, Property
 
 # Debugging
 import pdb
@@ -437,3 +440,208 @@ def gen_simulator_simulink(dir_path, model_name, in_labels, in_vals,
         makefile = open(makefile_path, 'w')
         makefile.write(''.join(data))
         makefile.close()
+
+def simulate():
+
+    return _sim_ver( 1 )
+
+def verify():
+
+    return _sim_ver( 0 )
+
+def _sim_ver( action ):
+
+    if( not Session.cur_prop.is_valid() ):
+        return
+
+    # Parse and Compose ( HyIR.compose_all calss HyIR.parse_all )
+    HyIR.compose_all( Session.hybrid_automata )
+
+    # Generate Simulator
+    if( Session.simulator == CAPD ):
+        Session.hybrid.convertToCAPD( 'simulator' )
+    else:
+        if( Session.simulator == ODEINT_FIX ):
+            st = 'constant'
+        elif( Session.simulator == ODEINT_ADP ):
+            st = 'adaptive'
+        path = '../work-dir/simulator.cpp'
+        gen_simulator( path, Session.hybrid, step_type=st )
+
+    Session.hybrid.printHybridSimGuardsInvariants()
+    Session.hybrid.printBloatedSimGuardsInvariants()
+
+    # Simulate selected model
+    initialize_cpp_model( action )
+    compile_executable()
+
+    return Session.cpp_model.simulate_verify()
+    
+
+def initialize_cpp_model( sim_bool ):
+
+    model = Session.cpp_model
+
+    # Initialize set variables
+    initial_set_obj = Session.cur_prop.initial_set_obj
+    initial_mode = initial_set_obj[0]
+    initial_eqns = initial_set_obj[3]
+    initial_matrix = extract_matrix( initial_set_obj[1], initial_eqns )
+    initial_b = extract_matrix( initial_set_obj[2], initial_eqns )
+    mode_names = Session.get_mode_names()
+    initial_mode_idx = mode_names.index( initial_mode ) + 1
+
+    # Unsafe set variables
+    unsafe_set_obj = Session.cur_prop.unsafe_set_obj
+    unsafe_eqns = unsafe_set_obj[2]
+    unsafe_matrix = extract_matrix( unsafe_set_obj[0], unsafe_eqns )
+    unsafe_b = extract_matrix( unsafe_set_obj[1], unsafe_eqns )
+
+    # FIXME remove file readind and store in memory instead
+    mode_linear = []
+    gammas = []
+    k_consts = []
+    for m_i, m in enumerate( Session.get_modes() ):
+        fn = '../work-dir/jacobiannature' + str(m_i+1) + '.txt'
+        fid = open( fn, 'r' ).read().split( '\n' )
+        num_var = int( fid[0] )
+
+        if( num_var == 0 ):
+            m.linear = False
+
+        if( m.linear ):
+            list_var = []
+            for i in range( num_var ):
+                list_var.append( fid[i+1] )
+
+            eqn_pos = num_var + 1
+            num_eqn = int( fid[eqn_pos] )
+            eqn_pos += 1
+
+            list_eqn = []
+            for i in range( num_eqn ):
+                list_eqn.append( fid[eqn_pos+i] )
+
+            # FIXME see if we can avoid create functions dynamically
+
+            codestring  = "def jcalc("
+            codestring += "listofvar, "
+            codestring += "listvalue"
+            codestring += '):\n'
+            codestring += " for i in range (len(listofvar)):\n"
+            codestring += "   temp = listofvar[i]\n"
+            codestring += "   rightside = '='+str(listvalue[i])\n"
+            codestring += "   exec(temp+rightside)\n"
+            codestring += " ret = []\n"
+            for i in range (num_eqn):
+                codestring += " "
+                codestring += list_eqn[i]
+                codestring += '\n'
+                codestring += ' ret.append(Entry)\n'
+            codestring += ' return ret'
+            exec( codestring, globals() )
+
+            constant_jacobian = jcalc( list_var, np.ones( (1, num_var) )[0] )
+            constant_jacobian = np.reshape( constant_jacobian, (num_var, num_var) )
+
+            gamma_rate = np.linalg.eigvals( constant_jacobian ).real
+            gamma = max( gamma_rate )
+            if( abs( max(gamma_rate) ) < 0.00001 ):
+                gamma = 0
+            k = np.linalg.norm( constant_jacobian )
+
+        else:
+            gamma = 0
+            k = Session.cur_prop.k_value
+
+        # Append calculated value
+        mode_linear.append( int( m.linear ) )
+        gammas.append( gamma )
+        k_consts.append( k )
+
+    # Unsigned integers
+    model.dimensions = len( Session.get_varList() )
+    model.modes = len( Session.get_modes() )
+    model.initial_mode = initial_mode_idx
+    model.initial_eqns = len( initial_eqns )
+    model.unsafe_eqns = len( unsafe_eqns )
+    model.annot_type = 3
+
+    # Integers
+    if( Session.refine_strat == DEF_STRAT ):
+        model.refine = 0
+    else:
+        model.refine = 1
+    model.simu_flag = sim_bool
+
+    # Integer vectors
+    model.mode_linear = IntegerVector()
+    model.mode_linear[:] = mode_linear
+
+    # Doubles
+    model.abs_err = 0.0000000001
+    model.rel_err = 0.000000001
+    model.delta_time = Session.cur_prop.time_step
+    model.end_time = Session.cur_prop.time_horizon
+
+    # Double vectors
+    model.gammas = DoubleVector()
+    model.k_consts = DoubleVector()
+    model.initial_matrix = DoubleVector()
+    model.initial_b = DoubleVector()
+    model.unsafe_matrix = DoubleVector()
+    model.unsafe_b = DoubleVector()
+
+    model.gammas[:] = gammas
+    model.k_consts[:] = k_consts
+    model.initial_matrix[:] = initial_matrix
+    model.initial_b[:] = initial_b
+    model.unsafe_matrix[:] = unsafe_matrix
+    model.unsafe_b[:] = unsafe_b
+
+    model.visualize_filename = '../work-dir/' + Session.cur_prop.name
+
+
+def extract_matrix( mat_in, mat_eqn ):
+    
+    mat = []
+    for row, eqn in zip( mat_in, mat_eqn ):
+        if( eqn[0] == '>=' ):
+            row_new = [float(-d) for d in row]
+        else:
+            row_new = [float(d) for d in row]
+        mat.extend( row_new )
+    return mat
+
+
+def compile_executable():
+
+    if( Session.lib_compiled ):
+        return
+
+    print( "Compiling essential libraries for C2E2. Compilation may take a few minutes." )
+    if( (Session.simulator == ODEINT_ADP) or (Session.simulator == ODEINT_FIX) ):
+        print( "Using ODEINT Simulator..." )
+        command_line = "g++ -w -O2 -std=c++11 simulator.cpp -o simu"
+        args = shlex.split( command_line )
+        p = subprocess.Popen( args, cwd= "../work-dir" )
+        p.communicate()
+    else:
+        print( "Using CAPD Simulator..." )
+        command_line = "g++ -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`"
+        p = subprocess.Popen( command_line, cwd= "../work-dir", shell=True )
+        p.communicate()
+
+    command_line = "g++ -fPIC -shared hybridSimGI.cpp -o libhybridsim.so -lppl -lgmp"
+    args = shlex.split( command_line )
+    p = subprocess.Popen( args, cwd= "../work-dir" )
+    p.communicate()
+
+    command_line = "g++ -fPIC -shared bloatedSimGI.cpp -o libbloatedsim.so -lppl -lgmp"
+    args = shlex.split( command_line )
+    p = subprocess.Popen( args, cwd= "../work-dir" )
+    p.communicate()
+
+    Session.lib_compiled = True
+    
+    print( "Libraries successfully compiled." )

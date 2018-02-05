@@ -65,7 +65,7 @@ class HyIR:
         print( "Transitions parsed" )
 
     @classmethod
-    def parse_properties( cls, hybrid, prop_list ):
+    def compose_properties( cls, hybrid, prop_list ):
 
         for p in prop_list:
 
@@ -108,6 +108,8 @@ class HyIR:
         writer.write(thinvarlist)
         writer.close()
 
+        cls.compose_properties( hybrid, Session.prop_list )
+        
         Session.hybrid = hybrid
         Session.compose()
 

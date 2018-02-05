@@ -351,7 +351,7 @@ class TreeView( Treeview ):
 
         # Update property status if the model was changed
         if( entry.is_changed() ):
-            self.sidebar._update_property_status( 0, 0, 1 )
+            self.sidebar._expire_properties()
         
         # Refresh Model
         self._clear_model()
@@ -597,14 +597,14 @@ class ModelSidebar( Frame ):
         # Update property status if k value changed and model is Simulated or Verified
         if Session.cur_prop.k_value != k_value: 
             if Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified:
-                self._update_property_status(0,0,1)
+                self._update_property_status( 0, 0, 1 )
 
         # Update Session
         Session.cur_prop.k_value = k_value
         Session.cur_prop.k_value_valid = valid
         
         # Update GUI Elements
-        self.kv_vl.set_state(valid)
+        self.kv_vl.set_state( valid )
 
         return
     
@@ -880,50 +880,44 @@ class ModelSidebar( Frame ):
         HyIR.compose_all( Session.hybrid_automata )
 
 
-    # TODO implement me
     def _callback_sim(self):
 
-        HyIR.parse_all( Session.hybrid_automata )
-        HyIR.compose_all( Session.hybrid_automata )
-
-        if not Session.cur_prop.is_valid():
-            return
-
-        # Disable button
         self._disable_enable_button(1)
 
-        # Generate simulator
-        if( Session.simulator == CAPD ):
-            Session.hybrid.convertToCAPD( 'simulator' )
-        else:
-            if( Session.simulator == ODEINT_FIX ):
-                st = 'constant'
-            elif( Session.simulator == ODEINT_ADP ):
-                st = 'adaptive'
-            path = '../work-dir/simulator.cpp'
-            gen_simulator( path, Session.hybrid, step_type=st )
-        
-        Session.hybrid.printHybridSimGuardsInvariants()
-        Session.hybrid.printBloatedSimGuardsInvariants()
-
-        # Simulate the selected model
-        print( "Initialize CPP Model" )
-        self._initialize_cpp_model(1)
-        print( "Compile Executable" )
-        self._compile_executable()
-  
-        print( "Simulate Verify" )
-        result = Session.cpp_model.simulate_verify()
-        self._disable_enable_button(0)
-        self._update_property_status(1,result,0)
-
-        #update simulator result
+        # Guarantee simulator is updated
         Session.cur_prop.simulator = self.sim_var.get()
 
-        if result!=0:
-            self._open_the_plotter_window(3)
+        result = simulate()
 
+        self._disable_enable_button( 0 )
+        self._update_property_status( 1, result, 0 )
 
+        if( result != 0 ):
+            self._open_the_plotter_window( 3 )
+
+        return
+
+    def _callback_ver(self):
+        
+        self._disable_enable_button(1)
+
+        # Guarantee simulator is updated
+        Session.cur_prop.simulator = self.sim_var.get()
+        
+        result = verify()
+        
+        self._disable_enable_button( 0 )
+        self._update_property_status( 0, result, 0 )
+
+        if( result!=0 ):
+            
+            if( Session.cur_prop.simulator == ODEINT_ADP ):
+                self._open_the_plotter_window(2)        
+            else:
+                self._open_the_plotter_window(1)
+
+        return
+    
     def _open_the_plotter_window(self,sim_adpative):
         #construct arguments to open the plot window
         #Sim == 1, FIX_STEP == 0, Adaptive == 2
@@ -937,7 +931,25 @@ class ModelSidebar( Frame ):
 
         self.parent.parent._init_plot_widgets(varlist,modelist,time_step,time_horizon,unsafe_set,file_path,sim_adpative,Session.cur_prop.name)
         
-    
+    def _expire_properties( self ):
+        """ Expire all Simulated and Verified properties """
+        
+        sel_iid = self.sel_iid
+
+        self._clear_properties()
+
+        for prop in Session.prop_list:
+            if( prop.status == Simulated or prop.status == Verified ):
+                prop.status += '*'
+                prop.result = 'Expired'
+
+        self._display_properties()
+
+        self.sel_iid = sel_iid
+        self._display_property( Session.cur_prop )
+
+        return
+
     def _update_property_status(self, sim, result, expire):
         if expire:
             Session.cur_prop.status += '*'
@@ -979,233 +991,9 @@ class ModelSidebar( Frame ):
         self.update()
 
 
-    def _compile_executable(self):
-        # FIXME hardcoded compiling simulator.cpp to executable
-
-        if Session.lib_compiled:
-            return 
-
-        Session.lib_compiled = True
-
-        top = Toplevel()
-        width = top.winfo_screenwidth()
-        height = top.winfo_screenheight()
-        appwidth = 200
-        appheight = 150
-        offset_x = width//2 - appwidth //2
-        offset_y = height//2 - appheight//2
-        top.geometry("%dx%d%+d%+d" % (250, 100, offset_x, offset_y))
-        top.title("compiling message")
-        msg = Message(top,text="Compiling essential libraries for C2E2, compilation may last few minutes", width = 200)
-        msg.pack(expand=TRUE, fill=BOTH)
-        
-        msg.update()
-        #messagebox.showinfo("Information","Informative message")
-        if Session.simulator == ODEINT_ADP or Session.simulator == ODEINT_FIX:
-            print ("Using ODEINT Simulator")
-            command_line = "g++ -w -O2 -std=c++11 simulator.cpp -o simu"
-            args = shlex.split(command_line)
-            p = subprocess.Popen(args, cwd= "../work-dir")
-            p.communicate()
-        else:
-            print ("Using CAPD Simulator")
-            command_line = "g++ -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`"
-            p = subprocess.Popen(command_line, cwd= "../work-dir", shell=True)
-            p.communicate()
-
-        command_line = "g++ -fPIC -shared hybridSimGI.cpp -o libhybridsim.so -lppl -lgmp"
-        args = shlex.split(command_line)
-        p = subprocess.Popen(args, cwd= "../work-dir")
-        p.communicate()
-
-        command_line = "g++ -fPIC -shared bloatedSimGI.cpp -o libbloatedsim.so -lppl -lgmp"
-        args = shlex.split(command_line)
-        p = subprocess.Popen(args, cwd= "../work-dir")
-        p.communicate()
-
-        top.destroy()
-
-
-    def _callback_ver(self):
-        
-        HyIR.parse_all( Session.hybrid_automata )
-        HyIR.compose_all( Session.hybrid_automata )
-
-        st = 'constant'
-        path = '../work-dir/simulator.cpp'
-        gen_simulator(path, Session.hybrid, step_type=st)
-
-        if not Session.cur_prop.is_valid():
-            return
-
-        self._disable_enable_button(1)
-        
-        Session.hybrid.printHybridSimGuardsInvariants();
-        Session.hybrid.printBloatedSimGuardsInvariants()
-
-        # Simulate the selected model
-        self._initialize_cpp_model(0)
-        Session.cpp_model.print_model()
-
-        Session.cur_prop.simulator = self.sim_var.get()
-        #FIXME for debug use
-        self._compile_executable()
-        
-        result = Session.cpp_model.simulate_verify()
-        self._disable_enable_button(0)
-        self._update_property_status(0,result,0)
-
-        if result!=0:
-            if Session.cur_prop.simulator == ODEINT_ADP:
-                self._open_the_plotter_window(2)
-            else:
-                self._open_the_plotter_window(1)
-
-
     def _set_list_property(self, name):
         iid = self.list_view.focus()
         self.list_view(iid, 0, name)
-
-
-
-    def _initialize_cpp_model(self, simulate):
-        model = Session.cpp_model
-
-        # Initial set variables
-        initial_set_obj = Session.cur_prop.initial_set_obj
-        initial_mode = initial_set_obj[0]
-        initial_eqns = initial_set_obj[3]
-        initial_matrix = self._extract_matrix(initial_set_obj[1], initial_eqns)
-        initial_b = self._extract_matrix(initial_set_obj[2], initial_eqns)
-        mode_names = Session.get_mode_names()
-        initial_mode_idx = mode_names.index(initial_mode) + 1
-
-        # Unsafe set variables
-        unsafe_set_obj = Session.cur_prop.unsafe_set_obj
-        unsafe_eqns = unsafe_set_obj[2]
-        unsafe_matrix = self._extract_matrix(unsafe_set_obj[0], unsafe_eqns)
-        unsafe_b = self._extract_matrix(unsafe_set_obj[1], unsafe_eqns)
-
-        # Annotation
-        # FIXME remove file reading and store in memory instead
-        mode_linear = []
-        gammas = []
-        k_consts = []
-        for m_i, m in enumerate( Session.get_modes() ):
-            fn = '../work-dir/jacobiannature' + str(m_i+1) + '.txt'
-            fid = open(fn, 'r').read().split('\n')
-            num_var = int(fid[0])
-
-            if num_var == 0:
-                m.linear = False
-
-            if m.linear:
-                list_var = []
-                for i in range(num_var):
-                    list_var.append(fid[i+1])
-
-                eqn_pos = num_var + 1
-                num_eqn = int(fid[eqn_pos])
-                eqn_pos += 1
-
-                list_eqn = []
-                for i in range(num_eqn):
-                    list_eqn.append(fid[eqn_pos+i])
-
-                # FIXME see if can avoid creating functions dynamically
-
-                codestring = "def jcalc("
-                codestring += "listofvar, "
-                codestring += "listvalue"
-                codestring+='):\n'
-                codestring+=" for i in range (len(listofvar)):\n"
-                codestring+="   temp = listofvar[i]\n"
-                codestring+="   rightside = '='+str(listvalue[i])\n"
-                codestring+="   exec(temp+rightside)\n"
-                codestring+=" ret = []\n"
-                for i in range (num_eqn):
-                  codestring+=" "
-                  codestring+=list_eqn[i]
-                  codestring+='\n'
-                  codestring+=' ret.append(Entry)\n'
-                codestring+=' return ret'
-                exec(codestring,globals())
-
-                constant_jacobian = jcalc(list_var, np.ones((1, num_var))[0])
-                constant_jacobian = np.reshape(constant_jacobian, (num_var, num_var))
-
-                gamma_rate = np.linalg.eigvals(constant_jacobian).real
-                gamma = max(gamma_rate)
-                if abs(max(gamma_rate)) < 0.00001:
-                    gamma = 0
-                k = np.linalg.norm(constant_jacobian)
-
-            else:
-                gamma = 0
-                k = Session.cur_prop.k_value
-
-            # Append calculated value
-            mode_linear.append(int(m.linear))
-            gammas.append(gamma)
-            k_consts.append(k)
-
-        # Unsigned integers
-        model.dimensions = len(Session.get_varList())
-        model.modes = len(Session.get_modes())
-        model.initial_mode = initial_mode_idx
-        model.initial_eqns = len(initial_eqns)
-        model.unsafe_eqns = len(unsafe_eqns)
-        model.annot_type = 3 
-
-        # Integers
-        if Session.refine_strat == DEF_STRAT:
-            model.refine = 0
-        else:
-            mode.refine = 1
-        model.simu_flag = simulate
-        #model.simu_flag = 0
-
-        # Integer vectors
-        model.mode_linear = IntegerVector()
-        model.mode_linear[:] = mode_linear
-
-        # Doubles
-        model.abs_err = 0.0000000001
-        model.rel_err = 0.000000001
-        model.delta_time = Session.cur_prop.time_step
-        model.end_time = Session.cur_prop.time_horizon
-
-        # Double vectors
-        model.gammas = DoubleVector()
-        model.k_consts = DoubleVector()
-        model.initial_matrix = DoubleVector()
-        model.initial_b = DoubleVector()
-        model.unsafe_matrix = DoubleVector()
-        model.unsafe_b = DoubleVector()
-
-        model.gammas[:] = gammas
-        model.k_consts[:] = k_consts
-        model.initial_matrix[:] = initial_matrix
-        model.initial_b[:] = initial_b
-        model.unsafe_matrix[:] = unsafe_matrix
-        model.unsafe_b[:] = unsafe_b
-
-        # Strings
-        #model.annot_str = ''
-        #model.beta_str = ''
-        #model.opt_str = ''
-        model.visualize_filename = '../work-dir/'+Session.cur_prop.name
-
-
-    def _extract_matrix(self, mat_in, mat_eqn):
-        mat = []
-        for row, eqn in zip(mat_in, mat_eqn):
-            if eqn[0] == '>=':
-                row_new = [float(-d) for d in row]
-            else:
-                row_new = [float(d) for d in row]
-            mat.extend(row_new)
-        return mat
 
 
     ''' PROPERTY EDITOR FUNCTIONS '''
@@ -1218,16 +1006,11 @@ class ModelSidebar( Frame ):
 
     def _display_properties(self, event=None):
 
-        #TODO st = 'constant'
-        #TODO path = '../work-dir/simulator.cpp'
-        #TODO gen_simulator(path, Session.hybrid, step_type=st)   
-
         for prop in Session.prop_list:
             if self.sel_iid:
                 self._add_property(prop)
             else:
                 self.sel_iid = self._add_property(prop)
-
         
         self.list_view.selection_set(self.sel_iid)
         
