@@ -133,13 +133,6 @@ class MenuBar(Menu):
             
             hybrid_automata = FileHandler.open_file(file_path)
 
-            if HYXML_FILE in file_path:
-                print ("hyxml file opened")
-                Session.file_type = HYXML_FILE
-            elif MDL_FILE in file_path:
-                print ("mdl file opened")
-                Session.file_type = MDL_FILE
-
             if hybrid_automata == None:
                 return
 

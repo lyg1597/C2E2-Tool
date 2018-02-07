@@ -958,17 +958,17 @@ class ModelSidebar( Frame ):
 
             return 
 
-        if sim:
-            Session.cur_prop.status = Simulated
-        else:
-            Session.cur_prop.status = Verified
+        # if sim:
+        #     Session.cur_prop.status = Simulated
+        # else:
+        #     Session.cur_prop.status = Verified
 
-        if result == 1:
-            Session.cur_prop.result = "Safe"
-        elif result == 0 :
-            Session.cur_prop.result = "Unknown"
-        else:
-            Session.cur_prop.result = "Unsafe"
+        # if result == 1:
+        #     Session.cur_prop.result = "Safe"
+        # elif result == 0 :
+        #     Session.cur_prop.result = "Unknown"
+        # else:
+        #     Session.cur_prop.result = "Unsafe"
         self.list_view.item(self.sel_iid, values=(Session.cur_prop.name, Session.cur_prop.status, Session.cur_prop.result))
 
         return 

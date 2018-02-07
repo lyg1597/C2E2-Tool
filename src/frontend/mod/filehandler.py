@@ -90,6 +90,8 @@ class FileHandler:
 
         # Handle HyXML file
         if ext == '.hyxml':
+            
+            Session.file_type = HYXML_FILE
 
             # Get HyXML type and call corresponding function
             hyxml_tree = ET.parse(file_path)
@@ -107,15 +109,14 @@ class FileHandler:
                 hybrid_automata = FileHandler.open_hyxml_model( hyxml_root, raw_name )
                 prop_list = FileHandler.open_hyxml_properties( hyxml_root )
 
-            # LMB  1/29/2018  No plans to support Simulink
-            #elif hyxml_type == 'Simulink':
-            #    hybrid = self.open_hyxml_simulink(hyxml_root)
-
             else:
                 return None
 
         # Handle MDL file
         elif ext == '.mdl':
+
+            Session.file_type = MLD_FILE
+
             hybrid = FileHandler.open_mdl_model(file_path,raw_name)
             prop_list = []
 
@@ -126,7 +127,7 @@ class FileHandler:
         Session.hybrid_automata = hybrid_automata
         Session.prop_list = prop_list
 
-        print( "File opened!" )
+        print( "File opened." )
         return hybrid_automata
 
     # Open HyXML Model file
@@ -330,7 +331,7 @@ class FileHandler:
                 transition = Transition( guard, actions, tran_id, tran_src, tran_dest )
                 hybrid.automata.add_trans( transition )
 
-        print( "Model Loaded!" )
+        print( "Model Loaded." )
         return hybrid_automata
 
     """
@@ -415,6 +416,7 @@ class FileHandler:
 
             prop_list.append(p)
 
+        print( "Properties loaded." )
         return prop_list
     
     @staticmethod

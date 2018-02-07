@@ -443,16 +443,48 @@ def gen_simulator_simulink(dir_path, model_name, in_labels, in_vals,
 
 def simulate():
 
-    return _sim_ver( 1 )
+    result = _sim_ver( 1 )
+
+    if( not result ):
+        Session.cur_prop.status = "Invalid" 
+        Session.cur_prop.result = "Invalid"
+        return None
+
+    Session.cur_prop.status = Simulated
+
+    if( result == 1 ):
+        Session.cur_prop.result = "Safe"
+    elif( result == 0 ):
+        Session.cur_prop.result = "Unknown"
+    else:
+        Session.cur_prop.result = "Unsafe"
+    
+    return result
 
 def verify():
 
-    return _sim_ver( 0 )
+    result = _sim_ver( 0 )
+
+    if( not result ):
+        Session.cur_prop.status = "Invalid" 
+        Session.cur_prop.result = "Invalid"
+        return None
+        
+    Session.cur_prop.status = Verified
+    if( result == 1 ):
+        Session.cur_prop.result = "Safe"
+    elif( result == 0 ):
+        Session.cur_prop.result = "Unknown"
+    else:
+        Session.cur_prop.result = "Unsafe"
+    
+    return result
 
 def _sim_ver( action ):
 
     if( not Session.cur_prop.is_valid() ):
-        return
+        print( "\nProperty invalid, abandoning operation..." )
+        return None
 
     # Parse and Compose ( HyIR.compose_all calss HyIR.parse_all )
     HyIR.compose_all( Session.hybrid_automata )
@@ -474,6 +506,10 @@ def _sim_ver( action ):
     # Simulate selected model
     initialize_cpp_model( action )
     compile_executable()
+
+    print( "Running simulate_verify" )
+    result = Session.cpp_model.simulate_verify()
+    print( "RESULT: ", result )
 
     return Session.cpp_model.simulate_verify()
     
@@ -645,3 +681,5 @@ def compile_executable():
     Session.lib_compiled = True
     
     print( "Libraries successfully compiled." )
+
+    return
