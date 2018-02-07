@@ -95,7 +95,7 @@ int Model::simulate_verify()
 {
     // Timer
     std::time_t timer = std::time(NULL);
-    freopen("../work-dir/log.txt","w",stdout);
+    //freopen("../work-dir/log.txt","w",stdout);
     // Initialize the model
     initialize();
     cout <<"printing the model"<<endl;

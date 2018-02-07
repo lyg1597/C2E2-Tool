@@ -7,8 +7,8 @@ SRC_DIR  = ./src/backend/cpp
 #Compiler
 CXX = g++
 CFLAGS = -g -std=c++11
-INCLUDES = -I $(SRC_DIR) -I /usr/include/python3.4m
-LFLAGS = -lboost_python-py34 -lpython3.4m -ldl -lppl -lglpk
+INCLUDES = -I $(SRC_DIR) -I /usr/include/python3.5m
+LFLAGS = -lboost_python-py35 -lpython3.5m -ldl -lppl -lglpk
 
 CPP_SOURCES := $(wildcard $(SRC_DIR)/*.cpp)
 CPP_OBJECTS := $(CPP_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
