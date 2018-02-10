@@ -4,58 +4,105 @@ from scipy import optimize as opt
 
 class Automaton:
 
-    def __init__(self, name="default_automaton"):
+    def __init__( self, name="default_automaton" ):
 
         self.name = name
+
+        self.vars = []  # List of Variable objects
+        self.varList = []  # List of Variable objects with scope LOCAL_DATA
+        self.variables = Variables()  # Variables object
+
+        self.thinvars = []  # List of ThinVariable objects
+        self.thinvarList = []  # List of ThinVariable objects with scope LOCAL_DATA
+        self.thinvariables = ThinVariables()  # Single ThinVariable object
+
+        self.modes = []  # Mode objects
+        self.trans = []  # Transition objects
+
+        self.prop_list = []
+                
         self.next_mode_id = 0
         self.next_transition_id = 0
         self.initial_mode_id = 0
-        self.modes = []
-        self.trans = []
 
+    @property
+    def local_vars( self ):
+        return self.variables.local
 
-    def print_trans(self):
-        print("--- Transitions ---")
-        for i in self.trans:
-            print("%s: %s %s %s Actions: %s" % \
-            (i.id, i.src, i.dest, i.guard.raw, 
-            ", ".join(action.raw for action in i.actions)))
-    
-    def print_modes(self):
-        print("--- Modes ---")
-        for i in self.modes:
-            print('DAIs:')
-            print(str(i.id)+": "+i.name+" Initial: "+str(i.initial)+" Linear: "+str(i.linear))
-            print('\n'.join(dai.raw for dai in i.dais))
-            print('Invariants:')
-            print('\n'.join(inv.raw for inv in i.invs))
-    
-    def print_all(self):
-        print("%s:" % self.name)
-        self.print_modes()
-        self.print_trans()
+    @property
+    def local_var_names( self ):
+        return self.variables.local_names
+
+    @property
+    def mode_names( self ):
+        names = []
+        for mode in self.modes:
+            names.append( mode.name )
+        return names
         
-    def add_mode(self,mode):
-        self.modes.append(mode)
+    def add_var( self, var ):
+        self.variables.add_var( var )
+        return
+
+    def add_thinvar( self, thinvar ):
+        self.thinvariables.add_thinvar( thinvar )
+        return
+        
+    def add_mode( self, mode ):
+        self.modes.append( mode )
+        return
     
     def remove_mode( self, mode ):
         self.modes.remove( mode )
+        return
 
-    def add_trans(self,trans):
-        self.trans.append(trans)
+    def add_transition( self, tran ):
+        self.trans.append( tran )
+        return
+
+    def remove_transition( self, tran ):
+        self.trans.remove( tran )
+        return
+
+    # DEPRECATED?
         
-    def remove_trans(self, tran):
-        self.trans.remove(tran)
-        
-    def new_mode_id(self):
+    def new_mode_id( self ):
         m_id = self.next_mode_id
         self.next_mode_id += 1
         return m_id
     
-    def new_transition_id(self):
+    def new_transition_id( self ):
         t_id = self.next_transition_id
         self.next_transition_id += 1
         return t_id
+
+    # Prints
+    
+    def print_trans( self ):
+        print( "Transition printing under construction" )
+        # print("--- Transitions ---")
+        # for i in self.trans:
+        #     print("%s: %s %s %s Actions: %s" % \
+        #     (i.id, i.src, i.dest, i.guard.raw, 
+        #     ", ".join(action.raw for action in i.actions)))
+        return
+    
+    def print_modes( self ):
+        print( "Mode printing under construction" )
+        # print("--- Modes ---")
+        # for i in self.modes:
+        #     print('DAIs:')
+        #     print(str(i.id)+": "+i.name+" Initial: "+str(i.initial)+" Linear: "+str(i.linear))
+        #     print('\n'.join(dai.raw for dai in i.dais))
+        #     print('Invariants:')
+        #     print('\n'.join(inv.raw for inv in i.invs))
+        # return
+    
+    def print_all( self ):
+        print("%s:" % self.name)
+        self.print_modes()
+        self.print_trans()
+        return
 
 
 class Variables:
@@ -66,6 +113,24 @@ class Variables:
         self.input = []
         self.output = []
 
+    @property
+    def names( self ):
+        names = []
+        for var in self.all:
+            names.append( var.name )
+        return names
+
+    @property
+    def local_names( self ):
+        names = []
+        for var in self.local:
+            names.append( var.name )
+        return names
+
+    @property
+    def all( self ):
+        return ( self.input + self.local + self.output )
+
     def add_var(self, v):
         if v.scope=='LOCAL_DATA':
             self.local.append(v)
@@ -73,10 +138,7 @@ class Variables:
             self.output.append(v)
         elif v.scope=='INPUT_DATA':
             self.input.append(v)
-
-    def toVariable(self):
-        return self.input+self.local+self.output        
-    
+            
 
 class Variable:
     
@@ -97,16 +159,24 @@ class ThinVariables:
         self.input = []
         self.output = []
 
-    def add_thin_var(self, v):
+    @property
+    def names( self ):
+        names = []
+        for var in self.all:
+            names.append( var.name )
+        return names
+
+    @property
+    def all( self ):
+        return ( self.input + self.local + self.output )
+
+    def add_thinvar(self, v):
         if v.scope=='LOCAL_DATA':
             self.local.append(v)
         elif v.scope=='OUTPUT_DATA':
             self.output.append(v)
         elif v.scope=='INPUT_DATA':
             self.input.append(v)
-
-    def toThinVariable(self):
-        return self.input+self.local+self.output
 
 
 class ThinVariable:

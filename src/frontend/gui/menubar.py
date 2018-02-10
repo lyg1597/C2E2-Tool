@@ -124,20 +124,20 @@ class MenuBar(Menu):
         self.parent.email.pack_forget()
 
         # If a file is already open, close it.
-        if Session.file_opened:
+        if( Session.file_opened ):
             self.close_callback()
        
         file_path = filedialog.askopenfilename(**self.OPEN_OPT)
-        if file_path:            
+        if( file_path ):            
             Session.file_path = file_path
             
-            hybrid_automata = FileHandler.open_file(file_path)
+            status = FileHandler.open_file(file_path)
 
-            if hybrid_automata == None:
-                return
-
-            Session.file_opened = True
-            EventHandler.event_generate(OPEN_EVENT)
+            if( status ):
+                Session.file_opened = True
+                EventHandler.event_generate(OPEN_EVENT)
+                
+        return
 
 
     def save_callback(self):

@@ -82,57 +82,70 @@ class FileHandler:
 
     @staticmethod
     def open_file( file_path ):
-        """ Open file entry point. """
+        """
+        Loads a file and stores the model in Session.hybrid
+
+        Args:
+            file_path: The file path to load
+
+        Returns:
+            True/False status ( True if file opened successfully )
+        """
+
         print( "Opening File..." )
 
         base_name = os.path.basename( file_path ) 
         raw_name, ext = os.path.splitext( base_name )
 
         # Handle HyXML file
-        if ext == '.hyxml':
+        if( ext == '.hyxml' ):
             
             Session.file_type = HYXML_FILE
 
             # Get HyXML type and call corresponding function
-            hyxml_tree = ET.parse(file_path)
-            if hyxml_tree == None:
-                return None
+            hyxml_tree = ET.parse( file_path )
+            if( hyxml_tree == None ):
+                return False
 
             hyxml_root = hyxml_tree.getroot()
-            hyxml_type = hyxml_root.get('type')
+            hyxml_type = hyxml_root.get( 'type' )
 
             thinvarprop = ""
             thinvarlist = ""
 
-            if hyxml_type == 'Model':
+            if( hyxml_type == 'Model' ):
 
-                hybrid_automata = FileHandler.open_hyxml_model( hyxml_root, raw_name )
-                prop_list = FileHandler.open_hyxml_properties( hyxml_root )
+                automata = FileHandler.open_hyxml_model( hyxml_root )
+                properties = FileHandler.open_hyxml_properties( hyxml_root )
 
             else:
-                return None
+                return False
 
         # Handle MDL file
-        elif ext == '.mdl':
+        elif( ext == '.mdl' ):
 
             Session.file_type = MLD_FILE
 
-            hybrid = FileHandler.open_mdl_model(file_path,raw_name)
+            hybrid = FileHandler.open_mdl_model( file_path, raw_name )
             prop_list = []
 
         # Handle all other extensions
         else:
-            return None
+            return False
         
-        Session.hybrid_automata = hybrid_automata
-        Session.prop_list = prop_list
+        hybrid = HyIR( file_name=file_path )
+
+        hybrid.automata = automata
+        hybrid.properties = properties
+
+        Session.hybrid = hybrid
 
         print( "File opened." )
-        return hybrid_automata
+        return True
 
     # Open HyXML Model file
     @staticmethod
-    def open_mdl_model(file_path,file_name):
+    def open_mdl_model( file_path,file_name ):
         print ("start to parse mdl file and construct hyir")
         model=open(file_path,"r")
         rawModel = model.read()
@@ -250,22 +263,27 @@ class FileHandler:
         
     
     @staticmethod
-    def open_hyxml_model( root, file_name ):
-        """ Load model from hyxml """
+    def open_hyxml_model( root ):
+        """
+        Loads automata from input xml root
+
+        Args:
+            root: XML root
+
+        Returns:
+            List of Automaton() objects
+        """
+
         print( "Loading hyxml model..." )
 
-        hybrid_automata = []
+        automata = []
 
-        for automata in root.iterfind( "automaton" ):
+        for auto in root.iterfind( "automaton" ):
 
-            # Create new HyIR object for each automaton
-            name = automata.get( "name" )
-            hybrid_name = name + " HyIR"
-            hybrid = HyIR( name=hybrid_name, file_name=file_name )
-            hybrid.automata.name = name
-            hybrid_automata.append( hybrid )
-
-            for var in automata.iterfind( "variable" ):
+            name = auto.get( "name" )
+            automaton = Automaton( name )
+            
+            for var in auto.iterfind( "variable" ):
                 
                 # Load variables
                 v_name = var.get( "name" )
@@ -273,9 +291,9 @@ class FileHandler:
                 v_type = var.get( "type" )
                
                 v = Variable( name=v_name, type=v_type, scope=v_scope )
-                hybrid.add_var( v )
+                automaton.add_var( v )
 
-            for thinvar in automata.iterfind( "thin_variable" ):
+            for thinvar in auto.iterfind( "thin_variable" ):
                 
                 # Load thin variables
                 v_name = thinvar.get( "name" )
@@ -283,9 +301,9 @@ class FileHandler:
                 v_type = thinvar.get( "type")
                 
                 v = ThinVariable( name=v_name, type=v_type, scope=v_scope )
-                hybrid.add_thin_var( v )
+                automaton.add_thin_var( v )
 
-            for mode in automata.iterfind( "mode" ):
+            for mode in auto.iterfind( "mode" ):
                 
                 # Load modes
                 mode_name = mode.get( "name" )
@@ -308,9 +326,9 @@ class FileHandler:
                     clean_eq = FileHandler.clean_eq( raw_eq )
                     mode_obj.add_inv( Invariant( clean_eq ) )
                 
-                hybrid.automata.add_mode( mode_obj )  
+                automaton.add_mode( mode_obj )  
 
-            for tran in automata.iterfind( "transition" ):
+            for tran in auto.iterfind( "transition" ):
 
                 # Load transitions
                 g = tran.find( "guard" )
@@ -329,10 +347,12 @@ class FileHandler:
                     actions.append( Action(clean_eq) )
 
                 transition = Transition( guard, actions, tran_id, tran_src, tran_dest )
-                hybrid.automata.add_trans( transition )
+                automaton.add_transition( transition )
+
+            automata.append( automaton )
 
         print( "Model Loaded." )
-        return hybrid_automata
+        return automata
 
     """
     # FIXME move this up before the previous method
@@ -380,7 +400,16 @@ class FileHandler:
 
     @staticmethod
     def open_hyxml_properties( root ):
-        """ Load properties from hyxml """
+        """ 
+        Load properties from hyxml
+        
+        Args:
+            root: XML root
+
+        Returns:
+            List of Proerty() objects
+        """
+        
         print( "Loading hyxml properties..." )
 
         prop_list = []

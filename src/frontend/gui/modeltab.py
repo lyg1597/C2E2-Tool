@@ -25,7 +25,7 @@ class ModelTab( Frame ):
     def _init_widgets( self ):
         """ Initialize the Treeview and Property Editory """
         
-        print ("Initialize the Treeview and Property Editor")
+        print( "Initialize the Treeview and Property Editor" )
 
         self.sidebar = ModelSidebar( self ) 
         self.tree = TreeView(self, self.sidebar, selectmode='browse' )
@@ -97,7 +97,7 @@ class TreeView( Treeview ):
         
         print( 'Displaying Model...' )
 
-        hybrid_automata = Session.hybrid_automata
+        hybrid = Session.hybrid
 
         self.automaton_dict = {}  # dict[item_id] = automaton object
         self.mode_dict = {}       # dict[item_id] = mode object
@@ -105,25 +105,25 @@ class TreeView( Treeview ):
 
         self.mode_name_dict = {}  # dict[mode.id] = mode.name
         
-        for hybrid in hybrid_automata:
+        for automaton in hybrid.automata:
 
             # Create automaton parent item
-            automaton_id = self.insert( '', 'end', text=hybrid.automata.name )
+            automaton_id = self.insert( '', 'end', text=automaton.name )
             self.item( automaton_id, open=TRUE )
             
             # Store automaton in dictionary
-            self.automaton_dict[automaton_id] = hybrid
+            self.automaton_dict[automaton_id] = automaton
             
             # Create variable parent and variable items
             var_id = self.insert( automaton_id, 'end', text=VARIABLES )
-            var_str = ', '.join( hybrid.varList )
+            var_str = ', '.join( automaton.variables.names )
             self.insert( var_id, 'end', text=var_str )
             self.item( var_id, open=TRUE )
 
             # Create thin variable parent and thin variable items
-            if( len( hybrid.thinvarList ) !=0 ):
+            if( len( automaton.thinvariables.all ) !=0 ):
                 thin_var_id = self.insert( automaton_id, 'end', text='Thin Variables' )
-                thin_var_str = ', '.join( hybrid.thinvarList )
+                thin_var_str = ', '.join( automaton.thinvariables.names )
                 self.insert( thin_var_id, 'end', text=thin_var_str )
                 self.item( thin_var_id, open=TRUE )
 
@@ -132,7 +132,7 @@ class TreeView( Treeview ):
             self.item( modes_id, open=TRUE )
     
             # Create mode items
-            for mode in hybrid.automata.modes:
+            for mode in automaton.modes:
 
                 mode_str = mode.name + ' (' + str(mode.id) + ')'
                 mode_id = self.insert( modes_id, 'end', text=mode_str )
@@ -158,7 +158,7 @@ class TreeView( Treeview ):
             self.item( trans_id, open=TRUE )
             
             # Create transition items
-            for tran in hybrid.automata.trans:
+            for tran in automaton.trans:
 
                 # Build transition string
                 src, dest = self.mode_name_dict[tran.src], self.mode_name_dict[tran.dest]
@@ -211,8 +211,6 @@ class TreeView( Treeview ):
     def _on_right_click( self, event ):
         """ Right-click event callback """
 
-        print( '<<Right-Click>>' )
-
         # Populate selection variables
         self._identify_selection( event )
 
@@ -246,8 +244,6 @@ class TreeView( Treeview ):
     def _on_left_click( self, event ):
         """ Left-click event callback """
 
-        print( '<<Single-Click>>' )
-
         # Populate selection variables
         self._identify_selection( event )
 
@@ -255,8 +251,6 @@ class TreeView( Treeview ):
 
     def _on_double_click( self, event ):
         """ Double-click event callback """
-
-        print( '<<Double-Click>>' )
 
         # Populate selection variables        
         self._identify_selection( event )
@@ -516,7 +510,7 @@ class ModelSidebar( Frame ):
         if( name == '' ):
             valid = False
         else:
-            for prop in Session.prop_list:
+            for prop in Session.hybrid.properties:
                 if( prop.is_visible ):
                     continue
                 elif( name == prop.name ):
@@ -648,7 +642,7 @@ class ModelSidebar( Frame ):
 
             # Validate mode
             mode = re.search(self.re_var, is_sep[0]).group(0)
-            mode_list = Session.get_mode_names()
+            mode_list = Session.hybrid.mode_names
 
             if mode not in mode_list:
                 self.is_err.set('No matching modes')
@@ -659,7 +653,7 @@ class ModelSidebar( Frame ):
 
             # Validate vars
             vars = re.findall(self.re_var, is_sep[1])
-            var_list = Session.get_varList()
+            var_list = Session.hybrid.local_var_names
             var_union = set(vars) | set(var_list)
             if len(var_union) > len(var_list):
                 self.is_err.set('Variable mismatch')
@@ -709,7 +703,7 @@ class ModelSidebar( Frame ):
         # Validate vars
         else:
             vars = re.findall(self.re_var, input)
-            var_list = Session.get_varList()
+            var_list = Session.hybrid.local_var_names
             var_union = set(vars) | set(var_list)
             if len(var_union) > len(var_list):
                 self.us_err.set('Variable mismatch')
@@ -816,14 +810,14 @@ class ModelSidebar( Frame ):
         if iid:
             self.sel_iid = iid
             idx = self.list_view.index(self.sel_iid)
-            Session.cur_prop = Session.prop_list[idx]
+            Session.cur_prop = Session.hybrid.properties[idx]
             self._display_property(Session.cur_prop)
 
 
     def _callback_new(self):
         # Create new property
         Session.cur_prop = Property()
-        Session.prop_list.append(Session.cur_prop)
+        Session.hybrid.properties.append(Session.cur_prop)
 
         # Display property in view and list
         self.sel_iid = self._add_property(Session.cur_prop)
@@ -838,7 +832,7 @@ class ModelSidebar( Frame ):
         new_prop.result = ""
         new_prop.name = new_prop.name + '_Copy'
         Session.cur_prop = new_prop
-        Session.prop_list.append(Session.cur_prop)
+        Session.hybrid.properties.append(Session.cur_prop)
 
         # Display property in view and list
         self.sel_iid = self._add_property(Session.cur_prop)
@@ -849,21 +843,21 @@ class ModelSidebar( Frame ):
     def _callback_rmv(self):
         # Find next property to select
         idx = self.list_view.index(self.sel_iid)
-        plen = len(Session.prop_list) - 1
+        plen = len(Session.hybrid.properties) - 1
         if plen == 0:
             Session.cur_prop = Property()
-            Session.prop_list.append(Session.cur_prop)
+            Session.hybrid.properties.append(Session.cur_prop)
             up_iid = self._add_property(Session.cur_prop)
         elif idx == plen:
-            Session.cur_prop = Session.prop_list[idx - 1]
+            Session.cur_prop = Session.hybrid.properties[idx - 1]
             up_iid = self.list_view.prev(self.sel_iid)
         else:
-            Session.cur_prop = Session.prop_list[idx + 1]
+            Session.cur_prop = Session.hybrid.properties[idx + 1]
             up_iid = self.list_view.next(self.sel_iid)
             
         # Remove the selected property 
         self.list_view.delete(self.sel_iid)
-        del Session.prop_list[idx]
+        del Session.hybrid.properties[idx]
 
         # Display property in view and list
         self.sel_iid = up_iid
@@ -938,7 +932,7 @@ class ModelSidebar( Frame ):
 
         self._clear_properties()
 
-        for prop in Session.prop_list:
+        for prop in Session.hybrid.properties:
             if( prop.status == Simulated or prop.status == Verified ):
                 prop.status += '*'
                 prop.result = 'Expired'
@@ -1006,7 +1000,7 @@ class ModelSidebar( Frame ):
 
     def _display_properties(self, event=None):
 
-        for prop in Session.prop_list:
+        for prop in Session.hybrid.properties:
             if self.sel_iid:
                 self._add_property(prop)
             else:
@@ -1014,6 +1008,6 @@ class ModelSidebar( Frame ):
         
         self.list_view.selection_set(self.sel_iid)
         
-        Session.cur_prop = Session.prop_list[0]
+        Session.cur_prop = Session.hybrid.properties[0]
         Session.cur_prop.is_visible = True
         self._display_property(Session.cur_prop)

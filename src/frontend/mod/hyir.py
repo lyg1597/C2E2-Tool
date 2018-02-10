@@ -16,21 +16,42 @@ class HyIR:
     def __init__( self, name="hybrid_system", file_name="" ):
 
         self.name = name
+        self.automata = []  # List of Automaton() objects
+        self.properties = []  # List of Property() objects
+
         self.file_name = file_name
-        
-        self.vars = []  # List of Variable objects
-        self.varList = []  # List of Variable objects with scope LOCAL_DATA
-        self.variables = Variables()  # Single Variables object
-
-        self.thinvars = []  # List of ThinVariable objects
-        self.thinvarList = []  # List of ThinVariable objects with scope LOCAL_DATA
-        self.thinvariables = ThinVariables()  # Single ThinVariables object
-
-        self.automata = Automaton()
-        
+       
         self.annotations = ""
         self.annotationsRaw = []
-        ###self.treestore = gtk.TreeStore(str)
+
+        self.composed = False
+
+    @property
+    def local_vars( self ):
+        vars_ = []
+        for automaton in self.automata:
+            vars_+= automaton.local_vars
+        return list( set( vars_ ) )
+
+    @property
+    def local_var_names( self ):
+        names = []
+        for automaton in self.automata:
+            names += automaton.local_var_names
+        return list( set( names ) )
+
+    @property
+    def mode_names( self ):
+        names = []
+        for automaton in self.automata:
+            names += automaton.mode_names
+        return names    
+
+    def add_automaton( self, automaton ):
+
+        self.automata.append( automaton )
+        self.composed = False
+        return
 
     @classmethod
     def parse_all( cls, hybrid_automata ):
@@ -238,64 +259,6 @@ class HyIR:
         if len(local.intersection(output))!=0:
             return False
         return True
-
-
-    def add_var(self, v):
-        """ Add variable """
-        self.vars.append(v)
-        self.variables.add_var(v)
-        if v.scope=='LOCAL_DATA':
-            self.varList.append(v.name)
-
-
-    def add_thin_var(self, v):
-        """ Add thin variable """
-        self.thinvars.append(v)
-        self.thinvariables.add_thin_var(v)
-        if v.scope=='LOCAL_DATA':
-            self.thinvarList.append(v.name)
-
-    def reset_vars( self ):
-        """ Reset variable lists. Used for editing. """
-        self.vars = []
-        self.variables = Variables()
-        self.varList = []
-
-    
-    def reset_local_vars( self ):
-        """ Reset local vars only. Preserve variable with other scopes. """
-        
-        nonlocal_vars = []
-        for var in self.vars:
-            if( var.scope != 'LOCAL_DATA' ):
-                nonlocal_vars.append( var )
-        
-        self.reset_vars()
-
-        for var in nonlocal_vars:
-            self.add_var( var )
-
-
-    def reset_thin_vars( self ):
-        """ Reset thin variable lists. Used for editing. """
-        self.thinvars = []
-        self.thinvariables = ThinVariables()
-        self.thinvarList = []
-
-
-    def reset_local_thin_vars( self ):
-        """ Reset local thin vars only. Presever variables with other scopes. """
-
-        nonlocal_vars = []
-        for var in self.thinvars:
-            if( var.scope != 'LOCAL_DATA' ):
-                nonlocal_vars.append( var )
-
-        self.reset_thin_vars()
-
-        for var in nonlocal_vars:
-            self.add_thin_var( var )
-        
 
     def print_all(self):
         print("%s:" % self.name)

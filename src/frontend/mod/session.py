@@ -240,17 +240,16 @@ class PlotProperty():
         self.plot_name = ''
         self.x = ''
         
-
         # Property values valid
         self.name_valid = False
         self.x_valid = True
         self.y_check_box = []
 
-
         # Misc
         self.status = "Not Plotted"
         self.is_visible = False
         self.identifier = identifier
+
 
     def is_valid(self):
         if not self.name_valid:
@@ -274,124 +273,19 @@ class Session():
     file_modified = False
     file_saved = False
     file_path = ''
+    file_type = None
 
     lib_compiled = False
 
-    # Pre-composition
-    hybrid_automata = None
-    composed = False
-
-    # Post-composition
+    # Working Model
     hybrid = None
     cur_prop = None
-    prop_list = None
+    
+    # Pre-composition (if hyrid was composed in this session)
+    hybrid_precomp = None
 
+    # Simulation parameters
     simulator = ODEINT_FIX
     refine_strat = DEF_STRAT
 
-    file_type = None
-
     cpp_model = Model()
-
-    @classmethod
-    def compose( cls ):
-        
-        cls.composed = True
-        #cls.cpp_model = Model()
-
-    @classmethod
-    def get_mode_names( cls ):
-
-        mode_list = cls.get_modes()
-        mode_name_list = []
-        
-        for mode in mode_list:
-            mode_name_list.append( mode.get_name() )
-
-        return mode_name_list
-
-    @classmethod
-    def get_modes( cls ):
-
-        mode_list = []
-
-        if( cls.hybrid ):
-            return cls.hybrid.automata.modes
-
-        for hybrid in cls.hybrid_automata:
-            for mode in hybrid.automata.modes:
-                mode_list.append( mode )
-
-        return mode_list
-
-
-    @classmethod
-    def get_vars( cls ):
-        """ Get variable objects from composed hybrid, or from all automata for a non-composed sytem """
-
-        vars = []
-
-        if( cls.hybrid ):
-            return cls.hybrid.automata.vars
-
-        for hybrid in cls.hybrid_automata:
-            for var in hybrid.vars:
-                vars.append( var )
-
-        return vars
-
-
-    @classmethod
-    def get_varList( cls ):
-        """ 
-        Get varList ( variable objects with scope LOCAL_DATA ) from composed hybrid, or fram all automata in a non-composed system 
-        
-        NOTE: The unusual naming convention is a blend of the underscore standard and the camelCase used in the HyIR object. -- LMB, 1/22/2018
-        """
-
-        varList = []
-
-        if( cls.hybrid ):
-            return cls.hybrid.varList
-
-        for hybrid in cls.hybrid_automata:
-            for local_var in hybrid.varList:
-                varList.append( local_var )
-
-        return varList
-
-
-    @classmethod
-    def get_thinvars( cls ):
-        """ Get thin variable objects from composed hybrid, or from all automata for a non-composed system """
-
-        thinvars = []
-
-        if( cls.hybrid ):
-            return cls.hyrid.thinvars
-
-        for hybrid in cls.hybrid_automata:
-            for thinvar in hybrid.thinvars:
-                thinvars.append( thinvar )
-
-        return thinvars
-
-
-    @classmethod
-    def get_thinvarList( cls ):
-        """ 
-        Get thinvarList ( thin variable objects with scope LOCAL_DATA ) from composed hybrid, or from all automata in a non-composed system 
-        
-        NOTE: The unusual naming convention is a blend of the underscore standard and the camelCase used in the HyIR object. -- LMB, 1/22/2018
-        """
-
-        thinvarList = []
-
-        if( cls.hybrid ):
-            return cls.hybrid.thinvarList
-
-        for hybrid in cls.hybrid_automata:
-            for local_thinvar in hybrid.thinvarList:
-                thinvarList.append( local_thinvar )
-
-        return thinvarList
