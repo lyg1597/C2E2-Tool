@@ -8,22 +8,26 @@ class Automaton:
 
         self.name = name
 
-        self.vars = []  # List of Variable objects
+        #self.vars = []  # List of Variable objects
         self.varList = []  # List of Variable objects with scope LOCAL_DATA
         self.variables = Variables()  # Variables object
 
-        self.thinvars = []  # List of ThinVariable objects
+        #self.thinvars = []  # List of ThinVariable objects
         self.thinvarList = []  # List of ThinVariable objects with scope LOCAL_DATA
         self.thinvariables = ThinVariables()  # Single ThinVariable object
 
         self.modes = []  # Mode objects
-        self.trans = []  # Transition objects
+        self.transitions = []  # Transition objects
 
         self.prop_list = []
                 
         self.next_mode_id = 0
         self.next_transition_id = 0
         self.initial_mode_id = 0
+
+    @property
+    def vars( self ):
+        return self.variables.all
 
     @property
     def local_vars( self ):
@@ -34,19 +38,49 @@ class Automaton:
         return self.variables.local_names
 
     @property
+    def thinvars( self ):
+        return self.thinvariables.all
+
+    @property
+    def local_thinvars( self ):
+        return self.thinvariables.local
+
+    @property
     def mode_names( self ):
         names = []
         for mode in self.modes:
             names.append( mode.name )
         return names
-        
+
+    @property
+    def trans( self ):
+        print( "******************************************************" )
+        print( " WARNING: USING DEPRECATED PROPERTY - AUTOMATON.TRANS" )
+        print( "******************************************************" )
+        return self.transitions
+
     def add_var( self, var ):
         self.variables.add_var( var )
+        return
+
+    def remove_var( self, var ):
+        self.variables.remove_var( var )
+        return
+    
+    def reset_vars( self ):
+        self.variables = Variables()
         return
 
     def add_thinvar( self, thinvar ):
         self.thinvariables.add_thinvar( thinvar )
         return
+
+    def remove_thinvar( self, thinvar ):
+        self.thinvariables.remove_thinvar( thinvar )
+        return
+
+    def reset_thinvars( self ):
+        self.thinvariables = ThinVariables()
         
     def add_mode( self, mode ):
         self.modes.append( mode )
@@ -57,11 +91,11 @@ class Automaton:
         return
 
     def add_transition( self, tran ):
-        self.trans.append( tran )
+        self.transitions.append( tran )
         return
 
     def remove_transition( self, tran ):
-        self.trans.remove( tran )
+        self.transitions.remove( tran )
         return
 
     # DEPRECATED?
@@ -95,7 +129,7 @@ class Automaton:
         #     print(str(i.id)+": "+i.name+" Initial: "+str(i.initial)+" Linear: "+str(i.linear))
         #     print('\n'.join(dai.raw for dai in i.dais))
         #     print('Invariants:')
-        #     print('\n'.join(inv.raw for inv in i.invs))
+        #     print('\n'.join(inv.raw for inv in i.invariants))
         # return
     
     def print_all( self ):
@@ -203,18 +237,32 @@ class Mode:
         self.id = id
         self.initial = initial
         self.initialConditions = []
-        self.invs = []
+        self.invariants = []
         self.dais = []
         self.linear = True
-            
-    def add_inv( self, inv ):
-        self.invs.append( inv )
 
-    def remove_inv( self, inv ):
-        self.invs.remove( inv )
+    @property
+    def invs( self ):
+        print( "************************************************" )
+        print( " WARNING: USING DEPRECATED PROPERTY - MODE.INV" )
+        print( "************************************************" )
+        return self.invariants
+
+    @invs.setter
+    def invs( self, invariants ):
+        print( "************************************************" )
+        print( " WARNING: USING DEPRECATED PROPERTY - MODE.INV" )
+        print( "************************************************" )
+        self.invariants = invariants
+
+    def add_invariant( self, inv ):
+        self.invariants.append( inv )
+
+    def remove_invariants( self, inv ):
+        self.invariants.remove( inv )
     
-    def clear_invs( self ):
-        self.invs = []
+    def clear_invariants( self ):
+        self.invariants = []
     
     def add_dai( self, dai ):
         self.dais.append( dai )
@@ -237,7 +285,7 @@ class Mode:
             if self.linear:
                 self.linear = SymEq.is_linear( dai.expr.rhs )
 
-        for inv in self.invs:
+        for inv in self.invariants:
             inv.parse()
             if not inv.expr:
                 self.remove_inv( inv )
@@ -249,12 +297,42 @@ class Transition:
     src - the source of the transition
     dest - the destination of the transition
     ''' 
-    def __init__( self, guard, actions, id=-1, src=-1, dest=-1 ):
+    def __init__( self, guard, actions, id=-1, source=-1, destination=-1 ):
         self.guard = guard
         self.actions = actions
         self.id = id
-        self.src = src
-        self.dest = dest
+        self.source = source
+        self.destination = destination
+    
+    @property
+    def src( self ):
+        print( "********************************************************" )
+        print( " WARNING: USING DEPRECATED PROPERTY - TRANSITION.SOURCE" )
+        print( "********************************************************" )
+        return self.source
+
+    @src.setter
+    def src( self, source ):
+        print( "********************************************************" )
+        print( " WARNING: USING DEPRECATED PROPERTY - TRANSITION.SOURCE" )
+        print( "********************************************************" )
+        self.source = source
+        return
+
+    @property
+    def dest( self ):
+        print( "*************************************************************" )
+        print( " WARNING: USING DEPRECATED PROPERTY - TRANSITION.DESTINATION" )
+        print( "*************************************************************" )
+        return self.destination
+
+    @dest.setter
+    def dest( self, destination ):
+        print( "*************************************************************" )
+        print( " WARNING: USING DEPRECATED PROPERTY - TRANSITION.DESTINATION" )
+        print( "*************************************************************" )
+        self.destination = destination
+        return
 
     def parse( self ):
         self.guard.parse()

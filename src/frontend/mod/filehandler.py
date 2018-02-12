@@ -14,36 +14,37 @@ import pdb
 class FileHandler:
 
     @staticmethod
-    def save_model(hybrid_automata, propertyList, file_path):
+    def save_model( hybrid, property_list, file_path ):
 
-        #print ("Starting to convert file to hyxml format string")
+        print( "Saving filepath: " + file_path )
+        print( "Saving..." )
         hyxml = ET.Element("hyxml", {"type":"Model"})
 
-        for hybrid in hybrid_automata:
+        for automaton in hybrid.automata:
 
-            auto = ET.SubElement(hyxml, 'automaton', {"name": hybrid.automata.name})
+            auto = ET.SubElement(hyxml, 'automaton', {"name": automaton.name})
             
             # Variables
-            for var in hybrid.vars:
+            for var in automaton.vars:
                 ET.SubElement(auto,"variable",{"name":var.name,"scope":var.scope,"type":var.type})
 
             # Thin Variables
-            for thinvar in hybrid.thinvars:
+            for thinvar in automaton.thinvars:
                 ET.SubElement( auto, "thin_variable", { "name":thinvar.name, "scope":thinvar.scope, "type":thinvar.type } )
 
             # Modes
-            for mode in hybrid.automata.modes:
+            for mode in automaton.modes:
                 m=ET.SubElement(auto,"mode",{"id":str(mode.id),"initial":str(mode.initial),"name":mode.name})
                 for dai in mode.dais:
                     #equ = dai.raw[3:-1]
                     #ET.SubElement(m,"dai",{"equation":equ.replace(",","=",1)})
                     ET.SubElement( m, "dai", {"equation":dai.raw} )
-                for inv in mode.invs:
+                for inv in mode.invariants:
                     ET.SubElement(m,"invariant",{"equation":inv.raw} )
             
             # Transitions
-            for tran in hybrid.automata.trans:
-                t = ET.SubElement(auto,"transition",{"id":str(tran.id),"destination":str(tran.dest),"source":str(tran.src)})
+            for tran in automaton.transitions:
+                t = ET.SubElement(auto,"transition",{"id":str(tran.id),"destination":str(tran.destination),"source":str(tran.source)})
                 ET.SubElement(t,"guard",{"equation":tran.guard.raw})
                 for act in tran.actions:
                     ET.SubElement(t,"action",{"equation":act.raw})
@@ -52,7 +53,7 @@ class FileHandler:
         #ET.SubElement(hyxml,"composition", {"automata":hybrid.automata[0].name})
             
         # Properties
-        for prop in propertyList:
+        for prop in property_list:
             if not prop.initial_set_str:
                 continue
             pt1 = ET.SubElement(hyxml,"property",{"name":prop.name,"type":str(prop.type),"initialSet":prop.initial_set_str,"unsafeSet":prop.unsafe_set_str})
@@ -77,6 +78,8 @@ class FileHandler:
 
         indent(hyxml)
         tree.write(file_path)
+
+        print( "Saved." )
         return    
 
 
@@ -301,7 +304,7 @@ class FileHandler:
                 v_type = thinvar.get( "type")
                 
                 v = ThinVariable( name=v_name, type=v_type, scope=v_scope )
-                automaton.add_thin_var( v )
+                automaton.add_thinvar( v )
 
             for mode in auto.iterfind( "mode" ):
                 
@@ -324,7 +327,7 @@ class FileHandler:
                     raw_eq = inv.get( "equation" )
                     # Equation 'cleaning' is needed for inequalities
                     clean_eq = FileHandler.clean_eq( raw_eq )
-                    mode_obj.add_inv( Invariant( clean_eq ) )
+                    mode_obj.add_invariant( Invariant( clean_eq ) )
                 
                 automaton.add_mode( mode_obj )  
 

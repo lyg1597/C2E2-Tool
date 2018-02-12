@@ -18,7 +18,7 @@ class EventHandler():
 
     @staticmethod
     def event_generate(event):
-        print(EventHandler.event_dict[event])
+        #print(EventHandler.event_dict[event])
         for listener in EventHandler.event_dict[event]:
             listener.event_generate(event, when='tail')
         

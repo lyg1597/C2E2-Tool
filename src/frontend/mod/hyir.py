@@ -155,9 +155,9 @@ class HyIR:
                 HyIR.replace_dais(cross_mode, dai_dict)
 
                 # Resulting invariant is a conjunction
-                for inv1 in m1.invs:
+                for inv1 in m1.invariants:
                     cross_mode.add_inv(inv1)
-                for inv2 in m2.invs:
+                for inv2 in m2.invariants:
                     cross_mode.add_inv(inv2)
                 composed.automata.add_mode(cross_mode)
 
@@ -234,7 +234,7 @@ class HyIR:
         for m in self.automata.modes:
           inv_eqs = []
           inv_vars = set()
-          for inv in m.invs:
+          for inv in m.invariants:
             inv_eqs.append(inv.expr)
             inv_vars = inv_vars.union(SymEq.vars_used(inv.expr))
           invariants[m.id] = (inv_eqs, inv_vars)

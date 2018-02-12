@@ -167,7 +167,7 @@ class MenuBar(Menu):
 
 
     def save_model(self, filepath):
-        savedModelString = FileHandler.save_model( Session.hybrid_automata, Session.prop_list, filepath )
+        savedModelString = FileHandler.save_model( Session.hybrid, Session.hybrid.properties, filepath )
 
 
     # FIXME destroy the session

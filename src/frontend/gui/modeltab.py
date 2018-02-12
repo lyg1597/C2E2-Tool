@@ -24,8 +24,6 @@ class ModelTab( Frame ):
 
     def _init_widgets( self ):
         """ Initialize the Treeview and Property Editory """
-        
-        print( "Initialize the Treeview and Property Editor" )
 
         self.sidebar = ModelSidebar( self ) 
         self.tree = TreeView(self, self.sidebar, selectmode='browse' )
@@ -86,9 +84,9 @@ class TreeView( Treeview ):
     def _clear_model( self, event=None ):
         """ Clear treeview display """
 
-        print( 'Clearing Model...' )
-
+        print( 'Updating Model...' )
         self.delete( *self.get_children() )
+        print( 'Done.' )
 
         return
 
@@ -150,7 +148,7 @@ class TreeView( Treeview ):
 
                 # Create invariant items
                 inv_id = self.insert( mode_id, 'end', text='Invariants' )
-                for inv in mode.invs:
+                for inv in mode.invariants:
                     self.insert( inv_id, 'end', text=inv.raw )
 
             # Create transition parent items
@@ -158,21 +156,21 @@ class TreeView( Treeview ):
             self.item( trans_id, open=TRUE )
             
             # Create transition items
-            for tran in automaton.trans:
+            for tran in automaton.transitions:
 
                 # Build transition string
-                src, dest = self.mode_name_dict[tran.src], self.mode_name_dict[tran.dest]
+                src, dest = self.mode_name_dict[tran.source], self.mode_name_dict[tran.destination]
                 tran_str = src + ' -> ' + dest
                 tran_id = self.insert( trans_id, 'end', text=tran_str )
 
                 self.trans_dict[tran_id] = tran
 
                 # Source
-                src_str = 'Source: ' + src + ' (' + str(tran.src) + ')'
+                src_str = 'Source: ' + src + ' (' + str(tran.source) + ')'
                 self.insert( tran_id, 'end', text=src_str )
 
                 # Destination
-                dest_str = 'Destination: ' + dest + ' (' + str(tran.dest) + ')'
+                dest_str = 'Destination: ' + dest + ' (' + str(tran.destination) + ')'
                 self.insert( tran_id, 'end', text=dest_str )
 
                 # Guard
@@ -184,6 +182,7 @@ class TreeView( Treeview ):
                 for act in tran.actions:
                     self.insert( act_id, 'end', text=act.raw )
 
+        print( 'Done.' )
         return
 
     def _init_rc_menus( self ):
@@ -333,9 +332,9 @@ class TreeView( Treeview ):
         if( context == VARIABLES or context == THINVARIABLES ):
             entry = VariableEntry( self.master, self.slct_automaton )
         elif( context == MODES ):
-            entry = ModeEntry( self.master, action, self.slct_mode, self.slct_automaton )   
+            entry = ModeEntry( self.master, self.slct_automaton, action,  self.slct_mode )   
         elif( context == TRANSITIONS ):
-            entry = TransitionEntry( self.master, action, self.mode_name_dict, self.slct_transition, self.slct_automaton )
+            entry = TransitionEntry( self.master, self.slct_automaton, self.mode_name_dict, action, self.slct_transition )
         elif( context == AUTOMATON ):
             print( 'Automaton entry not yet built' )
             return
@@ -344,7 +343,7 @@ class TreeView( Treeview ):
         self.master.wait_window( entry )
 
         # Update property status if the model was changed
-        if( entry.is_changed() ):
+        if( False ):  #entry.changed removed until expire_properties can be fixed
             self.sidebar._expire_properties()
         
         # Refresh Model
@@ -1008,6 +1007,7 @@ class ModelSidebar( Frame ):
         
         self.list_view.selection_set(self.sel_iid)
         
-        Session.cur_prop = Session.hybrid.properties[0]
+        if not Session.cur_prop:
+            Session.cur_prop = Session.hybrid.properties[0]
         Session.cur_prop.is_visible = True
         self._display_property(Session.cur_prop)
