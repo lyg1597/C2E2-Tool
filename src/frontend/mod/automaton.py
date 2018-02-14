@@ -8,13 +8,8 @@ class Automaton:
 
         self.name = name
 
-        #self.vars = []  # List of Variable objects
-        self.varList = []  # List of Variable objects with scope LOCAL_DATA
-        self.variables = Variables()  # Variables object
-
-        #self.thinvars = []  # List of ThinVariable objects
-        self.thinvarList = []  # List of ThinVariable objects with scope LOCAL_DATA
-        self.thinvariables = ThinVariables()  # Single ThinVariable object
+        self.variables = Variables()
+        self.thinvariables = ThinVariables()
 
         self.modes = []  # Mode objects
         self.transitions = []  # Transition objects
@@ -24,6 +19,7 @@ class Automaton:
         self.next_mode_id = 0
         self.next_transition_id = 0
         self.initial_mode_id = 0
+
 
     @property
     def vars( self ):
@@ -45,6 +41,10 @@ class Automaton:
     def local_thinvars( self ):
         return self.thinvariables.local
 
+    @property
+    def local_thinvar_names( self ):
+        return self.thinvariables.local_names
+        
     @property
     def mode_names( self ):
         names = []
@@ -81,7 +81,8 @@ class Automaton:
 
     def reset_thinvars( self ):
         self.thinvariables = ThinVariables()
-        
+        return
+
     def add_mode( self, mode ):
         self.modes.append( mode )
         return
@@ -130,7 +131,7 @@ class Automaton:
         #     print('\n'.join(dai.raw for dai in i.dais))
         #     print('Invariants:')
         #     print('\n'.join(inv.raw for inv in i.invariants))
-        # return
+        return
     
     def print_all( self ):
         print("%s:" % self.name)
@@ -146,6 +147,7 @@ class Variables:
         self.local = []
         self.input = []
         self.output = []
+
 
     @property
     def names( self ):
@@ -166,13 +168,16 @@ class Variables:
         return ( self.input + self.local + self.output )
 
     def add_var(self, v):
+    
         if v.scope=='LOCAL_DATA':
             self.local.append(v)
         elif v.scope=='OUTPUT_DATA':
             self.output.append(v)
         elif v.scope=='INPUT_DATA':
             self.input.append(v)
-            
+    
+        return
+
 
 class Variable:
     
@@ -181,6 +186,7 @@ class Variable:
         self.type = type
         self.scope = scope
         self.update_type = type
+
 
     def __eq__(self, other):
         return self.name==other.name and self.update_type==other.update_type and self.type==other.type
@@ -193,10 +199,18 @@ class ThinVariables:
         self.input = []
         self.output = []
 
+
     @property
     def names( self ):
         names = []
         for var in self.all:
+            names.append( var.name )
+        return names
+    
+    @property
+    def local_names( self ):
+        names = []
+        for var in self.local:
             names.append( var.name )
         return names
 
@@ -205,12 +219,15 @@ class ThinVariables:
         return ( self.input + self.local + self.output )
 
     def add_thinvar(self, v):
+
         if v.scope=='LOCAL_DATA':
             self.local.append(v)
         elif v.scope=='OUTPUT_DATA':
             self.output.append(v)
         elif v.scope=='INPUT_DATA':
             self.input.append(v)
+
+        return
 
 
 class ThinVariable:
@@ -220,6 +237,7 @@ class ThinVariable:
         self.type = type
         self.scope = scope
         self.update_type = type
+
 
     def __eq__(self, other):
         return self.name==other.name and self.update_type==other.update_type and self.type==other.type
@@ -241,6 +259,7 @@ class Mode:
         self.dais = []
         self.linear = True
 
+
     @property
     def invs( self ):
         print( "************************************************" )
@@ -254,24 +273,31 @@ class Mode:
         print( " WARNING: USING DEPRECATED PROPERTY - MODE.INV" )
         print( "************************************************" )
         self.invariants = invariants
+        return
 
     def add_invariant( self, inv ):
         self.invariants.append( inv )
+        return
 
     def remove_invariants( self, inv ):
         self.invariants.remove( inv )
-    
+        return
+
     def clear_invariants( self ):
         self.invariants = []
-    
+        return
+
     def add_dai( self, dai ):
         self.dais.append( dai )
+        return
 
     def remove_dai( self, dai ):
         self.dais.remove( dai )
+        return
 
     def clear_dais( self ):
         self.dais = []
+        return
 
     def get_name( self ):
         return self.name
@@ -289,7 +315,10 @@ class Mode:
             inv.parse()
             if not inv.expr:
                 self.remove_inv( inv )
- 
+
+        return
+
+
 class Transition:
     '''guard - node representing the guard for the transition
     actions - list of nodes representing the resets of the transition
@@ -304,6 +333,7 @@ class Transition:
         self.source = source
         self.destination = destination
     
+
     @property
     def src( self ):
         print( "********************************************************" )
@@ -342,11 +372,16 @@ class Transition:
         else:
             self.clear_actions
 
+        return
+
     def add_action( self, action ):
         self.actions.append( action )
+        return
 
     def clear_actions( self ):
         self.actions = []
+        return
+
 
 class DAI:
     '''Deterministic algebraic inequalities'''
@@ -355,6 +390,8 @@ class DAI:
     
     def parse( self ):
         self.expr = SymEq.construct_eqn( self.raw, True, False )
+        return
+
 
 class Invariant:
 
@@ -368,13 +405,17 @@ class Invariant:
         self.expr = filter( lambda eqn: eqn is not False, self.expr )
         self.expr = list( self.expr )
         if True in self.expr: 
-            print('Redundant Inv: ' + self.raw)
+            print( 'Redundant Inv: ' + self.raw )
             self.expr = []
-        
+
+        return
+
+
 class Guard:
 
     def __init__(self, raw):
         self.raw = raw
+
 
     def parse( self ):
         eqns = self.raw.split( '&&' )
@@ -385,6 +426,8 @@ class Guard:
         if False in self.expr: 
             print( 'Redundant Guard: ' + self.raw )
             self.expr = []
+        
+        return
 
         
 class Action:
@@ -392,9 +435,12 @@ class Action:
     def __init__( self, raw ):
         self.raw = raw
 
+
     def parse( self ):
         eqns = self.raw.split('&&')
         self.expr = [SymEq.construct_eqn(eqn, True, True) for eqn in eqns]
+
+        return
 
 #Symbolic Equation library
 class SymEq:

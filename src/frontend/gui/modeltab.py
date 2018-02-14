@@ -22,6 +22,7 @@ class ModelTab( Frame ):
         self.parent = parent
         self._init_widgets()
 
+
     def _init_widgets( self ):
         """ Initialize the Treeview and Property Editory """
 
@@ -51,6 +52,7 @@ class TreeView( Treeview ):
         self._bind_events()
         self._init_rc_menus()
         self.config( show='tree' )
+        
     
     def _init_selection_vars( self ):
         """ Initialize variables used to parse selected object """
@@ -611,52 +613,51 @@ class ModelSidebar( Frame ):
         Session.refine_strat = self.ref_var.get()
         return
 
-    # TODO optimize this
-    def _callback_is(self, input):
+    def _callback_is( self, initial_set ):
         #if Session.cur_prop.status == "Simulated" or Session.cur_prop.status == "Verified":
             #self._update_property_status(0,0,1)
 
         #print ("value form callback is ")
         #print (Session.cur_prop.initial_set_str)
-        match = re.match(self.re_is, input)
-        if Session.cur_prop.initial_set_str != input: 
-            if Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified:
-                self._update_property_status(0,0,1)
+        match = re.match( self.re_is, initial_set )
+        if( Session.cur_prop.initial_set_str != initial_set ): 
+            if( Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified ):
+                self._update_property_status( 0, 0, 1 )
 
-        Session.cur_prop.initial_set_str = input
+        Session.cur_prop.initial_set_str = initial_set
 
         # Check if input is valid
-        if match == None:
-            self.is_vl.set_state(False)
+        if( match == None ):
+            self.is_vl.set_state( False )
             Session.cur_prop.initial_set_obj = None
             Session.cur_prop.init_set_valid = False
-            if not input == '':
+            if( initial_set != '' ):
                 self.is_err.set('Incorrect syntax')
             else:
                 self.is_err.set('')
 
         # Parse individual components from input
         else:
-            is_sep = input.split(':')
+            is_sep = initial_set.split(':')
 
             # Validate mode
-            mode = re.search(self.re_var, is_sep[0]).group(0)
+            mode = re.search( self.re_var, is_sep[0] ).group(0)
             mode_list = Session.hybrid.mode_names
 
             if mode not in mode_list:
-                self.is_err.set('No matching modes')
-                self.is_vl.set_state(False)
+                self.is_err.set( 'No matching modes' )
+                self.is_vl.set_state( False )
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
                 return
 
             # Validate vars
-            vars = re.findall(self.re_var, is_sep[1])
+            vars_ = re.findall( self.re_var, is_sep[1] )
             var_list = Session.hybrid.local_var_names
-            var_union = set(vars) | set(var_list)
-            if len(var_union) > len(var_list):
-                self.is_err.set('Variable mismatch')
-                self.is_vl.set_state(False)
+            var_union = set(vars_) | set(var_list)
+            if( len(var_union) > len(var_list) ):
+                self.is_err.set( 'Variable mismatch' )
+                self.is_vl.set_state( False )
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
                 return
@@ -664,20 +665,22 @@ class ModelSidebar( Frame ):
             # Parse equations
             a_m, b_m, eq_m = SymEq.get_eqn_matrix(is_sep[1], var_list)
             bounded = SymEq.check_boundedness(a_m, b_m, eq_m, var_list)
-            if is_sep[1].count('>')!= is_sep[1].count('<'):
+
+            if( is_sep[1].count('>') != is_sep[1].count('<') ):
                 bounded = False
             
             if bounded:
-                self.is_err.set('') 
-                self.is_vl.set_state(True)
+                self.is_err.set( '' ) 
+                self.is_vl.set_state( True )
                 Session.cur_prop.initial_set_obj = [is_sep[0], a_m, b_m, eq_m]
                 Session.cur_prop.initial_set_valid = True
             else:
-                self.is_err.set('Set unbounded')
-                self.is_vl.set_state(False)
+                self.is_err.set( 'Set unbounded' )
+                self.is_vl.set_state( False )
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
 
+        return
 
     def _callback_us(self, input):
         #if Session.cur_prop.status == "Simulated" or Session.cur_prop.status == "Verified":
@@ -865,12 +868,12 @@ class ModelSidebar( Frame ):
 
 
     def _callback_parse( self ):
-        HyIR.parse_all( Session.hybrid_automata )
+        HyIR.parse_all( Session.hybrid )
 
 
     def _callback_compose( self ):
-        HyIR.parse_all( Session.hybrid_automata )
-        HyIR.compose_all( Session.hybrid_automata )
+        HyIR.parse_all( Session.hybrid )
+        HyIR.compose_all( Session.hybrid )
 
 
     def _callback_sim(self):
@@ -919,8 +922,8 @@ class ModelSidebar( Frame ):
         file_path = '../work-dir/'+Session.cur_prop.name
         time_step = Session.cur_prop.time_step
         time_horizon = Session.cur_prop.time_horizon
-        varlist = Session.get_varList()
-        modelist = Session.get_mode_names()
+        varlist = Session.hybrid.local_var_names
+        modelist = Session.hybrid.mode_names
 
         self.parent.parent._init_plot_widgets(varlist,modelist,time_step,time_horizon,unsafe_set,file_path,sim_adpative,Session.cur_prop.name)
         

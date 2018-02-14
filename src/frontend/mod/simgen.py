@@ -24,7 +24,7 @@ def gen_simulator_master(file_path, **kwargs):
         print('Incorrect simulation type')
 
 
-def gen_simulator(file_path, hybrid_rep, **kwargs):
+def gen_simulator( file_path, hybrid_rep, **kwargs ):
     # Get kwargs
     step_type = kwargs.pop('step_type', 'adaptive')
 
@@ -56,10 +56,7 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
     dxdt = []
     del_list = []
 
-    # FIXME allow for more automata in the future
-    automata = hybrid_rep.automata
-
-    for i, cur_mode in enumerate(automata.modes):
+    for i, cur_mode in enumerate(hybrid_rep.modes):
         modes.append(cur_mode.name) 
         dxdt.append([])
         orig_eqns = []
@@ -237,8 +234,8 @@ def gen_simulator(file_path, hybrid_rep, **kwargs):
 
     # Write CPP file
     file = open(file_path, 'w')
-    file.write(cpp_file);
-    file.close();
+    file.write(cpp_file)
+    file.close()
 
 
 def gen_simulator_simulink(dir_path, model_name, in_labels, in_vals, 
@@ -487,7 +484,7 @@ def _sim_ver( action ):
         return None
 
     # Parse and Compose ( HyIR.compose_all calss HyIR.parse_all )
-    HyIR.compose_all( Session.hybrid_automata )
+    HyIR.compose_all( Session.hybrid )
 
     # Generate Simulator
     if( Session.simulator == CAPD ):
@@ -524,7 +521,7 @@ def initialize_cpp_model( sim_bool ):
     initial_eqns = initial_set_obj[3]
     initial_matrix = extract_matrix( initial_set_obj[1], initial_eqns )
     initial_b = extract_matrix( initial_set_obj[2], initial_eqns )
-    mode_names = Session.get_mode_names()
+    mode_names = Session.hybrid.mode_names
     initial_mode_idx = mode_names.index( initial_mode ) + 1
 
     # Unsafe set variables
@@ -537,7 +534,7 @@ def initialize_cpp_model( sim_bool ):
     mode_linear = []
     gammas = []
     k_consts = []
-    for m_i, m in enumerate( Session.get_modes() ):
+    for m_i, m in enumerate( Session.hybrid.modes ):
         fn = '../work-dir/jacobiannature' + str(m_i+1) + '.txt'
         fid = open( fn, 'r' ).read().split( '\n' )
         num_var = int( fid[0] )
@@ -596,8 +593,8 @@ def initialize_cpp_model( sim_bool ):
         k_consts.append( k )
 
     # Unsigned integers
-    model.dimensions = len( Session.get_varList() )
-    model.modes = len( Session.get_modes() )
+    model.dimensions = len( Session.hybrid.local_var_names )
+    model.modes = len( Session.hybrid.modes )
     model.initial_mode = initial_mode_idx
     model.initial_eqns = len( initial_eqns )
     model.unsafe_eqns = len( unsafe_eqns )

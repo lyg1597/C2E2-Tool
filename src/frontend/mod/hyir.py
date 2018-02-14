@@ -19,6 +19,8 @@ class HyIR:
         self.automata = []  # List of Automaton() objects
         self.properties = []  # List of Property() objects
 
+        self.composed = False
+
         self.file_name = file_name
        
         self.annotations = ""
@@ -26,11 +28,19 @@ class HyIR:
 
         self.composed = False
 
+
+    @property
+    def vars( self ):
+        vars_ = []
+        for automaton in self.automata:
+            vars_ += automaton.vars
+        return vars_  # list( set( vars_ ) ) fails
+
     @property
     def local_vars( self ):
         vars_ = []
         for automaton in self.automata:
-            vars_+= automaton.local_vars
+            vars_ += automaton.local_vars
         return list( set( vars_ ) )
 
     @property
@@ -41,11 +51,38 @@ class HyIR:
         return list( set( names ) )
 
     @property
+    def local_thinvars( self ):
+        thinvars = []
+        for automaton in self.automata:
+            thinvars += automaton.local_thinvars
+        return list( set( thinvars ) )
+
+    @property
+    def local_thinvar_names( self ):
+        names = []
+        for automaton in self.automata:
+            names += automaton.local_thinvar_names
+        return list( set( names ) )
+    @property
+    def modes( self ):
+        modes_ = []
+        for automaton in self.automata:
+            modes_ += automaton.modes
+        return modes_
+
+    @property
     def mode_names( self ):
         names = []
         for automaton in self.automata:
             names += automaton.mode_names
         return names    
+
+    @property
+    def transitions( self ):
+        trans = []
+        for automaton in self.automata:
+            trans += automaton.transitions
+        return trans
 
     def add_automaton( self, automaton ):
 
@@ -53,69 +90,71 @@ class HyIR:
         self.composed = False
         return
 
-    @classmethod
-    def parse_all( cls, hybrid_automata ):
-
-        for hybrid in hybrid_automata:
-            cls.parse( hybrid )
+    # Parse Functions
 
     @classmethod
-    def parse( cls, hyir ):
-
-        print( "Parsing..." )
-
-        cls.parse_modes( hyir )
-        cls.parse_transitions( hyir )
-
-        print( "Parsing complete" )
+    def parse_all( cls, hybrid ):
+        for automaton in hybrid.automata:
+            cls.parse_automaton( automaton )
+        return
 
     @classmethod
-    def parse_modes( cls, hyir ):
+    def parse_automaton( cls, automaton ):
+        print( "Parsing Automaton " + automaton.name + "..." )
+        cls.parse_modes( automaton )
+        cls.parse_transitions( automaton )
+        print( "Automaton " + automaton.name + " parsing complete." )
+        return
 
+    @classmethod
+    def parse_modes( cls, automaton ):
         print( "Parsing modes..." )
-        for mode in hyir.automata.modes:
+        for mode in automaton.modes:
             mode.parse()
-        print( "Modes parsed" )
+        print( "Modes parsed." )
+        return
 
     @classmethod
-    def parse_transitions( cls, hyir ):
-        
+    def parse_transitions( cls, automaton ):
         print( "Parsing transitions..." )
-        for tran in hyir.automata.trans:
+        for tran in automaton.transitions:
             tran.parse()
-        print( "Transitions parsed" )
+        print( "Transitions parsed." )
+        return
+
+    # Compose Functions
 
     @classmethod
-    def compose_properties( cls, hybrid, prop_list ):
+    def compose_properties( cls, composed, prop_list ):
 
         for p in prop_list:
 
             init_set_split = p.initial_set_str.split(':')
-            p.initial_set_obj = [init_set_split[0]] + SymEq.get_eqn_matrix( init_set_split[1], hybrid.varList )
+            p.initial_set_obj = [init_set_split[0]] + SymEq.get_eqn_matrix( init_set_split[1], composed.local_var_names )
 
-            p.unsafe_set_obj = SymEq.get_eqn_matrix(p.unsafe_set_str, hybrid.varList)
+            p.unsafe_set_obj = SymEq.get_eqn_matrix(p.unsafe_set_str, composed.local_var_names )
 
     @classmethod
-    def compose_all( cls, hybrid_automata ):
+    def compose_all( cls, hybrid ):
 
-        cls.parse_all( hybrid_automata )
+        cls.parse_all( hybrid )
 
-        automata_list = hybrid_automata
+        automata_list = hybrid.automata
         automata_list.reverse()
         while len( automata_list ) > 1:
-            hyir1 = automata_list.pop()
-            hyir2 = automata_list.pop()
-            automata_list.apped( HyIR.compose( hyir1, hyir2 ) )
+            automaton1 = automata_list.pop()
+            automaton2 = automata_list.pop()
+            automata_list.apped( HyIR.compose( automaton1, automaton2 ) )
         
-        hybrid = automata_list[0]
+        hybrid.automata = automata_list
         hybrid.populateInvGuards()
-        hybrid.print_all()
+        #hybrid.print_all()
         
         thinvarprop = ""
         thinvarlist = ""
 
-        for var in hybrid.varList:
-            if var in hybrid.thinvarList:
+        for var in hybrid.local_var_names:
+            if var in hybrid.local_thinvar_names:
                 thinvarlist += var + "\n"
                 thinvarprop += "1\n"
             else:
@@ -129,20 +168,21 @@ class HyIR:
         writer.write(thinvarlist)
         writer.close()
 
-        cls.compose_properties( hybrid, Session.prop_list )
+        cls.compose_properties( hybrid.automata[0], Session.hybrid.properties )
         
         Session.hybrid = hybrid
-        Session.compose()
-
+        Session.hybrid.composed = True
+        
+        return
 
     @staticmethod
-    def compose( hyir1, hyir2 ):
-        composed = HyIR()
-        m1_len = len(hyir1.automata.modes)
-        m2_len = len(hyir2.automata.modes)
+    def compose( automaton1, automaton2 ):
+        composed = Automaton()
+        m1_len = len( automaton1.modes)
+        m2_len = len( automaton2.modes)
         #Construct Cartesian product of modes
-        for m1 in hyir1.automata.modes:
-            for m2 in hyir2.automata.modes:
+        for m1 in automaton1.modes:
+            for m2 in automaton2.modes:
                 m_name = m1.name + '_' + m2.name
                 m_id = m1.id*m2_len + m2.id
                 m_initial = m1.initial and m2.initial
@@ -156,43 +196,43 @@ class HyIR:
 
                 # Resulting invariant is a conjunction
                 for inv1 in m1.invariants:
-                    cross_mode.add_inv(inv1)
+                    cross_mode.add_invariant(inv1)
                 for inv2 in m2.invariants:
-                    cross_mode.add_inv(inv2)
-                composed.automata.add_mode(cross_mode)
+                    cross_mode.add_invariant(inv2)
+                composed.add_mode(cross_mode)
 
         # Construct guards of composed automata. (a,b)->(a',b) and (a,b)->(a,b')
         # for all transitions a->a' and b->b'. Note there is no (a,b)->(a',b')
         trans_id = 0
-        for t1 in hyir1.automata.trans:
+        for t1 in automaton1.transition:
             t_guard = t1.guard
             t_actions = t1.actions
           
             for i in range(m2_len):    
                 t_src = t1.src*m2_len+i
                 t_dest = t1.dest*m2_len+i
-                cross_trans = Transition(guard=t_guard,actions=t_actions,src=t_src,dest=t_dest,id=trans_id)
-                composed.automata.add_trans(cross_trans)
+                cross_trans = Transition(guard=t_guard,actions=t_actions,source=t_src,destination=t_dest,id=trans_id)
+                composed.add_transition(cross_trans)
                 trans_id+=1
 
-        for t2 in hyir2.automata.trans:
+        for t2 in automaton2.transition:
             t_guard = t2.guard
             t_actions = t2.actions
          
             for i in range(m1_len):    
                 t_src = i*m2_len+t2.src
                 t_dest = i*m2_len+t2.dest
-                cross_trans = Transition(guard=t_guard,actions=t_actions,src=t_src,dest=t_dest,id=trans_id)
-                composed.automata.add_trans(cross_trans)
+                cross_trans = Transition(guard=t_guard,actions=t_actions,source=t_src,destination=t_dest,id=trans_id)
+                compsed.add_transition(cross_trans)
                 trans_id+=1
 
         # Construct composed variables
-        composed.variables.local = hyir1.variables.local+hyir2.variables.local
-        composed.variables.output = hyir1.variables.output+hyir2.variables.output
-        composed.variables.input = hyir1.variables.input+hyir2.variables.input
+        composed.local_vars = automaton1.variables.local + automaton2.variables.local
+        composed.variables.output = automaton1.variables.output + automaton2.variables.output
+        composed.variables.input = automaton1.variables.input + automaton2.variables.input
         composed.variables.input = [var for var in composed.variables.input if var not in composed.variables.output]
-        composed.vars = composed.variables.local+composed.variables.output+composed.variables.input
-        composed.varList = [v.name for v in composed.variables.local]
+        #composed.vars = composed.variables.local+composed.variables.output+composed.variables.input
+        #composed.varList = [v.name for v in composed.variables.local]
 
         return composed
 
@@ -229,9 +269,9 @@ class HyIR:
         """ Populate the guard and invariant dictionaries we use to generate PPL files """
         guardResets = defaultdict(list)
         invariants = defaultdict(list)
-        varList = self.varList
+        varList = self.local_var_names
 
-        for m in self.automata.modes:
+        for m in self.modes:
           inv_eqs = []
           inv_vars = set()
           for inv in m.invariants:
@@ -239,7 +279,7 @@ class HyIR:
             inv_vars = inv_vars.union(SymEq.vars_used(inv.expr))
           invariants[m.id] = (inv_eqs, inv_vars)
 
-        for t in self.automata.trans:
+        for t in self.transitions:
           g_eqs = t.guard.expr
           g_vars = SymEq.vars_used(t.guard.expr)
           print (g_vars)
@@ -331,7 +371,7 @@ class HyIR:
     # Generates PPL code to check guards and create transitions.
     # Only check against those variables in the guard. If reset exists, create 2*n dimensional space.
     def printGuardResets(self, file_name, is_hybrid):
-        varList = ["Simu_time"]+self.varList
+        varList = ["Simu_time"]+self.local_var_names
         resetVarList = [var+"_new" for var in varList]
         tempVarList = [var+"_temp" for var in varList]
         checkFile = open(file_name, "a")
@@ -348,7 +388,7 @@ class HyIR:
                 codeString+= self.constructBoxHelper(varsUsed, "", 4, is_hybrid)
                 thin_prop = -1
                 for var in varsUsed:
-                    if var in self.thinvarList:
+                    if var in self.local_thinvar_names:
                         if thin_prop == 0:
                             thin_prop = -1
                             break
@@ -395,7 +435,7 @@ class HyIR:
                         assert len(free_vars)==1
                         var = str(free_vars[0])
                         lhs = lhs.subs(var, var+'_new')
-                        for v in self.varList:
+                        for v in self.local_var_names:
                             rhs = rhs.subs(v, v+'_temp')
                         codeString+="      cs_gd.insert("+str(lhs)+"=="+str(rhs)+");\n"
                         remVars.discard(var)
@@ -404,7 +444,7 @@ class HyIR:
                 
                 if not is_hybrid:
                     for guard_eq in a:
-                        for v in self.varList:
+                        for v in self.local_var_names:
                             guard_eq = guard_eq.subs(v, v+'_temp')
                         codeString+="      cs_gd.insert("+str(guard_eq)+");\n"
                 codeString+="      NNC_Polyhedron guard_reset(cs_gd);\n"
@@ -428,7 +468,7 @@ class HyIR:
 
     def constructBox(self, varList=None):
         if not varList:
-            varList=["Simu_time"]+self.varList
+            varList=["Simu_time"]+self.local_var_names
         codeString="NNC_Polyhedron constructBox(double *ptLower, double *ptUpper){\n"
         codeString+="  NNC_Polyhedron box_poly;\n"
         codeString+="  double mult_factor = getMultFactor(ptLower, ptUpper);\n"
@@ -439,7 +479,7 @@ class HyIR:
 
     def constructBoxHelper(self, varList, suffix, indent, is_point):
         indentation = " "*indent
-        allVars = ["Simu_time"]+self.varList
+        allVars = ["Simu_time"]+self.local_var_names
 
         codeString=indentation+"Constraint_System cs_box;\n"        
         for i,var in enumerate(varList):
@@ -469,7 +509,7 @@ class HyIR:
         codeString+="  int multiplier=0, tmp_mul, str_len;\n"
         codeString+="  char buffer[100];\n"
         codeString+="  char *dot_loc;\n\n"
-        mulLoop="  for(int i=0; i<"+str(len(self.varList)+1)+"; i++){\n"
+        mulLoop="  for(int i=0; i<"+str(len(self.local_var_names)+1)+"; i++){\n"
         mulLoop+="    sprintf(buffer, \"%lf\", pt[i]);\n"
         mulLoop+="    str_len = strlen(buffer);\n"
         mulLoop+="    dot_loc = strchr(buffer,'.');\n"
