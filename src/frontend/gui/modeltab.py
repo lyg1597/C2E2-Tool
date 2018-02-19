@@ -1,5 +1,7 @@
 import numpy as np
 import shlex, subprocess
+import sys
+
 from tkinter import messagebox
 from tkinter import *
 from tkinter.ttk import *
@@ -26,12 +28,25 @@ class ModelTab( Frame ):
     def _init_widgets( self ):
         """ Initialize the Treeview and Property Editory """
 
-        self.sidebar = ModelSidebar( self ) 
-        self.tree = TreeView(self, self.sidebar, selectmode='browse' )
+        self.sidebar = ModelSidebar( self )
 
-        self.tree.pack( expand=TRUE, fill=BOTH, side=LEFT, anchor=E ) 
+        # self.leftside = Frame( self )
+        # self.tree = TreeView( self.leftside, self.sidebar, selectmode='browse' )
+        # self.feedback = Text( self.leftside, state=DISABLED )
+
+        # sys.stdout = StdRedirector( self.feedback )
+
+        # self.tree.grid( row=0, column=0, sticky=NSEW )
+        # self.feedback.grid( row=1, column=0, sticky=NSEW )
+
+        # self.leftside.pack( expand=TRUE, fill=BOTH, side=LEFT, anchor=E ) 
+        # self.sidebar.pack( expand=TRUE, fill=Y, side=TOP, anchor=E )
+
+        self.tree = TreeView( self, self.sidebar, selectmode='browse' )
+        
+        self.tree.pack( expand=TRUE, fill=BOTH, side=LEFT, anchor=E )
         self.sidebar.pack( expand=TRUE, fill=Y, side=TOP, anchor=E )
-
+        
         return
 
 
@@ -345,7 +360,7 @@ class TreeView( Treeview ):
         self.master.wait_window( entry )
 
         # Update property status if the model was changed
-        if( False ):  #entry.changed removed until expire_properties can be fixed
+        if( entry.changed ):  
             self.sidebar._expire_properties()
         
         # Refresh Model
@@ -365,9 +380,11 @@ class ModelSidebar( Frame ):
         
         self.parent = parent
         self.sel_iid = None
+        self.prop_dict = {}  # dict[item_id] = property
 
         self._bind_events()
         self._init_widgets()
+
 
     def _bind_events( self ):
         """ Bind open and close file events and click events """
@@ -375,7 +392,7 @@ class ModelSidebar( Frame ):
         self.bind( CLOSE_EVENT, self._clear_properties )
         EventHandler.add_event_listeners( self, CLOSE_EVENT )
 
-        self.bind( OPEN_EVENT, self._display_properties )
+        self.bind( OPEN_EVENT, self._load_properties )
         EventHandler.add_event_listeners( self, OPEN_EVENT ) 
 
         return
@@ -394,8 +411,8 @@ class ModelSidebar( Frame ):
         return
 
     ''' PROPERTY VIEW GUI AND FUNCTIONS '''
-    def _init_prop_view(self):
-        """ Initialize Property View """
+    def _init_prop_view( self ):
+        """ Initialize Property View GUI elements and trace variables """
         
         # Regex building blocks
         flt = '(-?(\d*\.?\d+))'
@@ -417,82 +434,82 @@ class ModelSidebar( Frame ):
         self.re_us = unsafe_set
 
         # Property view frame
-        self.prop_view = LabelFrame(self, text='Property')
+        self.prop_view = LabelFrame( self, text='Property' )
 
         # Name
-        Label(self.prop_view, text='Property name:').grid(row=0, sticky=W)
-        self.name_vl = ValidLabel(self.prop_view)
-        self.name_vl.grid(row=0, column=2, sticky=E)
+        Label( self.prop_view, text='Property name:').grid(row=0, sticky=W )
+        self.name_vl = ValidLabel( self.prop_view )
+        self.name_vl.grid( row=0, column=2, sticky=E )
         self.name_var = StringVar()
-        self.name_var.trace_variable('w', self._callback_name)
-        Entry(self.prop_view, textvariable=self.name_var).grid(row=0, column=1, sticky=W+E)
+        self.name_var.trace_variable( 'w', self._callback_name )
+        Entry( self.prop_view, textvariable=self.name_var ).grid( row=0, column=1, sticky=W+E )
 
         # Verification type
         # TODO only for show; complete when more functionality available
         self.type_var = IntVar()
-        Radiobutton(self.prop_view, text='Safety', variable=self.type_var, value=0).grid(row=1)
+        Radiobutton( self.prop_view, text='Safety', variable=self.type_var, value=0 ).grid( row=1 )
 
         # Time step 
-        Label(self.prop_view, text='Time step:').grid(row=2, sticky=W)
-        self.ts_vl = ValidLabel(self.prop_view)
-        self.ts_vl.grid(row=2, column=2, sticky=E)
+        Label( self.prop_view, text='Time step:' ).grid( row=2, sticky=W )
+        self.ts_vl = ValidLabel( self.prop_view )
+        self.ts_vl.grid( row=2, column=2, sticky=E )
         self.time_step_var = DoubleVar()
-        self.time_step_var.trace_variable('w', self._callback_time_step)
-        Entry(self.prop_view, textvariable=self.time_step_var).grid(row=2, column=1, sticky=W+E)
+        self.time_step_var.trace_variable( 'w', self._callback_time_step )
+        Entry( self.prop_view, textvariable=self.time_step_var ).grid( row=2, column=1, sticky=W+E )
 
         # Time horizon
-        Label(self.prop_view, text='Time horizon:').grid(row=3, sticky=W)
-        self.th_vl = ValidLabel(self.prop_view)
-        self.th_vl.grid(row=3, column=2, sticky=E)
+        Label( self.prop_view, text='Time horizon:' ).grid( row=3, sticky=W )
+        self.th_vl = ValidLabel( self.prop_view )
+        self.th_vl.grid( row=3, column=2, sticky=E )
         self.time_horizon_var = DoubleVar()
-        self.time_horizon_var.trace_variable('w', self._callback_time_horizon)
-        Entry(self.prop_view, textvariable=self.time_horizon_var).grid(row=3, column=1, sticky=W+E)
+        self.time_horizon_var.trace_variable( 'w', self._callback_time_horizon )
+        Entry( self.prop_view, textvariable=self.time_horizon_var ).grid( row=3, column=1, sticky=W+E )
 
         # K value
-        Label(self.prop_view, text='K value:').grid(row=4, sticky=W)
-        self.kv_vl = ValidLabel(self.prop_view)
-        self.kv_vl.grid(row=4, column=2, sticky=E)
+        Label( self.prop_view, text='K value:' ).grid( row=4, sticky=W )
+        self.kv_vl = ValidLabel( self.prop_view )
+        self.kv_vl.grid( row=4, column=2, sticky=E )
         self.k_value_var = DoubleVar()
-        self.k_value_var.trace_variable('w', self._callback_k_value)
-        Entry(self.prop_view, textvariable=self.k_value_var).grid(row=4, column=1, sticky=W+E)
+        self.k_value_var.trace_variable( 'w', self._callback_k_value )
+        Entry( self.prop_view, textvariable=self.k_value_var ).grid( row=4, column=1, sticky=W+E )
 
         # Simulator type
-        opts = (ODEINT_FIX, ODEINT_ADP, CAPD)
-        Label(self.prop_view, text='Simulator:').grid(row=5, sticky=W)
+        opts = ( ODEINT_FIX, ODEINT_ADP, CAPD )
+        Label( self.prop_view, text='Simulator:' ).grid( row=5, sticky=W )
         self.sim_var = StringVar()
-        self.sim_var.set(opts[0])
-        self.sim_var.trace_variable('w', self._callback_simulator)
-        OptionMenu(self.prop_view, self.sim_var, '', *opts)\
-                .grid(row=5, column=1, columnspan=2, sticky=W+E)
+        self.sim_var.set( opts[0] )
+        self.sim_var.trace_variable( 'w', self._callback_simulator )
+        OptionMenu( self.prop_view, self.sim_var, '', *opts )\
+                .grid( row=5, column=1, columnspan=2, sticky=W+E )
 
         # Refine type
-        opts = (DEF_STRAT, USR_STRAT)
-        Label(self.prop_view, text='Refinement:').grid(row=6, sticky=W)
+        opts = ( DEF_STRAT, USR_STRAT )
+        Label( self.prop_view, text='Refinement:' ).grid( row=6, sticky=W )
         self.ref_var = StringVar()
-        self.ref_var.set(opts[0])
-        self.ref_var.trace_variable('w', self._callback_refine_strat)
-        OptionMenu(self.prop_view, self.ref_var, '', *opts)\
-                .grid(row=6, column=1, columnspan=2, sticky=W+E)
+        self.ref_var.set( opts[0] )
+        self.ref_var.trace_variable( 'w', self._callback_refine_strat )
+        OptionMenu( self.prop_view, self.ref_var, '', *opts )\
+                .grid( row=6, column=1, columnspan=2, sticky=W+E )
 
         # Initial set
-        Label(self.prop_view, text='Initial set:').grid(row=7, sticky=W)
+        Label( self.prop_view, text='Initial set:' ).grid( row=7, sticky=W )
         self.is_err = StringVar()
         self.is_err.set('')
-        Label(self.prop_view, textvariable=self.is_err).grid(row=7, column=1, sticky=W+E)
-        self.is_vl = ValidLabel(self.prop_view)
-        self.is_vl.grid(row=7, column=2, sticky=E)
-        self.initial_set = SetText(self.prop_view, height=65, callback=self._callback_is)
-        self.initial_set.grid(row=8, rowspan=4, columnspan=3, sticky=N+S+E+W)
+        Label( self.prop_view, textvariable=self.is_err ).grid( row=7, column=1, sticky=W+E )
+        self.is_vl = ValidLabel( self.prop_view )
+        self.is_vl.grid( row=7, column=2, sticky=E )
+        self.initial_set = SetText( self.prop_view, height=65, callback=self._callback_is )
+        self.initial_set.grid( row=8, rowspan=4, columnspan=3, sticky=N+S+E+W )
 
         # Unsafe set
-        Label(self.prop_view, text='Unsafe set:').grid(row=12, sticky=W)
+        Label( self.prop_view, text='Unsafe set:' ).grid( row=12, sticky=W )
         self.us_err = StringVar()
         self.us_err.set('')
-        Label(self.prop_view, textvariable=self.us_err).grid(row=12, column=1, sticky=E)
-        self.us_vl = ValidLabel(self.prop_view)
-        self.us_vl.grid(row=12, column=2, sticky=E)
-        self.unsafe_set = SetText(self.prop_view, height=65, callback=self._callback_us)
-        self.unsafe_set.grid(row=13, rowspan=4, columnspan=3, sticky=N+S+E+W)
+        Label( self.prop_view, textvariable=self.us_err ).grid( row=12, column=1, sticky=E )
+        self.us_vl = ValidLabel( self.prop_view )
+        self.us_vl.grid( row=12, column=2, sticky=E )
+        self.unsafe_set = SetText( self.prop_view, height=65, callback=self._callback_us )
+        self.unsafe_set.grid( row=13, rowspan=4, columnspan=3, sticky=N+S+E+W )
 
         return 
 
@@ -734,47 +751,49 @@ class ModelSidebar( Frame ):
 
 
     ''' PROPERTY LIST GUI AND FUNCTIONS'''
-    def _init_prop_list(self):
+    def _init_prop_list( self ):
+        """ Initialize Property List GUI elements """
+
         # Property list frame
-        self.prop_list = LabelFrame(self, text='Properties')
+        self.prop_list = LabelFrame( self, text='Properties' )
 
         # Property list
-        self.list_view = Treeview(self.prop_list)
-        self.list_view.pack(fill=BOTH, expand=TRUE)
-        self.list_view.bind('<Button-1>', self._callback_btn_press)
-        self.list_view.bind('<Double-Button-1>', self._callback_btn_press_double)
+        self.list_view = Treeview( self.prop_list )
+        self.list_view.pack( fill=BOTH, expand=TRUE )
+        self.list_view.bind( '<Button-1>', self._callback_btn_press )
+        self.list_view.bind( '<Double-Button-1>', self._callback_btn_press_double )
 
         self.list_view['show'] = 'headings'
-        self.list_view['columns'] = ('name', 'status', 'result')
-        self.list_view.column('name', width=100)
-        self.list_view.column('status', width=100)
-        self.list_view.column('result', width=100)
-        self.list_view.heading('name', text='Property')
-        self.list_view.heading('status', text='Status')
-        self.list_view.heading('result', text='Result')
+        self.list_view['columns'] = ( 'name', 'status', 'result' )
+        self.list_view.column( 'name', width=100 )
+        self.list_view.column( 'status', width=100 )
+        self.list_view.column( 'result', width=100 )
+        self.list_view.heading( 'name', text='Property' )
+        self.list_view.heading( 'status', text='Status' )
+        self.list_view.heading( 'result', text='Result' )
 
         # New, copy, and remove buttons
-        row = Frame(self.prop_list)
-        row.pack(fill=X)
+        row = Frame( self.prop_list )
+        row.pack( fill=X )
 
-        self.new_btn = Button(row, text='New', command=self._callback_new)
-        self.new_btn.pack(expand=TRUE, fill=X, side=LEFT)
+        self.new_btn = Button( row, text='New', command=self._callback_new )
+        self.new_btn.pack( expand=TRUE, fill=X, side=LEFT )
 
-        self.cpy_btn = Button(row, text='Copy', command=self._callback_cpy)
-        self.cpy_btn.pack(expand=TRUE, fill=X, side=LEFT)
+        self.cpy_btn = Button( row, text='Copy', command=self._callback_cpy )
+        self.cpy_btn.pack( expand=TRUE, fill=X, side=LEFT )
 
-        self.rmv_btn = Button(row, text='Remove', command=self._callback_rmv)
-        self.rmv_btn.pack(expand=TRUE, fill=X, side=LEFT)
+        self.rmv_btn = Button( row, text='Remove', command=self._callback_rmv )
+        self.rmv_btn.pack( expand=TRUE, fill=X, side=LEFT )
 
         # Simulate and verify buttons
-        row = Frame(self.prop_list)
-        row.pack(fill=X)
+        row = Frame( self.prop_list )
+        row.pack( fill=X )
 
-        self.sim_btn = Button(row, text='Simulate', command=self._callback_sim)
-        self.sim_btn.pack(expand=TRUE, fill=X, side=LEFT)
+        self.sim_btn = Button( row, text='Simulate', command=self._callback_sim )
+        self.sim_btn.pack( expand=TRUE, fill=X, side=LEFT )
 
-        self.ver_btn = Button(row, text='Verify', command=self._callback_ver)
-        self.ver_btn.pack(expand=TRUE, fill=X, side=LEFT)
+        self.ver_btn = Button( row, text='Verify', command=self._callback_ver )
+        self.ver_btn.pack( expand=TRUE, fill=X, side=LEFT )
 
         # Parse and Compose buttons
         row = Frame( self.prop_list )
@@ -787,8 +806,9 @@ class ModelSidebar( Frame ):
         self.compose_btn.pack( expand=TRUE, fill=X, side=LEFT )
 
 
-    def _add_property(self, prop):
-        iid = self.list_view.insert('', 'end', values=(prop.name, prop.status, prop.result))
+    def _add_property( self, prop ):
+        iid = self.list_view.insert('',  'end', values=(prop.name, prop.status, prop.result) )
+        self.prop_dict[iid] = prop
         return iid
 
 
@@ -930,19 +950,13 @@ class ModelSidebar( Frame ):
     def _expire_properties( self ):
         """ Expire all Simulated and Verified properties """
         
-        sel_iid = self.sel_iid
-
-        self._clear_properties()
-
-        for prop in Session.hybrid.properties:
-            if( prop.status == Simulated or prop.status == Verified ):
+        for iid in self.prop_dict:
+            prop = self.prop_dict[iid]
+            if( ( prop.status == Simulated or prop.status == Verified ) and ( prop.result != 'Expired' ) ):
                 prop.status += '*'
                 prop.result = 'Expired'
 
-        self._display_properties()
-
-        self.sel_iid = sel_iid
-        self._display_property( Session.cur_prop )
+                self.list_view.item( iid, values=( prop.name, prop.status, prop.result ) )
 
         return
 
@@ -954,17 +968,17 @@ class ModelSidebar( Frame ):
 
             return 
 
-        # if sim:
-        #     Session.cur_prop.status = Simulated
-        # else:
-        #     Session.cur_prop.status = Verified
+        if sim:
+            Session.cur_prop.status = Simulated
+        else:
+            Session.cur_prop.status = Verified
 
-        # if result == 1:
-        #     Session.cur_prop.result = "Safe"
-        # elif result == 0 :
-        #     Session.cur_prop.result = "Unknown"
-        # else:
-        #     Session.cur_prop.result = "Unsafe"
+        if result == 1:
+            Session.cur_prop.result = "Safe"
+        elif result == 0 :
+            Session.cur_prop.result = "Unknown"
+        else:
+            Session.cur_prop.result = "Unsafe"
         self.list_view.item(self.sel_iid, values=(Session.cur_prop.name, Session.cur_prop.status, Session.cur_prop.result))
 
         return 
@@ -1000,17 +1014,16 @@ class ModelSidebar( Frame ):
         self.sel_iid = None
 
 
-    def _display_properties(self, event=None):
+    def _load_properties( self, event=None ):
+        """ Load properties """
 
         for prop in Session.hybrid.properties:
-            if self.sel_iid:
-                self._add_property(prop)
-            else:
-                self.sel_iid = self._add_property(prop)
-        
-        self.list_view.selection_set(self.sel_iid)
-        
-        if not Session.cur_prop:
-            Session.cur_prop = Session.hybrid.properties[0]
+            iid = self._add_property( prop )
+            if not self.sel_iid: 
+                self.sel_iid = iid
+
+        self.list_view.selection_set( self.sel_iid )
+        Session.cur_prop = self.prop_dict[self.sel_iid]        
         Session.cur_prop.is_visible = True
-        self._display_property(Session.cur_prop)
+
+        self._display_property( Session.cur_prop )

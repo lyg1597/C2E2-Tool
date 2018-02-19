@@ -7,6 +7,25 @@ from frontend.mod.session import Session, Property
 import PIL.Image
 import PIL.ImageTk
 
+
+
+# class StdRedirector( object ):
+    
+#     def __init__( self, widget ):
+#         self.widget = widget
+    
+
+#     def write( self, string ):
+#         self.widget.config( state=NORMAL )
+#         self.widget.insert( END, string )
+#         self.widget.see( END )
+#         self.widget.config( state=DISABLED )
+#         return
+
+#     def flush( self ):
+#         pass
+
+
 # TODO remove the following class
 class FloatEntry(Entry):
     def __init__(self, parent, callback=None, **options):
