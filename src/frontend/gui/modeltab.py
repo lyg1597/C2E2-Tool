@@ -1,6 +1,6 @@
 import numpy as np
 import shlex, subprocess
-import sys
+# import sys
 
 from tkinter import messagebox
 from tkinter import *
@@ -552,7 +552,7 @@ class ModelSidebar( Frame ):
         try:
             time_step = self.time_step_var.get()
             valid = True
-        except ValueError:
+        except TclError:
             time_step = 0.0
             valid = False
 
@@ -577,7 +577,7 @@ class ModelSidebar( Frame ):
         try:
             time_horizon = self.time_horizon_var.get()
             valid = True
-        except ValueError:
+        except TclError:
             time_horizon = 0.0
             valid = False
 
@@ -602,7 +602,7 @@ class ModelSidebar( Frame ):
         try:
             k_value = self.k_value_var.get()
             valid = True
-        except ValueError:
+        except TclError:
             k_value = 0.0
             valid = False
 
