@@ -53,7 +53,7 @@ class Property():
         Property.validate_time_step( prop.time_step )
         Property.validate_time_horizon( prop.time_horizon )
         Property.validate_k_value( prop.k_value )
-        Property.validate_initial_set( prop.initial_set_str )
+        ( is_status, is_error ) = Property.validate_initial_set( prop.initial_set_str )
         Property.validate_unsafe_set( prop.unsafe_set_str )
 
         return
@@ -135,33 +135,30 @@ class Property():
         Session.cur_prop.initial_set_str = initial_set
 
         if( match == None ):
-            print( "ERROR/INITIAL SET: Incorrect Syntax" )
             Session.cur_prop.initial_set_obj = None
             Session.cur_prop.initial_set_valid = False
-            return False
+            return ( False, "Incorrect Syntax" )
         else:
             is_sep = initial_set.split( ':' )
 
             # Validate Mode
             mode = re.search( re_var, is_sep[0] ).group(0)
-            mode_list = Session.get_mode_names()
+            mode_list = Session.hybrid.mode_names
 
             if( mode not in mode_list ):
-                print( "ERROR/INITIAL SET: No matching modes" )
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
-                return False
+                return ( False, "No matching modes" )
 
             # Validate Vars
             vars_ = re.findall( re_var, is_sep[1] )
-            var_list = Session.get_varList()
+            var_list = Session.hybrid.local_var_names
             var_union= set(vars_) | set(var_list )
 
             if( len(var_union) > len(var_list) ):
-                print( "ERROR/INITIAL SET: Variable mismatch" )
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
-                return False
+                return ( False, "Variable mismatch" )
 
             # Parse equations
             a_m, b_m, eq_m = SymEq.get_eqn_matrix( is_sep[1], var_list )
@@ -173,12 +170,11 @@ class Property():
             if bounded:
                 Session.cur_prop.initial_set_obj = [is_sep[0], a_m, b_m, eq_m]
                 Session.cur_prop.initial_set_valid = True
-                return True
+                return ( True, "" )
             else:
-                print( "ERROR/INITIAL SET: Set unbounded" )
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
-                return False
+                return ( False, "Set unbounded" )
 
 
     def validate_unsafe_set( unsafe_set ):
@@ -207,26 +203,24 @@ class Property():
 
         # Check if input is valid
         if( match == None ):
-            print( "ERROR/UNSAFE SET: Incorrect Syntax" )
             Session.cur_prop.unsafe_set_obj = None
             Session.cur_prop.unsafe_set_valid = False
-            return False
+            return ( False, "Incorrect Syntax" )
         
         # Validate vars
         else:
             vars_ = re.findall( re_var, unsafe_set )
-            var_list = Session.get_varList()
+            var_list = Session.hybrid.local_var_names
             var_union = set(vars_) | set(var_list)
 
             if( len(var_union) > len(var_list) ):
-                print( "ERROR/UNSAFE SET: Variable mismatch" )
                 Session.cur_prop.unsafe_set_obj = None
                 Session.cur_prop.unsafe_set_valid = False
-                return False
+                return ( False, "Variable mismatch" )
 
             Session.cur_prop.unsafe_set_obj = SymEq.get_eqn_matrix( unsafe_set, var_list)
             Session.cur_prop.unsafe_set_valid = True
-            return True
+            return ( True, "" )
 
 
 class PlotProperty():

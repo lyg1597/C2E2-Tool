@@ -371,9 +371,12 @@ class TreeView( Treeview ):
         # Wait for user response
         self.master.wait_window( entry )
 
-        # Update property status if the model was changed
-        if( entry.changed ):  
+        if( entry.changed ):
+            # Update property status if the model was changed
             self.sidebar._expire_properties()
+            # Mode/Variable changes may change validity of Initial Set / Unsafe Set
+            self.sidebar._callback_is( self.sidebar.initial_set.get() )
+            self.sidebar._callback_us( self.sidebar.unsafe_set.get() )
         
         # Refresh Model
         self._clear_model()
@@ -634,120 +637,37 @@ class ModelSidebar( Frame ):
     
     def _callback_simulator( self, *args ):
         """ Update Session simulator """
+
         Session.simulator = self.sim_var.get()
+        
         return
 
     def _callback_refine_strat( self, *args ):
         """ Update Session refine strategy """
+        
         Session.refine_strat = self.ref_var.get()
+        
         return
 
     def _callback_is( self, initial_set ):
-        #if Session.cur_prop.status == "Simulated" or Session.cur_prop.status == "Verified":
-            #self._update_property_status(0,0,1)
+        """ Parse initial set an display errors, if any, above text box """
 
-        #print ("value form callback is ")
-        #print (Session.cur_prop.initial_set_str)
-        match = re.match( self.re_is, initial_set )
-        if( Session.cur_prop.initial_set_str != initial_set ): 
-            if( Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified ):
-                self._update_property_status( 0, 0, 1 )
-
-        Session.cur_prop.initial_set_str = initial_set
-
-        # Check if input is valid
-        if( match == None ):
-            self.is_vl.set_state( False )
-            Session.cur_prop.initial_set_obj = None
-            Session.cur_prop.init_set_valid = False
-            if( initial_set != '' ):
-                self.is_err.set('Incorrect syntax')
-            else:
-                self.is_err.set('')
-
-        # Parse individual components from input
-        else:
-            is_sep = initial_set.split(':')
-
-            # Validate mode
-            mode = re.search( self.re_var, is_sep[0] ).group(0)
-            mode_list = Session.hybrid.mode_names
-
-            if mode not in mode_list:
-                self.is_err.set( 'No matching modes' )
-                self.is_vl.set_state( False )
-                Session.cur_prop.initial_set_obj = None
-                Session.cur_prop.initial_set_valid = False
-                return
-
-            # Validate vars
-            vars_ = re.findall( self.re_var, is_sep[1] )
-            var_list = Session.hybrid.local_var_names
-            var_union = set(vars_) | set(var_list)
-            if( len(var_union) > len(var_list) ):
-                self.is_err.set( 'Variable mismatch' )
-                self.is_vl.set_state( False )
-                Session.cur_prop.initial_set_obj = None
-                Session.cur_prop.initial_set_valid = False
-                return
-
-            # Parse equations
-            a_m, b_m, eq_m = SymEq.get_eqn_matrix(is_sep[1], var_list)
-            bounded = SymEq.check_boundedness(a_m, b_m, eq_m, var_list)
-
-            if( is_sep[1].count('>') != is_sep[1].count('<') ):
-                bounded = False
-            
-            if bounded:
-                self.is_err.set( '' ) 
-                self.is_vl.set_state( True )
-                Session.cur_prop.initial_set_obj = [is_sep[0], a_m, b_m, eq_m]
-                Session.cur_prop.initial_set_valid = True
-            else:
-                self.is_err.set( 'Set unbounded' )
-                self.is_vl.set_state( False )
-                Session.cur_prop.initial_set_obj = None
-                Session.cur_prop.initial_set_valid = False
+        ( valid, error ) = Property.validate_initial_set( initial_set )
+        
+        self.is_err.set( error )
+        self.is_vl.set_state( valid )
 
         return
 
-    def _callback_us(self, input):
-        #if Session.cur_prop.status == "Simulated" or Session.cur_prop.status == "Verified":
-            #self._update_property_status(0,0,1)
-        match = re.match(self.re_us, input)
-        if Session.cur_prop.unsafe_set_str != input: 
-            if Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified:
-                self._update_property_status(0,0,1)
-        Session.cur_prop.unsafe_set_str = input
+    def _callback_us( self, unsafe_set ):
+        """ Parse unsafe set an display errors, if any, above text box """
 
-        # Check if input is valid
-        if match == None:
-            self.us_vl.set_state(False)
-            Session.cur_prop.unsafe_set_obj = None
-            Session.cur_prop.unsafe_set_valid = False
-            if not input == '':
-                self.us_err.set('Incorrect syntax')
-            else:
-                self.us_err.set('')
-            return
+        ( valid, error ) = Property.validate_unsafe_set( unsafe_set )
         
-        # Validate vars
-        else:
-            vars = re.findall(self.re_var, input)
-            var_list = Session.hybrid.local_var_names
-            var_union = set(vars) | set(var_list)
-            if len(var_union) > len(var_list):
-                self.us_err.set('Variable mismatch')
-                self.us_vl.set_state(False)
-                Session.cur_prop.unsafe_set_obj = None
-                Session.cur_prop.unsafe_set_valid = False
-                return
+        self.us_err.set( error )
+        self.us_vl.set_state( valid )
 
-            self.us_err.set('')
-            self.us_vl.set_state(True)
-            Session.cur_prop.unsafe_set_obj = SymEq.get_eqn_matrix(input, var_list)
-            Session.cur_prop.unsafe_set_valid = True
-
+        return
 
     def _display_property(self, prop):
         prop.is_visible = True
