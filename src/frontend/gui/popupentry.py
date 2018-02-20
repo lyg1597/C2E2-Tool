@@ -7,6 +7,105 @@ from frontend.mod.hyir import *
 from frontend.mod.session import Session
 
 
+class AutomatonEntry( PopupEntry ):
+    """
+    Popup window for adding/deleting Automata from the hybrid system.
+
+    Args:
+        parent (obj): Popup's parent object
+        hybrid (obj): Hybrid object - should always be Session.hybrid
+        action (str): Action to be performed (ADD or DELETE)
+    """
+
+    def __init__( self, parent, hybrid, action, automaton=None ):
+        PopupEntry.__init__( self, parent )
+        self.title_label.config( text="Automaton" )
+
+        if( hybrid is not Session.hybrid ):  # This should never happen
+            print( "ERROR: Attempting to edit non-Session hybrid" )
+            self._cancel()
+
+        self.parent = parent
+        self.hybrid = hybrid
+        self.automaton = automaton
+        self.changed = False
+
+        self._init_widgets()
+
+        if( action == DELETE ):
+            self._load_session()
+            self._disable_fields()
+
+    
+    def _init_widgets( self ):
+        """ Initialize GUI elements """
+
+        # Name
+        Label( self, text="Name:" ).grid( row=1, column=0, sticky=W )
+        self.name = StringVar()
+        self.name_entry = Entry( self, textvariable=self.name )
+        self.name_entry.grid( row=1, column=1, sticky=E )
+
+        # Buttons
+        self.btn_frame = Frame( self )
+        
+        self.cancel_btn = Button( self.btn_frame, text="Cancel", command=self._cancel )
+        self.confirm_btn = Button( self.btn_frame, text="Confirm", command=self._confirm )
+
+        self.cancel_btn.grid( row=0, column=0 )
+        self.confirm_btn.grid( row=0, column=1 )
+
+        self.btn_frame.grid( row=2, column=0, columnspan=2 )
+
+        return
+
+    def _load_session( self ):
+
+        # Name
+        self.name.set( self.automaton.name )
+
+        return
+
+    def _disable_fields( self ):
+
+        # Name
+        self.name_entry.config( state=DISABLED )
+
+        self.confirm_btn.config( text='DELETE', command=self._delete )
+
+        return
+
+    def _confirm( self ):
+
+        self.hybrid.add_automaton( Automaton( self.name.get() ) )
+
+        print( "Automaton Entry Confirmed." )
+        self.changed = True
+        self.destroy()
+
+        return
+
+    def _delete( self ):
+
+        if( messagebox.askyesno( "Delete Automaton", "Delete " + self.automaton.name + "?" ) ):
+            self.hybrid.remove_automaton( self.automaton )
+
+        print( "Automaton Deleted" )
+        self.changed = True
+        self.destroy()
+
+        return
+
+    def _cancel( self ):
+        """ Cancels changes made in popup """
+
+        print( "Automaton Entry Canceled." )
+        self.changed = False
+        self.destroy()
+
+        return
+
+
 class VariableEntry( PopupEntry ):
     """ 
     Popup window for Variable editing.    
@@ -72,6 +171,11 @@ class VariableEntry( PopupEntry ):
         """
         
         self.scope_options = { 'LOCAL_DATA' }
+
+        # Add a blank row if there are no variables (happens with new automata)
+        if( len( self.automaton.vars ) == 0 and len( self.automaton.thinvars ) == 0 ):
+            self._add_row()
+            return
 
         for var in self.automaton.vars:
             if( var.scope != 'LOCAL_DATA' ):

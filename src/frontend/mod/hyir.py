@@ -85,8 +85,12 @@ class HyIR:
         return trans
 
     def add_automaton( self, automaton ):
-
         self.automata.append( automaton )
+        self.composed = False
+        return
+
+    def remove_automaton( self, automaton ):
+        self.automata.remove( automaton )
         self.composed = False
         return
 

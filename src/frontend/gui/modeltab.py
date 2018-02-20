@@ -118,7 +118,7 @@ class TreeView( Treeview ):
         self.mode_dict = {}       # dict[item_id] = mode object
         self.trans_dict = {}      # dict[item_id] = transition object
 
-        self.mode_name_dict = {}  # dict[mode.id] = mode.name
+        self.mode_name_dict = {}  # nested dict[automaton.name][mode.id] = mode.name
         
         for automaton in hybrid.automata:
 
@@ -128,6 +128,7 @@ class TreeView( Treeview ):
             
             # Store automaton in dictionary
             self.automaton_dict[automaton_id] = automaton
+            self.mode_name_dict[automaton_id] = {}
             
             # Create variable parent and variable items
             var_id = self.insert( automaton_id, 'end', text=VARIABLES )
@@ -153,7 +154,7 @@ class TreeView( Treeview ):
                 mode_id = self.insert( modes_id, 'end', text=mode_str )
 
                 self.mode_dict[mode_id] = mode
-                self.mode_name_dict[mode.id] = mode.name
+                self.mode_name_dict[automaton_id][mode.id] = mode.name
 
                 # Create flow itmes
                 flow_id = self.insert( mode_id, 'end', text='Flows' )
@@ -176,7 +177,7 @@ class TreeView( Treeview ):
             for tran in automaton.transitions:
 
                 # Build transition string
-                src, dest = self.mode_name_dict[tran.source], self.mode_name_dict[tran.destination]
+                src, dest = self.mode_name_dict[automaton_id][tran.source], self.mode_name_dict[automaton_id][tran.destination]
                 tran_str = src + ' -> ' + dest
                 tran_id = self.insert( trans_id, 'end', text=tran_str )
 
@@ -205,6 +206,11 @@ class TreeView( Treeview ):
     def _init_rc_menus( self ):
         """Initialize right-click menus for Treeview"""  
 
+        # Right-click 'Automaton' parent
+        self.automaton_rc_menu = Menu( self, tearoff=0 )
+        self.automaton_rc_menu.add_command( label='Add Automaton', command=lambda: self.launch_entry_popup( AUTOMATON, ADD ) )
+        self.automaton_rc_menu.add_command( label='Delete Automaton', command=lambda: self.launch_entry_popup( AUTOMATON, DELETE ) )
+
         # Right-click 'Variables' parent
         self.variables_rc_menu = Menu( self, tearoff=0 )
         self.variables_rc_menu.add_command( label='Edit Variables', command=lambda: self.launch_entry_popup( VARIABLES, EDIT ) )
@@ -227,6 +233,16 @@ class TreeView( Treeview ):
     def _on_right_click( self, event ):
         """ Right-click event callback """
 
+        def _disable_enable( context_menu ):
+            """ Inner Function to disable/enable options for Mode and Transition rc menus """
+            if( self.slct_child == self.slct_grandchild ):  # User clicked on a context
+                context_menu.entryconfig( 1, state=DISABLED )
+                context_menu.entryconfig( 2, state=DISABLED )
+            else:  # User clicked on an object
+                context_menu.entryconfig( 1, state=NORMAL )
+                context_menu.entryconfig( 2, state=NORMAL )
+            return
+
         # Populate selection variables
         self._identify_selection( event )
 
@@ -235,25 +251,21 @@ class TreeView( Treeview ):
             context_menu = self.variables_rc_menu
         elif( self.slct_context == MODES ):
             context_menu = self.modes_rc_menu
+            _disable_enable( context_menu )
         elif( self.slct_context == TRANSITIONS ):
             context_menu = self.transitions_rc_menu
+            _disable_enable( context_menu )
         elif( self.slct_context == AUTOMATON ):
-            # TODO LMB
-            print( 'Automaton right-click menu not yet built' )
-            return
+            context_menu = self.automaton_rc_menu
+            if( self.slct_automaton == None ):
+                context_menu.entryconfig( 1, state=DISABLED )
+            else:
+                context_menu.entryconfig( 1, state=NORMAL )
         else:
             return
 
         # Popup menu
         context_menu.tk_popup( event.x_root, event.y_root )
-
-        # Diable/Enable appropriate depending on where user clicked
-        if( self.slct_child == self.slct_grandchild ):  # User clicked on a context
-            context_menu.entryconfig( 1, state=DISABLED )
-            context_menu.entryconfig( 2, state=DISABLED )
-        else:  # User clicked on an object
-            context_menu.entryconfig( 1, state=NORMAL )
-            context_menu.entryconfig( 2, state=NORMAL )
 
         return
 
@@ -294,10 +306,11 @@ class TreeView( Treeview ):
         # Clear selection variables
         self._init_selection_vars()
 
-        # Return if no item selected
         item_id = self.identify_row( event.y )
+
+        # Return early if no item selected - default to Automaton context
         if( not item_id ):
-            print( 'No item selected ' )
+            self.slct_context = AUTOMATON
             self.selection_remove( self.selection() ) # Unselect previous selections
             return
 
@@ -305,11 +318,11 @@ class TreeView( Treeview ):
         self.selection_set( item_id )
         
         # Set selection varialbes
-        self._get_slct_vars( item_id )
+        self._set_slct_vars( item_id )
            
         return
 
-    def _get_slct_vars( self, item_id ):
+    def _set_slct_vars( self, item_id ):
         """ Returns the ids of the automaton, context, and object of selection (item_id) in that order """
 
         root = item_id
@@ -329,7 +342,7 @@ class TreeView( Treeview ):
         
         if( child == root ):
             # User clicked on an automaton name
-            self.slct_context == AUTOMATON
+            self.slct_context = AUTOMATON
             return
         self.slct_context = self.item( child )['text']
 
@@ -351,10 +364,9 @@ class TreeView( Treeview ):
         elif( context == MODES ):
             entry = ModeEntry( self.master, self.slct_automaton, action,  self.slct_mode )   
         elif( context == TRANSITIONS ):
-            entry = TransitionEntry( self.master, self.slct_automaton, self.mode_name_dict, action, self.slct_transition )
+            entry = TransitionEntry( self.master, self.slct_automaton, self.mode_name_dict[self.slct_root], action, self.slct_transition )
         elif( context == AUTOMATON ):
-            print( 'Automaton entry not yet built' )
-            return
+            entry = AutomatonEntry( self.master, Session.hybrid, action, self.slct_automaton )
         
         # Wait for user response
         self.master.wait_window( entry )
