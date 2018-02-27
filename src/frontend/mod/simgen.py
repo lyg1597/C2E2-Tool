@@ -486,6 +486,10 @@ def _sim_ver( action ):
     # Parse and Compose ( HyIR.compose_all calss HyIR.parse_all )
     HyIR.compose_all( Session.hybrid )
 
+    if( not Session.hybrid.composed ):
+        print( "\nError: System not composed, abandoning operation..." )
+        return None
+
     # Generate Simulator
     if( Session.simulator == CAPD ):
         Session.hybrid.convertToCAPD( 'simulator' )
@@ -504,16 +508,17 @@ def _sim_ver( action ):
     initialize_cpp_model( action )
     compile_executable()
 
-    print( "Running simulate_verify" )
+    print( "Running simulate_verify...\n" )
     result = Session.cpp_model.simulate_verify()
     print( "RESULT: ", result )
 
-    return Session.cpp_model.simulate_verify()
+    return result
     
 
 def initialize_cpp_model( sim_bool ):
 
-    model = Session.cpp_model
+    
+    model = Session.new_cpp_model()
 
     # Initialize set variables
     initial_set_obj = Session.cur_prop.initial_set_obj

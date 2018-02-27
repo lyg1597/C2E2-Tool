@@ -28,15 +28,17 @@ class AutomatonEntry( PopupEntry ):
         self.parent = parent
         self.hybrid = hybrid
         self.automaton = automaton
+        self.action = action
         self.changed = False
 
         self._init_widgets()
 
-        if( action == DELETE ):
+        if( action == EDIT ):
             self._load_session()
-            self._disable_fields()
 
-    
+        if( action == DELETE ):
+            self._disable_fields()
+  
     def _init_widgets( self ):
         """ Initialize GUI elements """
 
@@ -77,8 +79,27 @@ class AutomatonEntry( PopupEntry ):
 
     def _confirm( self ):
 
+        if( self.action == ADD ):
+            self._confirm_add()
+        else:
+            self._confirm_edit()
+
+        return
+
+    def _confirm_add( self ):
+
         self.hybrid.add_automaton( Automaton( self.name.get() ) )
 
+        print( "Automaton Entry Confirmed." )
+        self.changed = True
+        self.destroy()
+
+        return
+
+    def _confirm_edit( self ):
+
+        self.automaton.name = self.name.get()
+        
         print( "Automaton Entry Confirmed." )
         self.changed = True
         self.destroy()
@@ -372,13 +393,19 @@ class ModeEntry( PopupEntry ):
         self.initial.set( self.mode.initial )
 
         # Flows
-        for dai in self.mode.dais:
-            self.flow_toggle.add_row( text=dai.raw )
+        if( len(self.mode.dais) < 1 ):
+            self.flow_toggle.add_row()
+        else:
+            for dai in self.mode.dais:
+                self.flow_toggle.add_row( text=dai.raw )
         self.flow_toggle.toggle()
         
         # Invariants
-        for invariant in self.mode.invariants:
-            self.invariant_toggle.add_row( text=invariant.raw )
+        if( len(self.mode.invariants) < 1 ):
+            self.invariant_toggle.add_row()
+        else:
+            for invariant in self.mode.invariants:
+                self.invariant_toggle.add_row( text=invariant.raw )
         self.invariant_toggle.toggle()
 
         return
@@ -518,7 +545,6 @@ class TransitionEntry( PopupEntry ):
             if( action == DELETE ):
                 self._disable_fields()
 
-
     def _init_widgets( self ):
         """ Initialize GUI elements """
 
@@ -587,8 +613,11 @@ class TransitionEntry( PopupEntry ):
         self.guard_str.set( self.transition.guard.raw )
 
         # Actions
-        for action in self.transition.actions:
-            self.action_toggle.add_row( text=action.raw )
+        if( len(self.transition.actions) ):
+            self.action_toggle.add_row()
+        else:
+            for action in self.transition.actions:
+                self.action_toggle.add_row( text=action.raw )
         self.action_toggle.toggle()
 
         return

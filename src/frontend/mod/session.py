@@ -20,7 +20,6 @@ class Property():
         self.unsafe_set_obj = None
         self.simulator = ''
 
-
         # Property values valid
         self.name_valid = False
         self.type_valid = True
@@ -282,4 +281,9 @@ class Session():
     simulator = ODEINT_FIX
     refine_strat = DEF_STRAT
 
-    cpp_model = Model()
+    cpp_model = None
+
+    @classmethod
+    def new_cpp_model( cls ):
+        cls.cpp_model = Model()
+        return cls.cpp_model

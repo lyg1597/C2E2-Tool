@@ -1,6 +1,8 @@
 import sympy
 from scipy import optimize as opt
 
+from frontend.mod.constants import *
+
 
 class Automaton:
 
@@ -19,7 +21,6 @@ class Automaton:
         self.next_mode_id = 0
         self.next_transition_id = 0
         self.initial_mode_id = 0
-
 
     @property
     def vars( self ):
@@ -148,7 +149,6 @@ class Variables:
         self.input = []
         self.output = []
 
-
     @property
     def names( self ):
         names = []
@@ -181,24 +181,22 @@ class Variables:
 
 class Variable:
     
-    def __init__(self,name="",update_type="",type="",scope=""):
+    def __init__( self, name="default_variable", update_type="", type=REAL, scope='LOCAL_DATA' ):
         self.name = name
         self.type = type
         self.scope = scope
         self.update_type = type
 
-
-    def __eq__(self, other):
+    def __eq__( self, other ):
         return self.name==other.name and self.update_type==other.update_type and self.type==other.type
 
 
 class ThinVariables:
 
-    def __init__(self):
+    def __init__( self ):
         self.local = []
         self.input = []
         self.output = []
-
 
     @property
     def names( self ):
@@ -232,12 +230,11 @@ class ThinVariables:
 
 class ThinVariable:
 
-    def __init__(self,name="",update_type="",type="",scope=""):
+    def __init__( self, name="default_thinvariable", update_type="", type=REAL, scope='LOCAL_DATA' ):
         self.name = name
         self.type = type
         self.scope = scope
         self.update_type = type
-
 
     def __eq__(self, other):
         return self.name==other.name and self.update_type==other.update_type and self.type==other.type
@@ -250,7 +247,7 @@ class Mode:
     invs - list of Invariant objects representing the mode's invariants
     dais - list of DAI objects representing the mode's governing differential equations
     '''
-    def __init__( self, name='UNNAMED', id=-1, initial=False ):
+    def __init__( self, name="default_mode", id=-1, initial=False ):
         self.name = name
         self.id = id
         self.initial = initial
@@ -258,7 +255,6 @@ class Mode:
         self.invariants = []
         self.dais = []
         self.linear = True
-
 
     @property
     def invs( self ):
@@ -307,16 +303,20 @@ class Mode:
         
         self.linear = True  # LMB: Default to True, based on original code
         for dai in self.dais:
-            dai.parse()
+            dai_eqn = dai.parse()
+            if( dai_eqn ):  # Eqn is returned only if parsing fails.
+                return { 'flow': dai_eqn }
             if self.linear:
                 self.linear = SymEq.is_linear( dai.expr.rhs )
 
         for inv in self.invariants:
-            inv.parse()
+            inv_eqn = inv.parse()
+            if( inv_eqn ):  # Eqn is returned only if parsing fails.
+                return { 'invariant': inv_eqn }
             if not inv.expr:
                 self.remove_inv( inv )
 
-        return
+        return None
 
 
 class Transition:
@@ -333,7 +333,6 @@ class Transition:
         self.source = source
         self.destination = destination
     
-
     @property
     def src( self ):
         print( "********************************************************" )
@@ -365,14 +364,20 @@ class Transition:
         return
 
     def parse( self ):
-        self.guard.parse()
+
+        guard_eqn = self.guard.parse()
+        if( guard_eqn ): # Eqn is returned only if parsing fails.
+            return { 'guard': guard_eqn }
+
         if( self.guard.expr ):
             for action in self.actions:
-                action.parse()
+                action_eqn = action.parse()
+                if( action_eqn ): # Eqn is returned only if parsing fails.
+                    return { 'action': action_eqn }
         else:
             self.clear_actions
 
-        return
+        return None
 
     def add_action( self, action ):
         self.actions.append( action )
@@ -385,22 +390,49 @@ class Transition:
 
 class DAI:
     '''Deterministic algebraic inequalities'''
-    def __init__( self, raw ):
+
+    def __init__( self, raw=None ):
+        
         self.raw = raw
+        self.expr = None
     
     def parse( self ):
-        self.expr = SymEq.construct_eqn( self.raw, True, False )
-        return
+
+        if( self.raw is None ):
+            return "No Expression"
+        
+        constructed = SymEq.construct_eqn( self.raw, True, False )
+        if( constructed is None ):
+            return self.raw
+
+        self.expr = constructed
+        
+        return None
 
 
 class Invariant:
 
-    def __init__( self, raw ):
+    def __init__( self, raw=None ):
+
         self.raw = raw
+        self.expr = None
 
     def parse( self ):
+        
+        if( self.raw is None ):
+            return "No Expression"
+
         eqns = self.raw.split( '||' )
-        self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
+        
+        #self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
+        expr = []
+        for eqn in eqns:
+            constructed = SymEq.construct_eqn( eqn, False, True )
+            if constructed is None:
+                return eqn
+            expr.append( constructed )
+        self.expr = expr
+
         # Filter out equations that evaluate to False
         self.expr = filter( lambda eqn: eqn is not False, self.expr )
         self.expr = list( self.expr )
@@ -408,59 +440,92 @@ class Invariant:
             print( 'Redundant Inv: ' + self.raw )
             self.expr = []
 
-        return
+        return None
 
 
 class Guard:
 
-    def __init__(self, raw):
-        self.raw = raw
+    def __init__( self, raw=None ):
 
+        self.raw = raw
+        self.expr = None
 
     def parse( self ):
+
+        if( self.raw is None ):
+            return "No Expression!" 
+
         eqns = self.raw.split( '&&' )
-        self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
+        
+        #self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
+        expr = []
+        for eqn in eqns:
+            constructed = SymEq.construct_eqn( eqn, False, True )
+            if( constructed is None ):
+                return eqn
+            expr.append( constructed )
+        self.expr = expr
+
         # Filter out equations that evaluate to True
         self.expr = filter( lambda eqn: eqn is not True, self.expr )
         self.expr = list( self.expr )
         if False in self.expr: 
             print( 'Redundant Guard: ' + self.raw )
-            self.expr = []
+            self.expr = None
         
-        return
+        return None
 
         
 class Action:
 
-    def __init__( self, raw ):
-        self.raw = raw
+    def __init__( self, raw=None ):
 
+        self.raw = raw
+        self.expr = None
 
     def parse( self ):
+
+        if( self.raw is None ):
+            return "No Expression"
+
         eqns = self.raw.split('&&')
-        self.expr = [SymEq.construct_eqn(eqn, True, True) for eqn in eqns]
 
-        return
+        #self.expr = [SymEq.construct_eqn(eqn, True, True) for eqn in eqns]
+        expr = []
+        for eqn in eqns:
+            constructed = SymEq.construct_eqn( eqn, True, True )
+            if( constructed is None ):
+                return eqn
+            expr.append( constructed )
+        self.expr = expr
 
-#Symbolic Equation library
+        return None
+
+
 class SymEq:
-    # Construct equation with sympy
-    # rationalize it if flag is set to True
-    # is_eq is True for DAI's and actions
+    """ Symbolic Equation Library """
+
     @staticmethod
-    def construct_eqn(eqn, is_eq, rationalize):
+    def construct_eqn( eqn, is_eq, rationalize ):
+        """ 
+        Construct equation with sympy. Rationalize it if flag is set to True. is_eq is True for DAIs and Actions 
+        
+        NOTE: sympy.sympify(eqn) converts eqn into a type that can be used inside SymPy
+        """
+
         try:
             if is_eq:
                 eqn_split = eqn.split('=')
                 lhs, rhs = eqn_split[0], eqn_split[1]
-                print (lhs, rhs)
+                #print (lhs, rhs)
                 eqn = sympy.Eq(sympy.sympify(lhs), sympy.sympify(rhs))
             else:
                 eqn = sympy.sympify(eqn)
                 if type(eqn) is bool:
                     return eqn
-        except SyntaxError:
+        except:
             print("Invalid expression.")
+            return None
 
         if rationalize:
             eqn = SymEq.rationalize(eqn)

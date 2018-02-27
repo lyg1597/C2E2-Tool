@@ -192,7 +192,7 @@ class TreeView( Treeview ):
                 self.insert( tran_id, 'end', text=dest_str )
 
                 # Guard
-                guard_str = 'Guards: ' + tran.guard.raw
+                guard_str = 'Guards: ' + ( tran.guard.raw or 'None' )
                 self.insert( tran_id, 'end', text=guard_str )
 
                 # Actions
@@ -209,6 +209,7 @@ class TreeView( Treeview ):
         # Right-click 'Automaton' parent
         self.automaton_rc_menu = Menu( self, tearoff=0 )
         self.automaton_rc_menu.add_command( label='Add Automaton', command=lambda: self.launch_entry_popup( AUTOMATON, ADD ) )
+        self.automaton_rc_menu.add_command( label='Edit Automaton', command=lambda: self.launch_entry_popup( AUTOMATON, EDIT ) )
         self.automaton_rc_menu.add_command( label='Delete Automaton', command=lambda: self.launch_entry_popup( AUTOMATON, DELETE ) )
 
         # Right-click 'Variables' parent
@@ -259,8 +260,10 @@ class TreeView( Treeview ):
             context_menu = self.automaton_rc_menu
             if( self.slct_automaton == None ):
                 context_menu.entryconfig( 1, state=DISABLED )
+                context_menu.entryconfig( 2, state=DISABLED )
             else:
                 context_menu.entryconfig( 1, state=NORMAL )
+                context_menu.entryconfig( 2, state=NORMAL )
         else:
             return
 
@@ -377,6 +380,11 @@ class TreeView( Treeview ):
             # Mode/Variable changes may change validity of Initial Set / Unsafe Set
             self.sidebar._callback_is( self.sidebar.initial_set.get() )
             self.sidebar._callback_us( self.sidebar.unsafe_set.get() )
+            # Flag libararies for re-compilation
+            Session.lib_compiled = False
+            # Flag Session for parsing and compilation
+            Session.hybrid.parsed = False
+            Session.hybrid.composed = False
         
         # Refresh Model
         self._clear_model()

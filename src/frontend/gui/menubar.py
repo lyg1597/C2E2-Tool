@@ -45,6 +45,8 @@ class MenuBar(Menu):
         file_menu = Menu(self, tearoff=0)
         file_menu.add_command(label='Open', accelerator='Crtl+O', underline=0,
                 command=self.open_callback)
+        file_menu.add_command( label='New', accelerator='Ctrl+N', underline=0, 
+                command=self.new_callback )
         file_menu.add_command(label='Save', accelerator='Ctrl+S', underline=0, 
                 command=self.save_callback)
         file_menu.add_command(label='Save As', accelerator='Ctrl+Shift+S', 
@@ -90,6 +92,7 @@ class MenuBar(Menu):
         # Bind accelerators
         
         self.parent.bind_all('<Control-o>', lambda event: self.open_callback())
+        self.parent.bind_all( '<Control-n>', lambda event: self.new_callback() )
         self.parent.bind_all('<Control-s>', lambda event: self.save_callback())
         self.parent.bind_all('<Control-Shift-s>', lambda event: self.save_as_callback())
         self.parent.bind_all('<Control-l>', lambda event: self.close_callback())
@@ -139,11 +142,34 @@ class MenuBar(Menu):
                 
         return
 
+    def new_callback( self ):
+        """ Open template file """
+
+        # Forget welcome screen widgets
+        self.parent.label.pack_forget()
+        self.parent.manual.pack_forget()
+        self.parent.email.pack_forget()
+
+        # If a file is already open, close it.
+        if( Session.file_opened ):
+            self.close_callback()
+
+        Session.hybrid = HyIR.create_template()
+
+        Session.file_path = None
+        Session.file_opened = True
+        EventHandler.event_generate( OPEN_EVENT )
+
+        return
 
     def save_callback(self):
 
         if not Session.file_opened:
-            return 
+            return
+
+        if( Session.file_path is None ):
+            self.save_as_callback()
+            return
 
         if Session.file_type == MDL_FILE and not Session.file_saved:
             self.save_as_callback()
@@ -172,6 +198,11 @@ class MenuBar(Menu):
 
     # FIXME destroy the session
     def close_callback(self, event=None):
+
+        # TODO LMB
+        print( "**************************" )
+        print( "TODO: PROMPT USER TO SAVE" )
+        print( "**************************" )
 
         Session.lib_compiled = False
         Session.simulator = ODEINT_FIX

@@ -26,8 +26,8 @@ class HyIR:
         self.annotations = ""
         self.annotationsRaw = []
 
+        self.parsed = False
         self.composed = False
-
 
     @property
     def vars( self ):
@@ -94,37 +94,85 @@ class HyIR:
         self.composed = False
         return
 
+    def add_property( self, property_ ):
+        self.properties.append( property_ )
+        return
+
+    def remove_property( self, property_ ):
+        self.properties.remove( property_ )
+        return
+
     # Parse Functions
 
     @classmethod
     def parse_all( cls, hybrid ):
+
+        # Do nothing if we're already parsed
+        if( hybrid.parsed ):
+            return
+
         for automaton in hybrid.automata:
-            cls.parse_automaton( automaton )
+            fail_trace = cls.parse_automaton( automaton )
+            if( fail_trace ):
+                print( "Parsing failed" )
+                print( "--------------" )
+                print( "Automaton: " + fail_trace['automaton'] )
+                if( 'mode' in fail_trace ):
+                    print( "Mode: " + fail_trace['mode'] )
+                    if( 'flow' in fail_trace ):
+                        print( "Flow: " + fail_trace['flow'] )
+                    else:
+                        print( "Invariant: " + fail_trace['invariant'] )
+                else:
+                    print( "Transition: " + str(fail_trace['transition']) )
+                    if( 'guard' in fail_trace ):
+                        print( "Guard: " + fail_trace['guard'] )
+                    else:
+                        print( "Action: " + fail_trace['action'] )
+                hybrid.parsed = False
+                return
+        hybrid.parsed = True
         return
+
 
     @classmethod
     def parse_automaton( cls, automaton ):
         print( "Parsing Automaton " + automaton.name + "..." )
-        cls.parse_modes( automaton )
-        cls.parse_transitions( automaton )
+        
+        fail_trace = cls.parse_modes( automaton )
+        if( fail_trace ):
+            fail_trace.update( { 'automaton': automaton.name } )
+            return fail_trace
+        fail_trace = cls.parse_transitions( automaton )
+        
+        if( fail_trace ):
+            fail_trace.update( { 'automaton': automaton.name } )
+            return fail_trace
+        
         print( "Automaton " + automaton.name + " parsing complete." )
-        return
+        return None
 
     @classmethod
     def parse_modes( cls, automaton ):
         print( "Parsing modes..." )
         for mode in automaton.modes:
-            mode.parse()
+            fail_trace = mode.parse()
+            if( fail_trace ):
+                fail_trace.update( { 'mode': mode.name } )
+                return fail_trace
         print( "Modes parsed." )
-        return
+        return None
 
     @classmethod
     def parse_transitions( cls, automaton ):
         print( "Parsing transitions..." )
         for tran in automaton.transitions:
-            tran.parse()
+            fail_trace = tran.parse()
+            if( fail_trace ):
+                fail_trace.update( { 'transition': tran.id } )
+                return fail_trace
         print( "Transitions parsed." )
-        return
+        return None
 
     # Compose Functions
 
@@ -142,6 +190,10 @@ class HyIR:
     def compose_all( cls, hybrid ):
 
         cls.parse_all( hybrid )
+
+        if( not hybrid.parsed ):
+            print( "System not parsed. Exiting composition..." )
+            return
 
         automata_list = hybrid.automata
         automata_list.reverse()
@@ -184,26 +236,27 @@ class HyIR:
         composed = Automaton()
         m1_len = len( automaton1.modes)
         m2_len = len( automaton2.modes)
+
         #Construct Cartesian product of modes
         for m1 in automaton1.modes:
             for m2 in automaton2.modes:
                 m_name = m1.name + '_' + m2.name
                 m_id = m1.id*m2_len + m2.id
                 m_initial = m1.initial and m2.initial
-                cross_mode = Mode(name=m_name,id=m_id,initial=m_initial)
+                cross_mode = Mode( name=m_name, id=m_id, initial=m_initial )
 
                 # Replace input variables with corresponding output variables
                 dai_dict = {}
-                HyIR.construct_output_dict(cross_mode, m1.dais, dai_dict)
-                HyIR.construct_output_dict(cross_mode, m2.dais, dai_dict)
-                HyIR.replace_dais(cross_mode, dai_dict)
+                HyIR.construct_output_dict( cross_mode, m1.dais, dai_dict )
+                HyIR.construct_output_dict( cross_mode, m2.dais, dai_dict )
+                HyIR.replace_dais( cross_mode, dai_dict )
 
                 # Resulting invariant is a conjunction
                 for inv1 in m1.invariants:
-                    cross_mode.add_invariant(inv1)
+                    cross_mode.add_invariant( inv1 )
                 for inv2 in m2.invariants:
-                    cross_mode.add_invariant(inv2)
-                composed.add_mode(cross_mode)
+                    cross_mode.add_invariant( inv2 )
+                composed.add_mode( cross_mode )
 
         # Construct guards of composed automata. (a,b)->(a',b) and (a,b)->(a,b')
         # for all transitions a->a' and b->b'. Note there is no (a,b)->(a',b')
@@ -212,12 +265,12 @@ class HyIR:
             t_guard = t1.guard
             t_actions = t1.actions
           
-            for i in range(m2_len):    
+            for i in range( m2_len ):    
                 t_src = t1.src*m2_len+i
                 t_dest = t1.dest*m2_len+i
-                cross_trans = Transition(guard=t_guard,actions=t_actions,source=t_src,destination=t_dest,id=trans_id)
-                composed.add_transition(cross_trans)
-                trans_id+=1
+                cross_trans = Transition( guard=t_guard, actions=t_actions, source=t_src, destination=t_dest, id=trans_id )
+                composed.add_transition( cross_trans )
+                trans_id += 1 
 
         for t2 in automaton2.transition:
             t_guard = t2.guard
@@ -226,9 +279,9 @@ class HyIR:
             for i in range(m1_len):    
                 t_src = i*m2_len+t2.src
                 t_dest = i*m2_len+t2.dest
-                cross_trans = Transition(guard=t_guard,actions=t_actions,source=t_src,destination=t_dest,id=trans_id)
-                compsed.add_transition(cross_trans)
-                trans_id+=1
+                cross_trans = Transition( guard=t_guard, actions=t_actions, source=t_src, destination=t_dest, id=trans_id )
+                compsed.add_transition( cross_trans )
+                trans_id += 1
 
         # Construct composed variables
         composed.local_vars = automaton1.variables.local + automaton2.variables.local
@@ -239,6 +292,29 @@ class HyIR:
         #composed.varList = [v.name for v in composed.variables.local]
 
         return composed
+
+    @staticmethod
+    def create_template():
+
+        hybrid = HyIR()
+        automaton = Automaton()
+        property_ = Property()
+
+        # LMB I'm guessing every model will use time
+        automaton.add_var( Variable( name="t" ) )
+
+        m1 = Mode( "Mode A", 0 )
+        m2 = Mode( "Mode B", 1 )
+        automaton.add_mode( m1 )
+        automaton.add_mode( m2 )
+
+        automaton.add_transition( Transition( Guard(), [], 0, m1.id, m2.id ) )
+        automaton.add_transition( Transition( Guard(), [], 1, m2.id, m1.id ) )
+
+        hybrid.add_automaton( automaton )
+        hybrid.add_property( property_ )
+
+        return hybrid
 
     def print_vars(self):
         print("--- Variables ---")
