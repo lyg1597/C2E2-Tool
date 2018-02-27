@@ -313,6 +313,9 @@ class FileHandler:
                 mode_id = int( mode.get( "id" ) )
                 mode_initial = ( mode.get( "initial" ) == "True" )
                 
+                if( automaton.next_mode_id <= mode_id ):
+                    automaton.next_mode_id = mode_id + 1
+                    
                 mode_obj = Mode( name=mode_name, id=mode_id, initial=mode_initial )
         
                 for dai in mode.iterfind( "dai" ):
@@ -329,7 +332,7 @@ class FileHandler:
                     clean_eq = FileHandler.clean_eq( raw_eq )
                     mode_obj.add_invariant( Invariant( clean_eq ) )
                 
-                automaton.add_mode( mode_obj )  
+                automaton.add_mode( mode_obj, True )  
 
             for tran in auto.iterfind( "transition" ):
 

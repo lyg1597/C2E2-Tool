@@ -20,7 +20,6 @@ class Automaton:
                 
         self.next_mode_id = 0
         self.next_transition_id = 0
-        self.initial_mode_id = 0
 
     @property
     def vars( self ):
@@ -84,8 +83,12 @@ class Automaton:
         self.thinvariables = ThinVariables()
         return
 
-    def add_mode( self, mode ):
+    def add_mode( self, mode, fileread=False ):
+        if( not fileread ): 
+            mode.id = self.next_mode_id
+            self.next_mode_id += 1 
         self.modes.append( mode )
+       
         return
     
     def remove_mode( self, mode ):

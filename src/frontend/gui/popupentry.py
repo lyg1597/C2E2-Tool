@@ -350,7 +350,7 @@ class ModeEntry( PopupEntry ):
         # ID
         Label( self, text='ID:' ).grid( row=2, column=0, sticky=W )
         self.mode_id = IntVar()
-        self.id_entry = Entry( self, textvariable=self.mode_id )
+        self.id_entry = Entry( self, textvariable=self.mode_id, state=DISABLED )
         self.id_entry.grid( row=2, column=1, sticky=E )
 
         # Initial
@@ -421,7 +421,7 @@ class ModeEntry( PopupEntry ):
         self.invariant_toggle.toggle()
 
         # Prefill ID assuming IDs are sequential. Not doing this defaults it to 0.
-        self.mode_id.set( len( self.automaton.modes ) )
+        self.mode_id.set( self.automaton.next_mode_id )
 
         return
 
@@ -498,7 +498,7 @@ class ModeEntry( PopupEntry ):
 
         # Build messagebox message warning user of transitions that also will be deleted
         msg = "Delete " + self.mode.name + "(" + str(self.mode.id) + ") ?\n"
-        msg += "WARNING: The following transitions will also be deleted\n"
+        msg += "WARNING: The following transitions will also be deleted:\n"
         for tran in del_trans:
             msg += tran.tostring( self.mode_dict ) + '\n'
                 
