@@ -318,13 +318,14 @@ class ModeEntry( PopupEntry ):
         mode (Mode obj): Mode to be edited or deleted, not required for ADD action
     """
 
-    def __init__( self, parent, automaton, action=ADD, mode=None ):
+    def __init__( self, parent, automaton, mode_dict, action=ADD, mode=None ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Mode' )
 
         self.automaton = automaton
         self.mode = mode
         self.action = action
+        self.mode_dict = mode_dict  # mode_dict[mode.id] = mode.name
         self.changed = False
 
         self._init_widgets()
@@ -489,8 +490,22 @@ class ModeEntry( PopupEntry ):
     def _delete( self ):
         """ Delete active Mode """
 
-        if( messagebox.askyesno( 'Delete Transition', 'Delete ' + self.mode.name + '(' + str(self.mode.id) + ') ' + '?' ) ):
+        # Build list of transitions that would be deleted
+        del_trans = []
+        for tran in self.automaton.transitions:
+            if( (tran.source == self.mode.id) or (tran.destination == self.mode.id) ):
+                del_trans.append( tran )
+
+        # Build messagebox message warning user of transitions that also will be deleted
+        msg = "Delete " + self.mode.name + "(" + str(self.mode.id) + ") ?\n"
+        msg += "WARNING: The following transitions will also be deleted\n"
+        for tran in del_trans:
+            msg += tran.tostring( self.mode_dict ) + '\n'
+                
+        if( messagebox.askyesno( 'Delete Mode', msg ) ):
             self.automaton.remove_mode( self.mode )
+            for tran in del_trans:
+                self.automaton.remove_transition( tran )
         
         print( 'Mode Deleted.' )
         self.changed = True
@@ -521,7 +536,7 @@ class TransitionEntry( PopupEntry ):
         trans (Transition obj): Transition to be edited or deleted, not required for ADD action
     """    
 
-    def __init__( self, parent, automaton, mode_dict, action, transition=None ):
+    def __init__( self, parent, automaton, mode_dict, action=ADD, transition=None ):
         PopupEntry.__init__( self, parent )
         self.title_label.config( text='Transition' )
 
@@ -569,7 +584,7 @@ class TransitionEntry( PopupEntry ):
         self.source_str.trace_variable( 'w', self._callback_mode_select )
         self.destination_str.trace_variable( 'w', self._callback_mode_select )
 
-        # Aribtrarily set default source/destination. These are overwritten to be correct in _load_session when appropriate
+        # Arbitrarily set default source/destination. These are overwritten to be correct in _load_session when appropriate
         self.source_option_menu = OptionMenu( self, self.source_str, self.mode_list[0], *self.mode_list )
         self.source_option_menu.grid( row=3, column=1, sticky=W+E )        
         self.destination_option_menu = OptionMenu( self, self.destination_str, self.mode_list[1], *self.mode_list )

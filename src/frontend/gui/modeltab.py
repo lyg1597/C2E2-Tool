@@ -365,7 +365,7 @@ class TreeView( Treeview ):
         if( context == VARIABLES or context == THINVARIABLES ):
             entry = VariableEntry( self.master, self.slct_automaton )
         elif( context == MODES ):
-            entry = ModeEntry( self.master, self.slct_automaton, action,  self.slct_mode )   
+            entry = ModeEntry( self.master, self.slct_automaton, self.mode_name_dict[self.slct_root], action,  self.slct_mode )   
         elif( context == TRANSITIONS ):
             entry = TransitionEntry( self.master, self.slct_automaton, self.mode_name_dict[self.slct_root], action, self.slct_transition )
         elif( context == AUTOMATON ):

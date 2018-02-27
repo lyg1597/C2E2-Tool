@@ -332,7 +332,7 @@ class Transition:
         self.id = id
         self.source = source
         self.destination = destination
-    
+
     @property
     def src( self ):
         print( "********************************************************" )
@@ -362,6 +362,10 @@ class Transition:
         print( "*************************************************************" )
         self.destination = destination
         return
+
+        
+    def tostring( self, mode_dict ):
+        return mode_dict[self.source] + " -> " + mode_dict[self.destination]
 
     def parse( self ):
 
