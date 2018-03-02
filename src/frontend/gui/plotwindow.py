@@ -11,8 +11,10 @@ from sys import platform
 
 
 class PlotterModelTab(Frame):
-    def __init__(self, parent,*args):
+
+    def __init__(self, parent, *args):
         Frame.__init__(self, parent)
+        
         self.parent = parent
 
         self._init_widgets(*args)
@@ -153,10 +155,11 @@ class PlotterDisplay(tk.Canvas):
 
 
 class PlotterPropertyEditor(Frame):
-    def __init__(self, parent,*args ,**options):
+    
+    def __init__(self, parent, *args, **options):
         Frame.__init__(self, parent, **options)
-        #args for plotter
-
+        
+        # args for plotter
         self.parent = parent
         self.sel_iid = None
         self.varlist = list(args[0])

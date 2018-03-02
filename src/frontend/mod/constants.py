@@ -25,10 +25,16 @@ Plotted = "Plotted"
 
 #Result
 
-# Variable Types / LMB 12/21/2017 / Options for variable type OptionMenu, contained in the VariableEntry popup
+# Variable Types / LMB 12/21/2017 / Options for variable type
 REAL = 'Real'
 INTEGER = 'Integer'
 VARIABLE_TYPES = [ REAL, INTEGER ]
+
+# Variable Scopes / LMB 3/2/2018 / Options for variable scope
+LOCAL = 'LOCAL_DATA'
+INPUT = 'INPUT_DATA'
+OUTPUT = 'OUTPUT_DATA'
+VARIABLE_SCOPES = {LOCAL, INPUT, OUTPUT}
 
 # Contexts / LMB 12/21/2017 / Used to determine right-click menus and popup entry/edit menus in the ModelTab Treeview
 AUTOMATON = 'Automaton'

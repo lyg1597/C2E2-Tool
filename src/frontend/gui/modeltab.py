@@ -16,60 +16,58 @@ from frontend.mod.session import Session, Property
 from frontend.mod.simgen import * # FIXME
 
 
-class ModelTab( Frame ):
+class ModelTab(Frame):
 
-    def __init__( self, parent ):
+    def __init__(self, parent):
         
-        Frame.__init__( self, parent )
+        Frame.__init__(self, parent)
         self.parent = parent
         self._init_widgets()
 
-
-    def _init_widgets( self ):
+    def _init_widgets(self):
         """ Initialize the Treeview and Property Editory """
 
-        self.sidebar = ModelSidebar( self )
+        self.sidebar = ModelSidebar(self)
 
-        # self.leftside = Frame( self )
-        # self.tree = TreeView( self.leftside, self.sidebar, selectmode='browse' )
-        # self.feedback = Text( self.leftside, state=DISABLED )
+        # self.leftside = Frame(self)
+        # self.tree = TreeView(self.leftside, self.sidebar, selectmode='browse')
+        # self.feedback = Text(self.leftside, state=DISABLED)
 
-        # sys.stdout = StdRedirector( self.feedback )
+        # sys.stdout = StdRedirector(self.feedback)
 
-        # self.tree.grid( row=0, column=0, sticky=NSEW )
-        # self.feedback.grid( row=1, column=0, sticky=NSEW )
+        # self.tree.grid(row=0, column=0, sticky=NSEW)
+        # self.feedback.grid(row=1, column=0, sticky=NSEW)
 
-        # self.leftside.pack( expand=TRUE, fill=BOTH, side=LEFT, anchor=E ) 
-        # self.sidebar.pack( expand=TRUE, fill=Y, side=TOP, anchor=E )
+        # self.leftside.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor=E) 
+        # self.sidebar.pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
 
-        self.tree = TreeView( self, self.sidebar, selectmode='browse' )
+        self.tree = TreeView(self, self.sidebar, selectmode='browse')
         
-        self.tree.pack( expand=TRUE, fill=BOTH, side=LEFT, anchor=E )
-        self.sidebar.pack( expand=TRUE, fill=Y, side=TOP, anchor=E )
+        self.tree.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor=E)
+        self.sidebar.pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
         
         return
 
 
-class TreeView( Treeview ):
+class TreeView(Treeview):
         
-    def __init__( self, master, sidebar, **options ):
+    def __init__(self, master, sidebar, **options):
         """ 
         NOTE: We use 'master' here instead of 'parent' due to naming conflict
               with the parent() function in the Treeview class. 
         """
         
-        Treeview.__init__( self, master, **options )
-        self.pack( fill=BOTH, expand=TRUE )
+        Treeview.__init__(self, master, **options)
+        self.pack(fill=BOTH, expand=TRUE)
         self.master = master
         self.sidebar = sidebar
 
         self._init_selection_vars()
         self._bind_events()
         self._init_rc_menus()
-        self.config( show='tree' )
+        self.config(show='tree')
         
-    
-    def _init_selection_vars( self ):
+    def _init_selection_vars(self):
         """ Initialize variables used to parse selected object """
 
         self.slct_root = None
@@ -83,34 +81,34 @@ class TreeView( Treeview ):
 
         return
 
-    def _bind_events( self ):
+    def _bind_events(self):
         """ Bind open and close file events and click events """
 
-        self.bind( CLOSE_EVENT, self._clear_model )
-        EventHandler.add_event_listeners( self, CLOSE_EVENT )
+        self.bind(CLOSE_EVENT, self._clear_model)
+        EventHandler.add_event_listeners(self, CLOSE_EVENT)
 
-        self.bind( OPEN_EVENT, self._display_model )
-        EventHandler.add_event_listeners( self, OPEN_EVENT )
+        self.bind(OPEN_EVENT, self._display_model)
+        EventHandler.add_event_listeners(self, OPEN_EVENT)
 
-        self.bind( '<Double-1>', self._on_double_click )
-        self.bind( '<Button-1>', self._on_left_click )
-        self.bind( '<Button-3>', self._on_right_click )
+        self.bind('<Double-1>', self._on_double_click)
+        self.bind('<Button-1>', self._on_left_click)
+        self.bind('<Button-3>', self._on_right_click)
 
         return
 
-    def _clear_model( self, event=None ):
+    def _clear_model(self, event=None):
         """ Clear treeview display """
 
-        print( 'Updating Model...' )
-        self.delete( *self.get_children() )
-        print( 'Done.' )
+        print("Updating Model...")
+        self.delete(*self.get_children())
+        print("Done.")
 
         return
 
-    def _display_model( self, event=None ):
+    def _display_model(self, event=None):
         """ Display Session automata in Treeview """
         
-        print( 'Displaying Model...' )
+        print("Displaying Model...")
 
         hybrid = Session.hybrid
 
@@ -123,219 +121,231 @@ class TreeView( Treeview ):
         for automaton in hybrid.automata:
 
             # Create automaton parent item
-            automaton_id = self.insert( '', 'end', text=automaton.name )
-            self.item( automaton_id, open=TRUE )
+            automaton_id = self.insert('', 'end', text=automaton.name)
+            self.item(automaton_id, open=TRUE)
             
             # Store automaton in dictionary
             self.automaton_dict[automaton_id] = automaton
             self.mode_name_dict[automaton_id] = {}
             
             # Create variable parent and variable items
-            var_id = self.insert( automaton_id, 'end', text=VARIABLES )
-            var_str = ', '.join( automaton.variables.names )
-            self.insert( var_id, 'end', text=var_str )
-            self.item( var_id, open=TRUE )
+            var_id = self.insert(automaton_id, 'end', text=VARIABLES)
+            var_str = ', '.join(automaton.variables.names)
+            self.insert(var_id, 'end', text=var_str)
+            self.item(var_id, open=TRUE)
 
             # Create thin variable parent and thin variable items
-            if( len( automaton.thinvariables.all ) !=0 ):
-                thin_var_id = self.insert( automaton_id, 'end', text='Thin Variables' )
-                thin_var_str = ', '.join( automaton.thinvariables.names )
-                self.insert( thin_var_id, 'end', text=thin_var_str )
-                self.item( thin_var_id, open=TRUE )
+            if len(automaton.thinvariables.all) != 0:
+                thin_var_id = self.insert(automaton_id, 'end', 
+                                          text="Thin Variables")
+                thin_var_str = ', '.join(automaton.thinvariables.names)
+                self.insert(thin_var_id, 'end', text=thin_var_str)
+                self.item(thin_var_id, open=TRUE)
 
             # Create mode parent item
-            modes_id = self.insert( automaton_id, 'end', text=MODES )
-            self.item( modes_id, open=TRUE )
+            modes_id = self.insert(automaton_id, 'end', text=MODES)
+            self.item(modes_id, open=TRUE)
     
             # Create mode items
             for mode in automaton.modes:
 
-                mode_str = mode.name + ' (' + str(mode.id) + ')'
-                mode_id = self.insert( modes_id, 'end', text=mode_str )
+                mode_str = mode.name + " (" + str(mode.id) + ")"
+                mode_id = self.insert(modes_id, 'end', text=mode_str)
 
                 self.mode_dict[mode_id] = mode
                 self.mode_name_dict[automaton_id][mode.id] = mode.name
 
                 # Create flow itmes
-                flow_id = self.insert( mode_id, 'end', text='Flows' )
+                flow_id = self.insert(mode_id, 'end', text="Flows")
                 for dai in mode.dais:
                     # LMB: Commenting out conditional from popup to avoid 'losing' equations when dialog is confirmed. Removing it here too for consistency. May need to go back and add it after talking with leadership.
                     #if '_dot' in dai.raw:
                     dai_str = dai.raw
-                    self.insert( flow_id, 'end', text=dai_str )
+                    self.insert(flow_id, 'end', text=dai_str)
 
                 # Create invariant items
-                inv_id = self.insert( mode_id, 'end', text='Invariants' )
+                inv_id = self.insert(mode_id, 'end', text="Invariants")
                 for inv in mode.invariants:
-                    self.insert( inv_id, 'end', text=inv.raw )
+                    self.insert(inv_id, 'end', text=inv.raw)
 
             # Create transition parent items
-            trans_id = self.insert( automaton_id, 'end', text=TRANSITIONS )
-            self.item( trans_id, open=TRUE )
+            trans_id = self.insert(automaton_id, 'end', text=TRANSITIONS)
+            self.item(trans_id, open=TRUE)
             
             # Create transition items
             for tran in automaton.transitions:
 
                 # Build transition string
                 src, dest = self.mode_name_dict[automaton_id][tran.source], self.mode_name_dict[automaton_id][tran.destination]
-                tran_str = src + ' -> ' + dest
-                tran_id = self.insert( trans_id, 'end', text=tran_str )
+                tran_str = src + " -> " + dest
+                tran_id = self.insert(trans_id, 'end', text=tran_str)
 
                 self.trans_dict[tran_id] = tran
 
                 # Source
-                src_str = 'Source: ' + src + ' (' + str(tran.source) + ')'
-                self.insert( tran_id, 'end', text=src_str )
+                src_str = "Source: " + src + " (" + str(tran.source) + ")"
+                self.insert(tran_id, 'end', text=src_str)
 
                 # Destination
-                dest_str = 'Destination: ' + dest + ' (' + str(tran.destination) + ')'
-                self.insert( tran_id, 'end', text=dest_str )
+                dest_str = "Destination: " + dest + " (" \
+                           + str(tran.destination) + ")"
+                self.insert(tran_id, 'end', text=dest_str)
 
                 # Guard
-                guard_str = 'Guards: ' + ( tran.guard.raw or 'None' )
-                self.insert( tran_id, 'end', text=guard_str )
+                guard_str = "Guards: " + (tran.guard.raw or "None")
+                self.insert(tran_id, 'end', text=guard_str)
 
                 # Actions
-                act_id = self.insert( tran_id, 'end', text='Actions' )
+                act_id = self.insert(tran_id, 'end', text="Actions")
                 for act in tran.actions:
-                    self.insert( act_id, 'end', text=act.raw )
+                    self.insert(act_id, 'end', text=act.raw)
 
-        print( 'Done.' )
+        print("Done.")
         return
 
-    def _init_rc_menus( self ):
+    def _init_rc_menus(self):
         """Initialize right-click menus for Treeview"""  
 
         # Right-click 'Automaton' parent
-        self.automaton_rc_menu = Menu( self, tearoff=0 )
-        self.automaton_rc_menu.add_command( label='Add Automaton', command=lambda: self.launch_entry_popup( AUTOMATON, ADD ) )
-        self.automaton_rc_menu.add_command( label='Edit Automaton', command=lambda: self.launch_entry_popup( AUTOMATON, EDIT ) )
-        self.automaton_rc_menu.add_command( label='Delete Automaton', command=lambda: self.launch_entry_popup( AUTOMATON, DELETE ) )
+        self.automaton_rc_menu = Menu(self, tearoff=0)
+        self.automaton_rc_menu.add_command(label="Add Automaton",
+            command=lambda: self.launch_entry_popup(AUTOMATON, ADD))
+        self.automaton_rc_menu.add_command(label="Edit Automaton",
+            command=lambda: self.launch_entry_popup(AUTOMATON, EDIT))
+        self.automaton_rc_menu.add_command(label="Delete Automaton",
+            command=lambda: self.launch_entry_popup(AUTOMATON, DELETE))
 
         # Right-click 'Variables' parent
-        self.variables_rc_menu = Menu( self, tearoff=0 )
-        self.variables_rc_menu.add_command( label='Edit Variables', command=lambda: self.launch_entry_popup( VARIABLES, EDIT ) )
+        self.variables_rc_menu = Menu(self, tearoff=0)
+        self.variables_rc_menu.add_command(label="Edit Variables",
+            command=lambda: self.launch_entry_popup(VARIABLES, EDIT))
         
         # Right-click 'Modes' parent
-        self.modes_rc_menu = Menu( self, tearoff=0 )
-        self.modes_rc_menu.add_command( label='Add Mode', command=lambda: self.launch_entry_popup( MODES, ADD ) )
-        self.modes_rc_menu.add_command( label='Edit Mode', command=lambda: self.launch_entry_popup( MODES, EDIT) )
-        self.modes_rc_menu.add_command( label='Delete Mode', command=lambda:
-        self.launch_entry_popup( MODES, DELETE ) ) 
+        self.modes_rc_menu = Menu(self, tearoff=0)
+        self.modes_rc_menu.add_command(label="Add Mode",
+            command=lambda: self.launch_entry_popup(MODES, ADD))
+        self.modes_rc_menu.add_command(label="Edit Mode",
+            command=lambda: self.launch_entry_popup(MODES, EDIT))
+        self.modes_rc_menu.add_command(label="Delete Mode",
+            command=lambda: self.launch_entry_popup(MODES, DELETE)) 
 
         # Right-click 'Transitions' parent
-        self.transitions_rc_menu = Menu( self, tearoff=0 )
-        self.transitions_rc_menu.add_command( label='Add Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, ADD ) )
-        self.transitions_rc_menu.add_command( label='Edit Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, EDIT ) )
-        self.transitions_rc_menu.add_command( label='Delete Transition', command=lambda: self.launch_entry_popup( TRANSITIONS, DELETE ) )
+        self.transitions_rc_menu = Menu(self, tearoff=0)
+        self.transitions_rc_menu.add_command(label="Add Transition",
+            command=lambda: self.launch_entry_popup(TRANSITIONS, ADD))
+        self.transitions_rc_menu.add_command(label="Edit Transition",
+            command=lambda: self.launch_entry_popup(TRANSITIONS, EDIT))
+        self.transitions_rc_menu.add_command(label="Delete Transition",
+            command=lambda: self.launch_entry_popup(TRANSITIONS, DELETE))
 
         return
 
-    def _on_right_click( self, event ):
+    def _on_right_click(self, event):
         """ Right-click event callback """
 
-        def _disable_enable( context_menu ):
-            """ Inner Function to disable/enable options for Mode and Transition rc menus """
-            if( self.slct_child == self.slct_grandchild ):  # User clicked on a context
-                context_menu.entryconfig( 1, state=DISABLED )
-                context_menu.entryconfig( 2, state=DISABLED )
-            else:  # User clicked on an object
-                context_menu.entryconfig( 1, state=NORMAL )
-                context_menu.entryconfig( 2, state=NORMAL )
+        def _disable_enable(context_menu):
+            """ Inner Function to disable/enable options for rc menus """
+            if self.slct_child == self.slct_grandchild:  # Context clicked
+                context_menu.entryconfig(1, state=DISABLED)
+                context_menu.entryconfig(2, state=DISABLED)
+            else:  # Object clicked
+                context_menu.entryconfig(1, state=NORMAL)
+                context_menu.entryconfig(2, state=NORMAL)
             return
 
         # Populate selection variables
-        self._identify_selection( event )
+        self._identify_selection(event)
 
         # Display appropriate menu popup
-        if( self.slct_context == VARIABLES or self.slct_context == THINVARIABLES ):
+        if ((self.slct_context == VARIABLES) or\
+            (self.slct_context == THINVARIABLES)):
             context_menu = self.variables_rc_menu
-        elif( self.slct_context == MODES ):
+        elif self.slct_context == MODES:
             context_menu = self.modes_rc_menu
-            _disable_enable( context_menu )
-        elif( self.slct_context == TRANSITIONS ):
+            _disable_enable(context_menu)
+        elif self.slct_context == TRANSITIONS:
             context_menu = self.transitions_rc_menu
-            _disable_enable( context_menu )
-        elif( self.slct_context == AUTOMATON ):
+            _disable_enable(context_menu)
+        elif self.slct_context == AUTOMATON:
             context_menu = self.automaton_rc_menu
-            if( self.slct_automaton == None ):
-                context_menu.entryconfig( 1, state=DISABLED )
-                context_menu.entryconfig( 2, state=DISABLED )
+            if self.slct_automaton == None:
+                context_menu.entryconfig(1, state=DISABLED)
+                context_menu.entryconfig(2, state=DISABLED)
             else:
-                context_menu.entryconfig( 1, state=NORMAL )
-                context_menu.entryconfig( 2, state=NORMAL )
+                context_menu.entryconfig(1, state=NORMAL)
+                context_menu.entryconfig(2, state=NORMAL)
         else:
             return
 
         # Popup menu
-        context_menu.tk_popup( event.x_root, event.y_root )
+        context_menu.tk_popup(event.x_root, event.y_root)
 
         return
 
-    def _on_left_click( self, event ):
+    def _on_left_click(self, event):
         """ Left-click event callback """
 
         # Populate selection variables
-        self._identify_selection( event )
+        self._identify_selection(event)
 
         return
 
-    def _on_double_click( self, event ):
+    def _on_double_click(self, event):
         """ Double-click event callback """
 
         # Populate selection variables        
-        self._identify_selection( event )
+        self._identify_selection(event)
 
-        # Do nothing if no automaton was selected (user didn't click on an item)
-        if( self.slct_automaton == None ): 
+        # Nothing selected
+        if self.slct_automaton == None: 
             return
         
         # Double-click on a parent (heading), launch add popup.
         # Double-click on an object, launch edit popup.
-        if( self.slct_context == AUTOMATON ):
+        if self.slct_context == AUTOMATON:
             action = ADD
-        elif( ( self.slct_mode == None ) and ( self.slct_transition == None ) ):
+        elif((self.slct_mode == None) and (self.slct_transition == None)):
             action = ADD
         else:
             action = EDIT
 
-        self.launch_entry_popup( self.slct_context, action )
+        self.launch_entry_popup(self.slct_context, action)
 
         return
 
-    def _identify_selection( self, event ):
-        """ Identify intended selection for right-click and double-click events """
+    def _identify_selection(self, event):
+        """ Identify selection for right-click and double-click events """
 
         # Clear selection variables
         self._init_selection_vars()
 
-        item_id = self.identify_row( event.y )
+        item_id = self.identify_row(event.y)
 
         # Return early if no item selected - default to Automaton context
-        if( not item_id ):
+        if(not item_id):
             self.slct_context = AUTOMATON
-            self.selection_remove( self.selection() ) # Unselect previous selections
+            self.selection_remove(self.selection())
             return
 
         # Highlight selected item
-        self.selection_set( item_id )
+        self.selection_set(item_id)
         
         # Set selection varialbes
-        self._set_slct_vars( item_id )
+        self._set_slct_vars(item_id)
            
         return
 
-    def _set_slct_vars( self, item_id ):
+    def _set_slct_vars(self, item_id):
         """ Returns the ids of the automaton, context, and object of selection (item_id) in that order """
 
         root = item_id
         child = item_id
         grandchild = item_id
 
-        while( self.parent( root ) != '' ):
+        while(self.parent(root) != ''):
             grandchild = child
             child = root
-            root = self.parent( root )
+            root = self.parent(root)
 
         self.slct_root = root
         self.slct_child = child
@@ -343,43 +353,53 @@ class TreeView( Treeview ):
 
         self.slct_automaton = self.automaton_dict[root]
         
-        if( child == root ):
+        if(child == root):
             # User clicked on an automaton name
             self.slct_context = AUTOMATON
             return
-        self.slct_context = self.item( child )['text']
+        self.slct_context = self.item(child)['text']
 
-        if( grandchild == child ): 
+        if(grandchild == child): 
             # User clicked on Context heading, no object selected
             return
 
-        if( self.slct_context == MODES ):
+        if(self.slct_context == MODES):
             self.slct_mode = self.mode_dict[grandchild]
-        elif( self.slct_context == TRANSITIONS ):
+        elif(self.slct_context == TRANSITIONS):
             self.slct_transition = self.trans_dict[grandchild]
         
         return 
 
-    def launch_entry_popup( self, context, action ):
+    def launch_entry_popup(self, context, action):
         
-        if( context == VARIABLES or context == THINVARIABLES ):
-            entry = VariableEntry( self.master, self.slct_automaton )
-        elif( context == MODES ):
-            entry = ModeEntry( self.master, self.slct_automaton, self.mode_name_dict[self.slct_root], action,  self.slct_mode )   
-        elif( context == TRANSITIONS ):
-            entry = TransitionEntry( self.master, self.slct_automaton, self.mode_name_dict[self.slct_root], action, self.slct_transition )
-        elif( context == AUTOMATON ):
-            entry = AutomatonEntry( self.master, Session.hybrid, action, self.slct_automaton )
+        if(context == VARIABLES or context == THINVARIABLES):
+            entry = VariableEntry(self.master, self.slct_automaton)
+        elif(context == MODES):
+            entry = ModeEntry(self.master, 
+                              self.slct_automaton,
+                              self.mode_name_dict[self.slct_root], 
+                              action, 
+                              self.slct_mode)   
+        elif(context == TRANSITIONS):
+            entry = TransitionEntry(self.master,
+                                    self.slct_automaton,
+                                    self.mode_name_dict[self.slct_root], 
+                                    action, 
+                                    self.slct_transition)
+        elif(context == AUTOMATON):
+            entry = AutomatonEntry(self.master, 
+                                   Session.hybrid, action,
+                                   self.slct_automaton)
         
         # Wait for user response
-        self.master.wait_window( entry )
+        self.master.wait_window(entry)
 
-        if( entry.changed ):
+        if(entry.changed):
             # Update property status if the model was changed
             self.sidebar._expire_properties()
-            # Mode/Variable changes may change validity of Initial Set / Unsafe Set
-            self.sidebar._callback_is( self.sidebar.initial_set.get() )
-            self.sidebar._callback_us( self.sidebar.unsafe_set.get() )
+            # Changes may change validity of Initial Set / Unsafe Set
+            self.sidebar._callback_is(self.sidebar.initial_set.get())
+            self.sidebar._callback_us(self.sidebar.unsafe_set.get())
             # Flag libararies for re-compilation
             Session.lib_compiled = False
             # Flag Session for parsing and compilation
@@ -396,10 +416,10 @@ class TreeView( Treeview ):
         return
 
 
-class ModelSidebar( Frame ):
+class ModelSidebar(Frame):
 
-    def __init__( self, parent, **options ):
-        Frame.__init__( self, parent, **options )
+    def __init__(self, parent, **options):
+        Frame.__init__(self, parent, **options)
         
         self.parent = parent
         self.sel_iid = None
@@ -409,14 +429,14 @@ class ModelSidebar( Frame ):
         self._init_widgets()
 
 
-    def _bind_events( self ):
+    def _bind_events(self):
         """ Bind open and close file events and click events """
 
-        self.bind( CLOSE_EVENT, self._clear_properties )
-        EventHandler.add_event_listeners( self, CLOSE_EVENT )
+        self.bind(CLOSE_EVENT, self._clear_properties)
+        EventHandler.add_event_listeners(self, CLOSE_EVENT)
 
-        self.bind( OPEN_EVENT, self._load_properties )
-        EventHandler.add_event_listeners( self, OPEN_EVENT ) 
+        self.bind(OPEN_EVENT, self._load_properties)
+        EventHandler.add_event_listeners(self, OPEN_EVENT) 
 
         return
 
@@ -427,14 +447,14 @@ class ModelSidebar( Frame ):
         self._init_prop_list()
 
         # Pack child frames
-        self.prop_view.pack( fill=X )
-        self.prop_view.columnconfigure( 1, weight=1 )
-        self.prop_list.pack( expand=TRUE, fill=BOTH )
+        self.prop_view.pack(fill=X)
+        self.prop_view.columnconfigure(1, weight=1)
+        self.prop_list.pack(expand=TRUE, fill=BOTH)
 
         return
 
     ''' PROPERTY VIEW GUI AND FUNCTIONS '''
-    def _init_prop_view( self ):
+    def _init_prop_view(self):
         """ Initialize Property View GUI elements and trace variables """
         
         # Regex building blocks
@@ -457,104 +477,104 @@ class ModelSidebar( Frame ):
         self.re_us = unsafe_set
 
         # Property view frame
-        self.prop_view = LabelFrame( self, text='Property' )
+        self.prop_view = LabelFrame(self, text='Property')
 
         # Name
-        Label( self.prop_view, text='Property name:').grid(row=0, sticky=W )
-        self.name_vl = ValidLabel( self.prop_view )
-        self.name_vl.grid( row=0, column=2, sticky=E )
+        Label(self.prop_view, text='Property name:').grid(row=0, sticky=W)
+        self.name_vl = ValidLabel(self.prop_view)
+        self.name_vl.grid(row=0, column=2, sticky=E)
         self.name_var = StringVar()
-        self.name_var.trace_variable( 'w', self._callback_name )
-        Entry( self.prop_view, textvariable=self.name_var ).grid( row=0, column=1, sticky=W+E )
+        self.name_var.trace_variable('w', self._callback_name)
+        Entry(self.prop_view, textvariable=self.name_var).grid(row=0, column=1, sticky=W+E)
 
         # Verification type
         # TODO only for show; complete when more functionality available
         self.type_var = IntVar()
-        Radiobutton( self.prop_view, text='Safety', variable=self.type_var, value=0 ).grid( row=1 )
+        Radiobutton(self.prop_view, text='Safety', variable=self.type_var, value=0).grid(row=1)
 
         # Time step 
-        Label( self.prop_view, text='Time step:' ).grid( row=2, sticky=W )
-        self.ts_vl = ValidLabel( self.prop_view )
-        self.ts_vl.grid( row=2, column=2, sticky=E )
+        Label(self.prop_view, text='Time step:').grid(row=2, sticky=W)
+        self.ts_vl = ValidLabel(self.prop_view)
+        self.ts_vl.grid(row=2, column=2, sticky=E)
         self.time_step_var = DoubleVar()
-        self.time_step_var.trace_variable( 'w', self._callback_time_step )
-        Entry( self.prop_view, textvariable=self.time_step_var ).grid( row=2, column=1, sticky=W+E )
+        self.time_step_var.trace_variable('w', self._callback_time_step)
+        Entry(self.prop_view, textvariable=self.time_step_var).grid(row=2, column=1, sticky=W+E)
 
         # Time horizon
-        Label( self.prop_view, text='Time horizon:' ).grid( row=3, sticky=W )
-        self.th_vl = ValidLabel( self.prop_view )
-        self.th_vl.grid( row=3, column=2, sticky=E )
+        Label(self.prop_view, text='Time horizon:').grid(row=3, sticky=W)
+        self.th_vl = ValidLabel(self.prop_view)
+        self.th_vl.grid(row=3, column=2, sticky=E)
         self.time_horizon_var = DoubleVar()
-        self.time_horizon_var.trace_variable( 'w', self._callback_time_horizon )
-        Entry( self.prop_view, textvariable=self.time_horizon_var ).grid( row=3, column=1, sticky=W+E )
+        self.time_horizon_var.trace_variable('w', self._callback_time_horizon)
+        Entry(self.prop_view, textvariable=self.time_horizon_var).grid(row=3, column=1, sticky=W+E)
 
         # K value
-        Label( self.prop_view, text='K value:' ).grid( row=4, sticky=W )
-        self.kv_vl = ValidLabel( self.prop_view )
-        self.kv_vl.grid( row=4, column=2, sticky=E )
+        Label(self.prop_view, text='K value:').grid(row=4, sticky=W)
+        self.kv_vl = ValidLabel(self.prop_view)
+        self.kv_vl.grid(row=4, column=2, sticky=E)
         self.k_value_var = DoubleVar()
-        self.k_value_var.trace_variable( 'w', self._callback_k_value )
-        Entry( self.prop_view, textvariable=self.k_value_var ).grid( row=4, column=1, sticky=W+E )
+        self.k_value_var.trace_variable('w', self._callback_k_value)
+        Entry(self.prop_view, textvariable=self.k_value_var).grid(row=4, column=1, sticky=W+E)
 
         # Simulator type
-        opts = ( ODEINT_FIX, ODEINT_ADP, CAPD )
-        Label( self.prop_view, text='Simulator:' ).grid( row=5, sticky=W )
+        opts = (ODEINT_FIX, ODEINT_ADP, CAPD)
+        Label(self.prop_view, text='Simulator:').grid(row=5, sticky=W)
         self.sim_var = StringVar()
-        self.sim_var.set( opts[0] )
-        self.sim_var.trace_variable( 'w', self._callback_simulator )
-        OptionMenu( self.prop_view, self.sim_var, '', *opts )\
-                .grid( row=5, column=1, columnspan=2, sticky=W+E )
+        self.sim_var.set(opts[0])
+        self.sim_var.trace_variable('w', self._callback_simulator)
+        OptionMenu(self.prop_view, self.sim_var, '', *opts)\
+                .grid(row=5, column=1, columnspan=2, sticky=W+E)
 
         # Refine type
-        opts = ( DEF_STRAT, USR_STRAT )
-        Label( self.prop_view, text='Refinement:' ).grid( row=6, sticky=W )
+        opts = (DEF_STRAT, USR_STRAT)
+        Label(self.prop_view, text='Refinement:').grid(row=6, sticky=W)
         self.ref_var = StringVar()
-        self.ref_var.set( opts[0] )
-        self.ref_var.trace_variable( 'w', self._callback_refine_strat )
-        OptionMenu( self.prop_view, self.ref_var, '', *opts )\
-                .grid( row=6, column=1, columnspan=2, sticky=W+E )
+        self.ref_var.set(opts[0])
+        self.ref_var.trace_variable('w', self._callback_refine_strat)
+        OptionMenu(self.prop_view, self.ref_var, '', *opts)\
+                .grid(row=6, column=1, columnspan=2, sticky=W+E)
 
         # Initial set
-        Label( self.prop_view, text='Initial set:' ).grid( row=7, sticky=W )
+        Label(self.prop_view, text='Initial set:').grid(row=7, sticky=W)
         self.is_err = StringVar()
         self.is_err.set('')
-        Label( self.prop_view, textvariable=self.is_err ).grid( row=7, column=1, sticky=W+E )
-        self.is_vl = ValidLabel( self.prop_view )
-        self.is_vl.grid( row=7, column=2, sticky=E )
-        self.initial_set = SetText( self.prop_view, height=65, callback=self._callback_is )
-        self.initial_set.grid( row=8, rowspan=4, columnspan=3, sticky=N+S+E+W )
+        Label(self.prop_view, textvariable=self.is_err).grid(row=7, column=1, sticky=W+E)
+        self.is_vl = ValidLabel(self.prop_view)
+        self.is_vl.grid(row=7, column=2, sticky=E)
+        self.initial_set = SetText(self.prop_view, height=65, callback=self._callback_is)
+        self.initial_set.grid(row=8, rowspan=4, columnspan=3, sticky=N+S+E+W)
 
         # Unsafe set
-        Label( self.prop_view, text='Unsafe set:' ).grid( row=12, sticky=W )
+        Label(self.prop_view, text='Unsafe set:').grid(row=12, sticky=W)
         self.us_err = StringVar()
         self.us_err.set('')
-        Label( self.prop_view, textvariable=self.us_err ).grid( row=12, column=1, sticky=E )
-        self.us_vl = ValidLabel( self.prop_view )
-        self.us_vl.grid( row=12, column=2, sticky=E )
-        self.unsafe_set = SetText( self.prop_view, height=65, callback=self._callback_us )
-        self.unsafe_set.grid( row=13, rowspan=4, columnspan=3, sticky=N+S+E+W )
+        Label(self.prop_view, textvariable=self.us_err).grid(row=12, column=1, sticky=E)
+        self.us_vl = ValidLabel(self.prop_view)
+        self.us_vl.grid(row=12, column=2, sticky=E)
+        self.unsafe_set = SetText(self.prop_view, height=65, callback=self._callback_us)
+        self.unsafe_set.grid(row=13, rowspan=4, columnspan=3, sticky=N+S+E+W)
 
         return 
 
-    def _callback_name( self, *args ):
+    def _callback_name(self, *args):
         """ Verify property name, update Session, and conditionally update property status """
 
         name = self.name_var.get()
         
         # Update property status if name changed and model is Simulated or Verified
-        if( name != Session.cur_prop.name ):
-            if( Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified ):
-                self._update_property_status( 0, 0, 1 )
+        if(name != Session.cur_prop.name):
+            if(Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified):
+                self._update_property_status(0, 0, 1)
 
         # Validate name
         valid = True
-        if( name == '' ):
+        if(name == ''):
             valid = False
         else:
             for prop in Session.hybrid.properties:
-                if( prop.is_visible ):
+                if(prop.is_visible):
                     continue
-                elif( name == prop.name ):
+                elif(name == prop.name):
                     valid = False
                     break
 
@@ -563,12 +583,12 @@ class ModelSidebar( Frame ):
         Session.cur_prop.name_valid = valid
 
         # Update GUI elements
-        self.name_vl.set_state( valid )
-        self.list_view.set( self.sel_iid, 0, name )
+        self.name_vl.set_state(valid)
+        self.list_view.set(self.sel_iid, 0, name)
 
         return
     
-    def _callback_time_step( self, *args ):
+    def _callback_time_step(self, *args):
         """ Verify time step, update Session, and conditionally update property status """
 
         # Validate time step
@@ -580,20 +600,20 @@ class ModelSidebar( Frame ):
             valid = False
 
         # Update property status if time step changed and model is Simulated or Verified
-        if( Session.cur_prop.time_step != time_step ): 
-            if( Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified ):
-                self._update_property_status( 0, 0, 1 )
+        if(Session.cur_prop.time_step != time_step): 
+            if(Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified):
+                self._update_property_status(0, 0, 1)
 
         # Update Session
         Session.cur_prop.time_step = time_step
         Session.cur_prop.time_step_valid = valid
         
         # Update GUI Elements
-        self.ts_vl.set_state( valid) 
+        self.ts_vl.set_state(valid) 
 
         return
     
-    def _callback_time_horizon( self, *args ):
+    def _callback_time_horizon(self, *args):
         """ Verify time horizon, update Session, and conditionally update property status """
 
         # Validate time horizon
@@ -605,20 +625,20 @@ class ModelSidebar( Frame ):
             valid = False
 
         # Update property status if time horizon changed and model is Simulated or Verified
-        if( Session.cur_prop.time_horizon != time_horizon ): 
-            if( Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified ):
-                self._update_property_status( 0, 0, 1 )
+        if(Session.cur_prop.time_horizon != time_horizon): 
+            if(Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified):
+                self._update_property_status(0, 0, 1)
 
         # Update Session
         Session.cur_prop.time_horizon = time_horizon
         Session.cur_prop.time_horizon_valid = valid
         
         # Update GUI Elements
-        self.th_vl.set_state( valid )
+        self.th_vl.set_state(valid)
 
         return
 
-    def _callback_k_value( self, *args ):
+    def _callback_k_value(self, *args):
         """ Verify k value, update Session, and conditionally update property status """
 
         # Validate k value
@@ -632,48 +652,48 @@ class ModelSidebar( Frame ):
         # Update property status if k value changed and model is Simulated or Verified
         if Session.cur_prop.k_value != k_value: 
             if Session.cur_prop.status == Simulated or Session.cur_prop.status == Verified:
-                self._update_property_status( 0, 0, 1 )
+                self._update_property_status(0, 0, 1)
 
         # Update Session
         Session.cur_prop.k_value = k_value
         Session.cur_prop.k_value_valid = valid
         
         # Update GUI Elements
-        self.kv_vl.set_state( valid )
+        self.kv_vl.set_state(valid)
 
         return
     
-    def _callback_simulator( self, *args ):
+    def _callback_simulator(self, *args):
         """ Update Session simulator """
 
         Session.simulator = self.sim_var.get()
         
         return
 
-    def _callback_refine_strat( self, *args ):
+    def _callback_refine_strat(self, *args):
         """ Update Session refine strategy """
         
         Session.refine_strat = self.ref_var.get()
         
         return
 
-    def _callback_is( self, initial_set ):
+    def _callback_is(self, initial_set):
         """ Parse initial set an display errors, if any, above text box """
 
-        ( valid, error ) = Property.validate_initial_set( initial_set )
+        (valid, error) = Property.validate_initial_set(initial_set)
         
-        self.is_err.set( error )
-        self.is_vl.set_state( valid )
+        self.is_err.set(error)
+        self.is_vl.set_state(valid)
 
         return
 
-    def _callback_us( self, unsafe_set ):
+    def _callback_us(self, unsafe_set):
         """ Parse unsafe set an display errors, if any, above text box """
 
-        ( valid, error ) = Property.validate_unsafe_set( unsafe_set )
+        (valid, error) = Property.validate_unsafe_set(unsafe_set)
         
-        self.us_err.set( error )
-        self.us_vl.set_state( valid )
+        self.us_err.set(error)
+        self.us_vl.set_state(valid)
 
         return
 
@@ -691,63 +711,63 @@ class ModelSidebar( Frame ):
 
 
     ''' PROPERTY LIST GUI AND FUNCTIONS'''
-    def _init_prop_list( self ):
+    def _init_prop_list(self):
         """ Initialize Property List GUI elements """
 
         # Property list frame
-        self.prop_list = LabelFrame( self, text='Properties' )
+        self.prop_list = LabelFrame(self, text='Properties')
 
         # Property list
-        self.list_view = Treeview( self.prop_list )
-        self.list_view.pack( fill=BOTH, expand=TRUE )
-        self.list_view.bind( '<Button-1>', self._callback_btn_press )
-        self.list_view.bind( '<Double-Button-1>', self._callback_btn_press_double )
+        self.list_view = Treeview(self.prop_list)
+        self.list_view.pack(fill=BOTH, expand=TRUE)
+        self.list_view.bind('<Button-1>', self._callback_btn_press)
+        self.list_view.bind('<Double-Button-1>', self._callback_btn_press_double)
 
         self.list_view['show'] = 'headings'
-        self.list_view['columns'] = ( 'name', 'status', 'result' )
-        self.list_view.column( 'name', width=100 )
-        self.list_view.column( 'status', width=100 )
-        self.list_view.column( 'result', width=100 )
-        self.list_view.heading( 'name', text='Property' )
-        self.list_view.heading( 'status', text='Status' )
-        self.list_view.heading( 'result', text='Result' )
+        self.list_view['columns'] = ('name', 'status', 'result')
+        self.list_view.column('name', width=100)
+        self.list_view.column('status', width=100)
+        self.list_view.column('result', width=100)
+        self.list_view.heading('name', text='Property')
+        self.list_view.heading('status', text='Status')
+        self.list_view.heading('result', text='Result')
 
         # New, copy, and remove buttons
-        row = Frame( self.prop_list )
-        row.pack( fill=X )
+        row = Frame(self.prop_list)
+        row.pack(fill=X)
 
-        self.new_btn = Button( row, text='New', command=self._callback_new )
-        self.new_btn.pack( expand=TRUE, fill=X, side=LEFT )
+        self.new_btn = Button(row, text='New', command=self._callback_new)
+        self.new_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
-        self.cpy_btn = Button( row, text='Copy', command=self._callback_cpy )
-        self.cpy_btn.pack( expand=TRUE, fill=X, side=LEFT )
+        self.cpy_btn = Button(row, text='Copy', command=self._callback_cpy)
+        self.cpy_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
-        self.rmv_btn = Button( row, text='Remove', command=self._callback_rmv )
-        self.rmv_btn.pack( expand=TRUE, fill=X, side=LEFT )
+        self.rmv_btn = Button(row, text='Remove', command=self._callback_rmv)
+        self.rmv_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
         # Simulate and verify buttons
-        row = Frame( self.prop_list )
-        row.pack( fill=X )
+        row = Frame(self.prop_list)
+        row.pack(fill=X)
 
-        self.sim_btn = Button( row, text='Simulate', command=self._callback_sim )
-        self.sim_btn.pack( expand=TRUE, fill=X, side=LEFT )
+        self.sim_btn = Button(row, text='Simulate', command=self._callback_sim)
+        self.sim_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
-        self.ver_btn = Button( row, text='Verify', command=self._callback_ver )
-        self.ver_btn.pack( expand=TRUE, fill=X, side=LEFT )
+        self.ver_btn = Button(row, text='Verify', command=self._callback_ver)
+        self.ver_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
         # Parse and Compose buttons
-        row = Frame( self.prop_list )
-        row.pack( fill=X )
+        row = Frame(self.prop_list)
+        row.pack(fill=X)
 
-        self.parse_btn = Button( row, text='Parse', command=self._callback_parse )
-        self.parse_btn.pack( expand=TRUE, fill=X, side=LEFT )
+        self.parse_btn = Button(row, text='Parse', command=self._callback_parse)
+        self.parse_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
-        self.compose_btn = Button( row, text='Compose', command=self._callback_compose )
-        self.compose_btn.pack( expand=TRUE, fill=X, side=LEFT )
+        self.compose_btn = Button(row, text='Compose', command=self._callback_compose)
+        self.compose_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
 
-    def _add_property( self, prop ):
-        iid = self.list_view.insert('',  'end', values=(prop.name, prop.status, prop.result) )
+    def _add_property(self, prop):
+        iid = self.list_view.insert('',  'end', values=(prop.name, prop.status, prop.result))
         self.prop_dict[iid] = prop
         return iid
 
@@ -827,13 +847,13 @@ class ModelSidebar( Frame ):
         self._display_property(Session.cur_prop)
 
 
-    def _callback_parse( self ):
-        HyIR.parse_all( Session.hybrid )
+    def _callback_parse(self):
+        HyIR.parse_all(Session.hybrid)
 
 
-    def _callback_compose( self ):
-        HyIR.parse_all( Session.hybrid )
-        HyIR.compose_all( Session.hybrid )
+    def _callback_compose(self):
+        HyIR.parse_all(Session.hybrid)
+        HyIR.compose_all(Session.hybrid)
 
 
     def _callback_sim(self):
@@ -845,11 +865,11 @@ class ModelSidebar( Frame ):
 
         result = simulate()
 
-        self._disable_enable_button( 0 )
-        self._update_property_status( 1, result, 0 )
+        self._disable_enable_button(0)
+        self._update_property_status(1, result, 0)
 
-        if( result != 0 ):
-            self._open_the_plotter_window( 3 )
+        if(result != 0):
+            self._open_the_plotter_window(3)
 
         return
 
@@ -862,41 +882,44 @@ class ModelSidebar( Frame ):
         
         result = verify()
         
-        self._disable_enable_button( 0 )
-        self._update_property_status( 0, result, 0 )
+        self._disable_enable_button(0)
+        self._update_property_status(0, result, 0)
 
-        if( result!=0 ):
+        if(result != 0):
             
-            if( Session.cur_prop.simulator == ODEINT_ADP ):
+            if(Session.cur_prop.simulator == ODEINT_ADP):
                 self._open_the_plotter_window(2)        
             else:
                 self._open_the_plotter_window(1)
 
         return
     
-    def _open_the_plotter_window(self,sim_adpative):
-        #construct arguments to open the plot window
-        #Sim == 1, FIX_STEP == 0, Adaptive == 2
-        #Different result uses different plotter
+    def _open_the_plotter_window(self, sim_adpative):
+        """
+        Construct arguments to open the plot window
+        Sim == 1, FIX_STEP == 0, Adaptive == 2
+        Different result uses different plotter 
+        """
         unsafe_set = Session.cur_prop.unsafe_set_obj
-        file_path = '../work-dir/'+Session.cur_prop.name
+        file_path = '../work-dir/' + Session.cur_prop.name
         time_step = Session.cur_prop.time_step
         time_horizon = Session.cur_prop.time_horizon
         varlist = Session.hybrid.local_var_names
         modelist = Session.hybrid.mode_names
 
-        self.parent.parent._init_plot_widgets(varlist,modelist,time_step,time_horizon,unsafe_set,file_path,sim_adpative,Session.cur_prop.name)
+        # self.parent.parent is the ModelNotebook object (modelnotebook.py)
+        self.parent.parent._init_plot_widgets(varlist, modelist, time_step, time_horizon, unsafe_set, file_path, sim_adpative, Session.cur_prop.name)
         
-    def _expire_properties( self ):
+    def _expire_properties(self):
         """ Expire all Simulated and Verified properties """
         
         for iid in self.prop_dict:
             prop = self.prop_dict[iid]
-            if( ( prop.status == Simulated or prop.status == Verified ) and ( prop.result != 'Expired' ) ):
+            if((prop.status == Simulated or prop.status == Verified) and (prop.result != 'Expired')):
                 prop.status += '*'
                 prop.result = 'Expired'
 
-                self.list_view.item( iid, values=( prop.name, prop.status, prop.result ) )
+                self.list_view.item(iid, values=(prop.name, prop.status, prop.result))
 
         return
 
@@ -954,16 +977,16 @@ class ModelSidebar( Frame ):
         self.sel_iid = None
 
 
-    def _load_properties( self, event=None ):
+    def _load_properties(self, event=None):
         """ Load properties """
 
         for prop in Session.hybrid.properties:
-            iid = self._add_property( prop )
+            iid = self._add_property(prop)
             if not self.sel_iid: 
                 self.sel_iid = iid
 
-        self.list_view.selection_set( self.sel_iid )
+        self.list_view.selection_set(self.sel_iid)
         Session.cur_prop = self.prop_dict[self.sel_iid]        
         Session.cur_prop.is_visible = True
 
-        self._display_property( Session.cur_prop )
+        self._display_property(Session.cur_prop)

@@ -6,7 +6,7 @@ from frontend.mod.constants import *
 
 class Automaton:
 
-    def __init__( self, name="default_automaton" ):
+    def __init__(self, name="default_automaton"):
 
         self.name = name
 
@@ -22,103 +22,103 @@ class Automaton:
         self.next_transition_id = 0
 
     @property
-    def vars( self ):
+    def vars(self):
         return self.variables.all
 
     @property
-    def local_vars( self ):
+    def local_vars(self):
         return self.variables.local
 
     @property
-    def local_var_names( self ):
+    def local_var_names(self):
         return self.variables.local_names
 
     @property
-    def thinvars( self ):
+    def thinvars(self):
         return self.thinvariables.all
 
     @property
-    def local_thinvars( self ):
+    def local_thinvars(self):
         return self.thinvariables.local
 
     @property
-    def local_thinvar_names( self ):
+    def local_thinvar_names(self):
         return self.thinvariables.local_names
         
     @property
-    def mode_names( self ):
+    def mode_names(self):
         names = []
         for mode in self.modes:
-            names.append( mode.name )
+            names.append(mode.name)
         return names
 
     @property
-    def trans( self ):
-        print( "******************************************************" )
-        print( " WARNING: USING DEPRECATED PROPERTY - AUTOMATON.TRANS" )
-        print( "******************************************************" )
+    def trans(self):
+        print("******************************************************")
+        print(" WARNING: USING DEPRECATED PROPERTY - AUTOMATON.TRANS")
+        print("******************************************************")
         return self.transitions
 
-    def add_var( self, var ):
-        self.variables.add_var( var )
+    def add_var(self, var):
+        self.variables.add_var(var)
         return
 
-    def remove_var( self, var ):
-        self.variables.remove_var( var )
+    def remove_var(self, var):
+        self.variables.remove_var(var)
         return
     
-    def reset_vars( self ):
+    def reset_vars(self):
         self.variables = Variables()
         return
 
-    def add_thinvar( self, thinvar ):
-        self.thinvariables.add_thinvar( thinvar )
+    def add_thinvar(self, thinvar):
+        self.thinvariables.add_thinvar(thinvar)
         return
 
-    def remove_thinvar( self, thinvar ):
-        self.thinvariables.remove_thinvar( thinvar )
+    def remove_thinvar(self, thinvar):
+        self.thinvariables.remove_thinvar(thinvar)
         return
 
-    def reset_thinvars( self ):
+    def reset_thinvars(self):
         self.thinvariables = ThinVariables()
         return
 
-    def add_mode( self, mode, fileread=False ):
-        if( not fileread ): 
+    def add_mode(self, mode, fileread=False):
+        if(not fileread): 
             mode.id = self.next_mode_id
             self.next_mode_id += 1 
-        self.modes.append( mode )
+        self.modes.append(mode)
        
         return
     
-    def remove_mode( self, mode ):
-        self.modes.remove( mode )
+    def remove_mode(self, mode):
+        self.modes.remove(mode)
         return
 
-    def add_transition( self, tran ):
-        self.transitions.append( tran )
+    def add_transition(self, tran):
+        self.transitions.append(tran)
         return
 
-    def remove_transition( self, tran ):
-        self.transitions.remove( tran )
+    def remove_transition(self, tran):
+        self.transitions.remove(tran)
         return
 
     # DEPRECATED?
         
-    def new_mode_id( self ):
+    def new_mode_id(self):
         m_id = self.next_mode_id
         self.next_mode_id += 1
         return m_id
     
-    def new_transition_id( self ):
+    def new_transition_id(self):
         t_id = self.next_transition_id
         self.next_transition_id += 1
         return t_id
 
     # Prints
     
-    def print_trans( self ):
-        print( "Transition printing under construction" )
+    def print_trans(self):
+        print("Transition printing under construction")
         # print("--- Transitions ---")
         # for i in self.trans:
         #     print("%s: %s %s %s Actions: %s" % \
@@ -126,8 +126,8 @@ class Automaton:
         #     ", ".join(action.raw for action in i.actions)))
         return
     
-    def print_modes( self ):
-        print( "Mode printing under construction" )
+    def print_modes(self):
+        print("Mode printing under construction")
         # print("--- Modes ---")
         # for i in self.modes:
         #     print('DAIs:')
@@ -137,7 +137,7 @@ class Automaton:
         #     print('\n'.join(inv.raw for inv in i.invariants))
         return
     
-    def print_all( self ):
+    def print_all(self):
         print("%s:" % self.name)
         self.print_modes()
         self.print_trans()
@@ -153,22 +153,22 @@ class Variables:
         self.output = []
 
     @property
-    def names( self ):
+    def names(self):
         names = []
         for var in self.all:
-            names.append( var.name )
+            names.append(var.name)
         return names
 
     @property
-    def local_names( self ):
+    def local_names(self):
         names = []
         for var in self.local:
-            names.append( var.name )
+            names.append(var.name)
         return names
 
     @property
-    def all( self ):
-        return ( self.input + self.local + self.output )
+    def all(self):
+        return (self.input + self.local + self.output)
 
     def add_var(self, v):
     
@@ -184,40 +184,40 @@ class Variables:
 
 class Variable:
     
-    def __init__( self, name="default_variable", update_type="", type=REAL, scope='LOCAL_DATA' ):
+    def __init__(self, name="default_variable", update_type="", type=REAL, scope='LOCAL_DATA'):
         self.name = name
         self.type = type
         self.scope = scope
         self.update_type = type
 
-    def __eq__( self, other ):
+    def __eq__(self, other):
         return self.name==other.name and self.update_type==other.update_type and self.type==other.type
 
 
 class ThinVariables:
 
-    def __init__( self ):
+    def __init__(self):
         self.local = []
         self.input = []
         self.output = []
 
     @property
-    def names( self ):
+    def names(self):
         names = []
         for var in self.all:
-            names.append( var.name )
+            names.append(var.name)
         return names
     
     @property
-    def local_names( self ):
+    def local_names(self):
         names = []
         for var in self.local:
-            names.append( var.name )
+            names.append(var.name)
         return names
 
     @property
-    def all( self ):
-        return ( self.input + self.local + self.output )
+    def all(self):
+        return (self.input + self.local + self.output)
 
     def add_thinvar(self, v):
 
@@ -233,7 +233,7 @@ class ThinVariables:
 
 class ThinVariable:
 
-    def __init__( self, name="default_thinvariable", update_type="", type=REAL, scope='LOCAL_DATA' ):
+    def __init__(self, name="default_thinvariable", update_type="", type=REAL, scope='LOCAL_DATA'):
         self.name = name
         self.type = type
         self.scope = scope
@@ -250,7 +250,7 @@ class Mode:
     invs - list of Invariant objects representing the mode's invariants
     dais - list of DAI objects representing the mode's governing differential equations
     '''
-    def __init__( self, name="default_mode", id=-1, initial=False ):
+    def __init__(self, name="default_mode", id=-1, initial=False):
         self.name = name
         self.id = id
         self.initial = initial
@@ -260,64 +260,64 @@ class Mode:
         self.linear = True
 
     @property
-    def invs( self ):
-        print( "************************************************" )
-        print( " WARNING: USING DEPRECATED PROPERTY - MODE.INV" )
-        print( "************************************************" )
+    def invs(self):
+        print("************************************************")
+        print(" WARNING: USING DEPRECATED PROPERTY - MODE.INV")
+        print("************************************************")
         return self.invariants
 
     @invs.setter
-    def invs( self, invariants ):
-        print( "************************************************" )
-        print( " WARNING: USING DEPRECATED PROPERTY - MODE.INV" )
-        print( "************************************************" )
+    def invs(self, invariants):
+        print("************************************************")
+        print(" WARNING: USING DEPRECATED PROPERTY - MODE.INV")
+        print("************************************************")
         self.invariants = invariants
         return
 
-    def add_invariant( self, inv ):
-        self.invariants.append( inv )
+    def add_invariant(self, inv):
+        self.invariants.append(inv)
         return
 
-    def remove_invariants( self, inv ):
-        self.invariants.remove( inv )
+    def remove_invariants(self, inv):
+        self.invariants.remove(inv)
         return
 
-    def clear_invariants( self ):
+    def clear_invariants(self):
         self.invariants = []
         return
 
-    def add_dai( self, dai ):
-        self.dais.append( dai )
+    def add_dai(self, dai):
+        self.dais.append(dai)
         return
 
-    def remove_dai( self, dai ):
-        self.dais.remove( dai )
+    def remove_dai(self, dai):
+        self.dais.remove(dai)
         return
 
-    def clear_dais( self ):
+    def clear_dais(self):
         self.dais = []
         return
 
-    def get_name( self ):
+    def get_name(self):
         return self.name
 
-    def parse( self ):
+    def parse(self):
         """ Parse DAI equation and Invariant Equations """
         
         self.linear = True  # LMB: Default to True, based on original code
         for dai in self.dais:
             dai_eqn = dai.parse()
-            if( dai_eqn ):  # Eqn is returned only if parsing fails.
+            if(dai_eqn):  # Eqn is returned only if parsing fails.
                 return { 'flow': dai_eqn }
             if self.linear:
-                self.linear = SymEq.is_linear( dai.expr.rhs )
+                self.linear = SymEq.is_linear(dai.expr.rhs)
 
         for inv in self.invariants:
             inv_eqn = inv.parse()
-            if( inv_eqn ):  # Eqn is returned only if parsing fails.
+            if(inv_eqn):  # Eqn is returned only if parsing fails.
                 return { 'invariant': inv_eqn }
             if not inv.expr:
-                self.remove_inv( inv )
+                self.remove_invariants(inv)
 
         return None
 
@@ -329,7 +329,7 @@ class Transition:
     src - the source of the transition
     dest - the destination of the transition
     ''' 
-    def __init__( self, guard, actions, id=-1, source=-1, destination=-1 ):
+    def __init__(self, guard, actions, id=-1, source=-1, destination=-1):
         self.guard = guard
         self.actions = actions
         self.id = id
@@ -337,60 +337,62 @@ class Transition:
         self.destination = destination
 
     @property
-    def src( self ):
-        print( "********************************************************" )
-        print( " WARNING: USING DEPRECATED PROPERTY - TRANSITION.SOURCE" )
-        print( "********************************************************" )
+    def src(self):
+        print("********************************************************")
+        print(" WARNING: USING DEPRECATED PROPERTY - TRANSITION.SOURCE")
+        print("********************************************************")
         return self.source
 
     @src.setter
-    def src( self, source ):
-        print( "********************************************************" )
-        print( " WARNING: USING DEPRECATED PROPERTY - TRANSITION.SOURCE" )
-        print( "********************************************************" )
+    def src(self, source):
+        print("********************************************************")
+        print(" WARNING: USING DEPRECATED PROPERTY - TRANSITION.SOURCE")
+        print("********************************************************")
         self.source = source
         return
 
     @property
-    def dest( self ):
-        print( "*************************************************************" )
-        print( " WARNING: USING DEPRECATED PROPERTY - TRANSITION.DESTINATION" )
-        print( "*************************************************************" )
+    def dest(self):
+        print("*************************************************************")
+        print(" WARNING: USING DEPRECATED PROPERTY - TRANSITION.DESTINATION")
+        print("*************************************************************")
         return self.destination
 
     @dest.setter
-    def dest( self, destination ):
-        print( "*************************************************************" )
-        print( " WARNING: USING DEPRECATED PROPERTY - TRANSITION.DESTINATION" )
-        print( "*************************************************************" )
+    def dest(self, destination):
+        print("*************************************************************")
+        print(" WARNING: USING DEPRECATED PROPERTY - TRANSITION.DESTINATION")
+        print("*************************************************************")
         self.destination = destination
         return
 
         
-    def tostring( self, mode_dict ):
+    def tostring(self, mode_dict):
         return mode_dict[self.source] + " -> " + mode_dict[self.destination]
 
-    def parse( self ):
+    def parse(self):
 
         guard_eqn = self.guard.parse()
-        if( guard_eqn ): # Eqn is returned only if parsing fails.
+        if(guard_eqn): # Eqn is returned only if parsing fails.
             return { 'guard': guard_eqn }
 
-        if( self.guard.expr ):
+        if(self.guard.expr):
             for action in self.actions:
                 action_eqn = action.parse()
-                if( action_eqn ): # Eqn is returned only if parsing fails.
+                if(action_eqn): # Eqn is returned only if parsing fails.
                     return { 'action': action_eqn }
         else:
-            self.clear_actions
+            print("Under construction")
+            #self.clear_actions
+            #TODO: Flag this Transitions for deletion if not fixed
 
         return None
 
-    def add_action( self, action ):
-        self.actions.append( action )
+    def add_action(self, action):
+        self.actions.append(action)
         return
 
-    def clear_actions( self ):
+    def clear_actions(self):
         self.actions = []
         return
 
@@ -398,18 +400,19 @@ class Transition:
 class DAI:
     '''Deterministic algebraic inequalities'''
 
-    def __init__( self, raw=None ):
+    def __init__(self, raw=None):
         
         self.raw = raw
         self.expr = None
     
-    def parse( self ):
+    def parse(self):
 
-        if( self.raw is None ):
+        if(self.raw is None):
             return "No Expression"
         
-        constructed = SymEq.construct_eqn( self.raw, True, False )
-        if( constructed is None ):
+        # Constructed returns None if operation fails
+        constructed = SymEq.construct_eqn(self.raw, True, False)
+        if(constructed is None):
             return self.raw
 
         self.expr = constructed
@@ -419,32 +422,32 @@ class DAI:
 
 class Invariant:
 
-    def __init__( self, raw=None ):
+    def __init__(self, raw=None):
 
         self.raw = raw
         self.expr = None
 
-    def parse( self ):
+    def parse(self):
         
-        if( self.raw is None ):
+        if(self.raw is None):
             return "No Expression"
 
-        eqns = self.raw.split( '||' )
+        eqns = self.raw.split('||')
         
-        #self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
+        #self.expr = [ SymEq.construct_eqn(eqn, False, True) for eqn in eqns ]
         expr = []
         for eqn in eqns:
-            constructed = SymEq.construct_eqn( eqn, False, True )
+            constructed = SymEq.construct_eqn(eqn, False, True)
             if constructed is None:
                 return eqn
-            expr.append( constructed )
+            expr.append(constructed)
         self.expr = expr
 
         # Filter out equations that evaluate to False
-        self.expr = filter( lambda eqn: eqn is not False, self.expr )
-        self.expr = list( self.expr )
+        self.expr = filter(lambda eqn: eqn is not False, self.expr)
+        self.expr = list(self.expr)
         if True in self.expr: 
-            print( 'Redundant Inv: ' + self.raw )
+            print('Redundant Inv: ' + self.raw)
             self.expr = []
 
         return None
@@ -452,47 +455,47 @@ class Invariant:
 
 class Guard:
 
-    def __init__( self, raw=None ):
+    def __init__(self, raw=None):
 
         self.raw = raw
         self.expr = None
 
-    def parse( self ):
+    def parse(self):
 
-        if( self.raw is None ):
+        if(self.raw is None):
             return "No Expression!" 
 
-        eqns = self.raw.split( '&&' )
+        eqns = self.raw.split('&&')
         
-        #self.expr = [ SymEq.construct_eqn( eqn, False, True ) for eqn in eqns ]
+        #self.expr = [ SymEq.construct_eqn(eqn, False, True) for eqn in eqns ]
         expr = []
         for eqn in eqns:
-            constructed = SymEq.construct_eqn( eqn, False, True )
-            if( constructed is None ):
+            constructed = SymEq.construct_eqn(eqn, False, True)
+            if(constructed is None):
                 return eqn
-            expr.append( constructed )
+            expr.append(constructed)
         self.expr = expr
 
         # Filter out equations that evaluate to True
-        self.expr = filter( lambda eqn: eqn is not True, self.expr )
-        self.expr = list( self.expr )
+        self.expr = filter(lambda eqn: eqn is not True, self.expr)
+        self.expr = list(self.expr)
         if False in self.expr: 
-            print( 'Redundant Guard: ' + self.raw )
-            self.expr = None
+            print('Redundant Guard: ' + self.raw)
+            self.expr = []
         
         return None
 
         
 class Action:
 
-    def __init__( self, raw=None ):
+    def __init__(self, raw=None):
 
         self.raw = raw
         self.expr = None
 
-    def parse( self ):
+    def parse(self):
 
-        if( self.raw is None ):
+        if(self.raw is None):
             return "No Expression"
 
         eqns = self.raw.split('&&')
@@ -500,10 +503,10 @@ class Action:
         #self.expr = [SymEq.construct_eqn(eqn, True, True) for eqn in eqns]
         expr = []
         for eqn in eqns:
-            constructed = SymEq.construct_eqn( eqn, True, True )
-            if( constructed is None ):
+            constructed = SymEq.construct_eqn(eqn, True, True)
+            if(constructed is None):
                 return eqn
-            expr.append( constructed )
+            expr.append(constructed)
         self.expr = expr
 
         return None
@@ -513,7 +516,7 @@ class SymEq:
     """ Symbolic Equation Library """
 
     @staticmethod
-    def construct_eqn( eqn, is_eq, rationalize ):
+    def construct_eqn(eqn, is_eq, rationalize):
         """ 
         Construct equation with sympy. Rationalize it if flag is set to True. is_eq is True for DAIs and Actions 
         
