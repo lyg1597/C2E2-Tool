@@ -116,7 +116,7 @@ class TreeView(Treeview):
         self.mode_dict = {}       # dict[item_id] = mode object
         self.trans_dict = {}      # dict[item_id] = transition object
 
-        self.mode_name_dict = {}  # nested dict[automaton.name][mode.id] = mode.name
+        #self.mode_name_dict = {}  # nested dict[automaton.name][mode.id] = mode.name
         
         for automaton in hybrid.automata:
 
@@ -126,7 +126,7 @@ class TreeView(Treeview):
             
             # Store automaton in dictionary
             self.automaton_dict[automaton_id] = automaton
-            self.mode_name_dict[automaton_id] = {}
+            #self.mode_name_dict[automaton_id] = {}
             
             # Create variable parent and variable items
             var_id = self.insert(automaton_id, 'end', text=VARIABLES)
@@ -153,7 +153,7 @@ class TreeView(Treeview):
                 mode_id = self.insert(modes_id, 'end', text=mode_str)
 
                 self.mode_dict[mode_id] = mode
-                self.mode_name_dict[automaton_id][mode.id] = mode.name
+                automaton.mode_dict[mode.id] = mode.name
 
                 # Create flow itmes
                 flow_id = self.insert(mode_id, 'end', text="Flows")
@@ -176,7 +176,7 @@ class TreeView(Treeview):
             for tran in automaton.transitions:
 
                 # Build transition string
-                src, dest = self.mode_name_dict[automaton_id][tran.source], self.mode_name_dict[automaton_id][tran.destination]
+                src, dest = automaton.mode_dict[tran.source], automaton.mode_dict[tran.destination]
                 tran_str = src + " -> " + dest
                 tran_id = self.insert(trans_id, 'end', text=tran_str)
 
@@ -376,14 +376,12 @@ class TreeView(Treeview):
             entry = VariableEntry(self.master, self.slct_automaton)
         elif(context == MODES):
             entry = ModeEntry(self.master, 
-                              self.slct_automaton,
-                              self.mode_name_dict[self.slct_root], 
+                              self.slct_automaton, 
                               action, 
                               self.slct_mode)   
         elif(context == TRANSITIONS):
             entry = TransitionEntry(self.master,
                                     self.slct_automaton,
-                                    self.mode_name_dict[self.slct_root], 
                                     action, 
                                     self.slct_transition)
         elif(context == AUTOMATON):
@@ -848,11 +846,10 @@ class ModelSidebar(Frame):
 
 
     def _callback_parse(self):
-        HyIR.parse_all(Session.hybrid)
+        HyIR.parse(Session.hybrid)
 
 
     def _callback_compose(self):
-        HyIR.parse_all(Session.hybrid)
         HyIR.compose_all(Session.hybrid)
 
 

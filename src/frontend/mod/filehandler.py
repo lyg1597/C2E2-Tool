@@ -14,10 +14,10 @@ import pdb
 class FileHandler:
 
     @staticmethod
-    def save_model( hybrid, property_list, file_path ):
+    def save_model(hybrid, property_list, file_path):
 
-        print( "Saving filepath: " + file_path )
-        print( "Saving..." )
+        print("Saving filepath: " + file_path)
+        print("Saving...")
         hyxml = ET.Element("hyxml", {"type":"Model"})
 
         for automaton in hybrid.automata:
@@ -30,7 +30,7 @@ class FileHandler:
 
             # Thin Variables
             for thinvar in automaton.thinvars:
-                ET.SubElement( auto, "thin_variable", { "name":thinvar.name, "scope":thinvar.scope, "type":thinvar.type } )
+                ET.SubElement(auto, "thin_variable", { "name":thinvar.name, "scope":thinvar.scope, "type":thinvar.type })
 
             # Modes
             for mode in automaton.modes:
@@ -38,9 +38,9 @@ class FileHandler:
                 for dai in mode.dais:
                     #equ = dai.raw[3:-1]
                     #ET.SubElement(m,"dai",{"equation":equ.replace(",","=",1)})
-                    ET.SubElement( m, "dai", {"equation":dai.raw} )
+                    ET.SubElement(m, "dai", {"equation":dai.raw})
                 for inv in mode.invariants:
-                    ET.SubElement(m,"invariant",{"equation":inv.raw} )
+                    ET.SubElement(m,"invariant",{"equation":inv.raw})
             
             # Transitions
             for tran in automaton.transitions:
@@ -79,12 +79,12 @@ class FileHandler:
         indent(hyxml)
         tree.write(file_path)
 
-        print( "Saved." )
+        print("Saved.")
         return    
 
 
     @staticmethod
-    def open_file( file_path ):
+    def open_file(file_path):
         """
         Loads a file and stores the model in Session.hybrid
 
@@ -92,63 +92,63 @@ class FileHandler:
             file_path: The file path to load
 
         Returns:
-            True/False status ( True if file opened successfully )
+            True/False status (True if file opened successfully)
         """
 
-        print( "Opening File..." )
+        print("Opening File...")
 
-        base_name = os.path.basename( file_path ) 
-        raw_name, ext = os.path.splitext( base_name )
+        base_name = os.path.basename(file_path) 
+        raw_name, ext = os.path.splitext(base_name)
 
         # Handle HyXML file
-        if( ext == '.hyxml' ):
+        if(ext == '.hyxml'):
             
             Session.file_type = HYXML_FILE
 
             # Get HyXML type and call corresponding function
-            hyxml_tree = ET.parse( file_path )
-            if( hyxml_tree == None ):
+            hyxml_tree = ET.parse(file_path)
+            if(hyxml_tree == None):
                 return False
 
             hyxml_root = hyxml_tree.getroot()
-            hyxml_type = hyxml_root.get( 'type' )
+            hyxml_type = hyxml_root.get('type')
 
             thinvarprop = ""
             thinvarlist = ""
 
-            if( hyxml_type == 'Model' ):
+            if(hyxml_type == 'Model'):
 
-                automata = FileHandler.open_hyxml_model( hyxml_root )
-                properties = FileHandler.open_hyxml_properties( hyxml_root )
+                automata = FileHandler.open_hyxml_model(hyxml_root)
+                properties = FileHandler.open_hyxml_properties(hyxml_root)
 
             else:
                 return False
 
         # Handle MDL file
-        elif( ext == '.mdl' ):
+        elif(ext == '.mdl'):
 
             Session.file_type = MLD_FILE
 
-            hybrid = FileHandler.open_mdl_model( file_path, raw_name )
+            hybrid = FileHandler.open_mdl_model(file_path, raw_name)
             prop_list = []
 
         # Handle all other extensions
         else:
             return False
         
-        hybrid = HyIR( file_name=file_path )
+        hybrid = HyIR(file_name=file_path)
 
         hybrid.automata = automata
         hybrid.properties = properties
 
         Session.hybrid = hybrid
 
-        print( "File opened." )
+        print("File opened.")
         return True
 
     # Open HyXML Model file
     @staticmethod
-    def open_mdl_model( file_path,file_name ):
+    def open_mdl_model(file_path,file_name):
         print ("start to parse mdl file and construct hyir")
         model=open(file_path,"r")
         rawModel = model.read()
@@ -266,7 +266,7 @@ class FileHandler:
         
     
     @staticmethod
-    def open_hyxml_model( root ):
+    def open_hyxml_model(root):
         """
         Loads automata from input xml root
 
@@ -277,87 +277,87 @@ class FileHandler:
             List of Automaton() objects
         """
 
-        print( "Loading hyxml model..." )
+        print("Loading hyxml model...")
 
         automata = []
 
-        for auto in root.iterfind( "automaton" ):
+        for auto in root.iterfind("automaton"):
 
-            name = auto.get( "name" )
-            automaton = Automaton( name )
+            name = auto.get("name")
+            automaton = Automaton(name)
             
-            for var in auto.iterfind( "variable" ):
+            for var in auto.iterfind("variable"):
                 
                 # Load variables
-                v_name = var.get( "name" )
-                v_scope = var.get( "scope" )
-                v_type = var.get( "type" )
+                v_name = var.get("name")
+                v_scope = var.get("scope")
+                v_type = var.get("type")
                
-                v = Variable( name=v_name, type=v_type, scope=v_scope )
-                automaton.add_var( v )
+                v = Variable(name=v_name, type=v_type, scope=v_scope)
+                automaton.add_var(v)
 
-            for thinvar in auto.iterfind( "thin_variable" ):
+            for thinvar in auto.iterfind("thin_variable"):
                 
                 # Load thin variables
-                v_name = thinvar.get( "name" )
-                v_scope = thinvar.get( "scope" )
-                v_type = thinvar.get( "type")
+                v_name = thinvar.get("name")
+                v_scope = thinvar.get("scope")
+                v_type = thinvar.get("type")
                 
-                v = ThinVariable( name=v_name, type=v_type, scope=v_scope )
-                automaton.add_thinvar( v )
+                v = ThinVariable(name=v_name, type=v_type, scope=v_scope)
+                automaton.add_thinvar(v)
 
-            for mode in auto.iterfind( "mode" ):
+            for mode in auto.iterfind("mode"):
                 
                 # Load modes
-                mode_name = mode.get( "name" )
-                mode_id = int( mode.get( "id" ) )
-                mode_initial = ( mode.get( "initial" ) == "True" )
+                mode_name = mode.get("name")
+                mode_id = int(mode.get("id"))
+                mode_init = (mode.get("initial") == "True")
                 
-                if( automaton.next_mode_id <= mode_id ):
+                if(automaton.next_mode_id <= mode_id):
                     automaton.next_mode_id = mode_id + 1
                     
-                mode_obj = Mode( name=mode_name, id=mode_id, initial=mode_initial )
+                mode_obj = Mode(name=mode_name, id=mode_id, initial=mode_init)
         
-                for dai in mode.iterfind( "dai" ):
+                for dai in mode.iterfind("dai"):
 
                     # Load Flows 
-                    raw_eq = dai.get( "equation" )                    
-                    mode_obj.add_dai( DAI(raw_eq) )
+                    raw_eq = dai.get("equation")                    
+                    mode_obj.add_dai(DAI(raw_eq))
 
-                for inv in mode.iterfind( "invariant" ):
+                for inv in mode.iterfind("invariant"):
                     
                     # Load Invariants
-                    raw_eq = inv.get( "equation" )
+                    raw_eq = inv.get("equation")
                     # Equation 'cleaning' is needed for inequalities
-                    clean_eq = FileHandler.clean_eq( raw_eq )
-                    mode_obj.add_invariant( Invariant( clean_eq ) )
+                    clean_eq = FileHandler.clean_eq(raw_eq)
+                    mode_obj.add_invariant(Invariant(clean_eq))
                 
-                automaton.add_mode( mode_obj, True )  
+                automaton.add_mode(mode_obj, True)  
 
-            for tran in auto.iterfind( "transition" ):
+            for tran in auto.iterfind("transition"):
 
                 # Load transitions
-                g = tran.find( "guard" )
-                guard = Guard( FileHandler.clean_eq( g.get("equation") ) )
+                g = tran.find("guard")
+                guard = Guard(FileHandler.clean_eq(g.get("equation")))
 
-                tran_id = int( tran.get( "id" ) )
-                tran_src = int( tran.get( "source" ) )
-                tran_dest = int( tran.get( "destination" ) )
+                tran_id = int(tran.get("id"))
+                tran_src = int(tran.get("source"))
+                tran_dest = int(tran.get("destination"))
                 
                 # Actions
                 actions = []
-                for act in tran.iterfind( "action" ):
+                for act in tran.iterfind("action"):
 
-                    raw_eq = act.get( "equation" )
-                    clean_eq = FileHandler.clean_eq( raw_eq )
-                    actions.append( Action(clean_eq) )
+                    raw_eq = act.get("equation")
+                    clean_eq = FileHandler.clean_eq(raw_eq)
+                    actions.append(Action(clean_eq))
 
-                transition = Transition( guard, actions, tran_id, tran_src, tran_dest )
-                automaton.add_transition( transition )
+                transition = Transition(guard, actions, tran_id, tran_src, tran_dest)
+                automaton.add_transition(transition)
 
-            automata.append( automaton )
+            automata.append(automaton)
 
-        print( "Model Loaded." )
+        print("Model Loaded.")
         return automata
 
     """
@@ -405,7 +405,7 @@ class FileHandler:
     """
 
     @staticmethod
-    def open_hyxml_properties( root ):
+    def open_hyxml_properties(root):
         """ 
         Load properties from hyxml
         
@@ -416,7 +416,7 @@ class FileHandler:
             List of Proerty() objects
         """
         
-        print( "Loading hyxml properties..." )
+        print("Loading hyxml properties...")
 
         prop_list = []
         for prop in root.iterfind('property'):
@@ -451,7 +451,7 @@ class FileHandler:
 
             prop_list.append(p)
 
-        print( "Properties loaded." )
+        print("Properties loaded.")
         return prop_list
     
     @staticmethod

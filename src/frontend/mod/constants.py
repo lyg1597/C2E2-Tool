@@ -43,6 +43,7 @@ THINVARIABLES = 'Thin Variables'
 MODES = 'Modes'
 TRANSITIONS = 'Transitions'
 
+
 # Actions / LMB 1/2/2018 / Used to determine right-click menus and popup entry/edit
 ADD = 'Add'
 EDIT = 'Edit' 

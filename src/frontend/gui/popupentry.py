@@ -317,14 +317,14 @@ class ModeEntry(PopupEntry):
         mode (Mode obj): Mode to be edited or deleted, not required for ADD action
     """
 
-    def __init__(self, parent, automaton, mode_dict, action=ADD, mode=None):
+    def __init__(self, parent, automaton, action=ADD, mode=None):
         PopupEntry.__init__(self, parent)
         self.title_label.config(text='Mode')
 
         self.automaton = automaton
         self.mode = mode
         self.action = action
-        self.mode_dict = mode_dict  # mode_dict[mode.id] = mode.name
+        self.mode_dict = automaton.mode_dict  # mode_dict[mode.id] = mode.name
         self.changed = False
 
         self._init_widgets()
@@ -499,7 +499,7 @@ class ModeEntry(PopupEntry):
         msg = "Delete " + self.mode.name + "(" + str(self.mode.id) + ") ?\n"
         msg += "WARNING: The following transitions will also be deleted:\n"
         for tran in del_trans:
-            msg += tran.tostring(self.mode_dict) + '\n'
+            msg += tran.name + '\n'
                 
         if(messagebox.askyesno('Delete Mode', msg)):
             self.automaton.remove_mode(self.mode)
@@ -535,20 +535,20 @@ class TransitionEntry(PopupEntry):
         trans (Transition obj): Transition to be edited or deleted, not required for ADD action
     """    
 
-    def __init__(self, parent, automaton, mode_dict, action=ADD, transition=None):
+    def __init__(self, parent, automaton, action=ADD, transition=None):
         PopupEntry.__init__(self, parent)
         self.title_label.config(text='Transition')
 
         self.automaton = automaton
         self.transition = transition
-        self.mode_dict = mode_dict  # mode_dict[mode.id] = mode.name
+        self.mode_dict = automaton.mode_dict  # mode_dict[mode.id] = mode.name
         self.action = action
         self.changed = False
 
         # Load Mode list for Source/Destination Option Menus
         self.mode_list = []
-        for mode_id in mode_dict:
-            self.mode_list.append(mode_dict[mode_id])
+        for mode_id in self.mode_dict:
+            self.mode_list.append(self.mode_dict[mode_id])
 
         self._init_widgets()
 
@@ -627,7 +627,7 @@ class TransitionEntry(PopupEntry):
         self.guard_str.set(self.transition.guard.raw)
 
         # Actions
-        if(len(self.transition.actions)):
+        if len(self.transition.actions) == 0:
             self.action_toggle.add_row()
         else:
             for action in self.transition.actions:

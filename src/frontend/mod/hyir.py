@@ -26,6 +26,7 @@ class HyIR:
 
         self.parsed = False
         self.composed = False
+        self.parse_errors = []
 
     @property
     def vars(self):
@@ -108,76 +109,44 @@ class HyIR:
 
     # Parse Functions
 
-    @classmethod
-    def parse_all(cls, hybrid):
+    def parse(self):
 
         # Do nothing if we're already parsed
-        if(hybrid.parsed):
+        if self.parsed:
             return
 
-        for automaton in hybrid.automata:
-            fail_trace = cls.parse_automaton(automaton)
-            if(fail_trace):
-                print("Parsing failed")
-                print("--------------")
-                print("Automaton: " + fail_trace['automaton'])
-                if('mode' in fail_trace):
-                    print("Mode: " + fail_trace['mode'])
-                    if('flow' in fail_trace):
-                        print("Flow: " + fail_trace['flow'])
-                    else:
-                        print("Invariant: " + fail_trace['invariant'])
-                else:
-                    print("Transition: " + str(fail_trace['transition']))
-                    if('guard' in fail_trace):
-                        print("Guard: " + fail_trace['guard'])
-                    else:
-                        print("Action: " + fail_trace['action'])
-                hybrid.parsed = False
-                return
-        hybrid.parsed = True
+        self.parse_errors = []
+        for automaton in self.automata:
+            self.parse_errors += automaton.parse()
+            if len(self.parse_errors) == 0:
+                self.parsed = True
+            else:
+                self.parsed = False
+                self.print_parse_errors()
+
         return
 
-
-    @classmethod
-    def parse_automaton(cls, automaton):
-        print("Parsing Automaton " + automaton.name + "...")
+    def print_parse_errors(self):
         
-        fail_trace = cls.parse_modes(automaton)
-        if(fail_trace):
-            fail_trace.update({ 'automaton': automaton.name })
-            return fail_trace
-
-        fail_trace = cls.parse_transitions(automaton)
-        if(fail_trace):
-            fail_trace.update({ 'automaton': automaton.name })
-            return fail_trace
+        print("------------------------")
+        print("      PARSE ERRORS")
+        print("------------------------")
         
-        print("Automaton " + automaton.name + " parsing complete.")
-        return None
+        for error in self.parse_errors:
+            print(error[0] + ": " + error[2])
 
-    @classmethod
-    def parse_modes(cls, automaton):
-        print("Parsing modes...")
-        for mode in automaton.modes:
-            fail_trace = mode.parse()
-            if(fail_trace):
-                fail_trace.update({ 'mode': mode.name })
-                return fail_trace
-        print("Modes parsed.")
-        return None
+            error_obj = error[1]
+            error_str = "\t"
+            while(error_obj is not None):
+                error_str += error_obj.name + " / "
+                error_obj = error_obj.parent
+            print(error_str)
 
-    @classmethod
-    def parse_transitions(cls, automaton):
-        print("Parsing transitions...")
-        for tran in automaton.transitions:
-            fail_trace = tran.parse()
-            if(fail_trace):
-                fail_trace.update({ 'transition': tran.id })
-                return fail_trace
-        print("Transitions parsed.")
-        return None
+            if error[3] is not None:
+                print("\t" + error[3])
 
+        return
+        
     # Compose Functions
 
     @classmethod
@@ -193,9 +162,9 @@ class HyIR:
     @classmethod
     def compose_all(cls, hybrid):
 
-        cls.parse_all(hybrid)
+        cls.parse(hybrid)
 
-        if(not hybrid.parsed):
+        if not hybrid.parsed:
             print("System not parsed. Exiting composition...")
             return
 
@@ -245,7 +214,7 @@ class HyIR:
         for m1 in automaton1.modes:
             for m2 in automaton2.modes:
                 m_name = m1.name + '_' + m2.name
-                m_id = m1.id*m2_len + m2.id
+                m_id = m1.id * m2_len + m2.id
                 m_initial = m1.initial and m2.initial
                 cross_mode = Mode(name=m_name, id=m_id, initial=m_initial)
 

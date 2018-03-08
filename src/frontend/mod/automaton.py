@@ -10,8 +10,8 @@ class Automaton:
 
         self.name = name
 
-        self.variables = Variables()
-        self.thinvariables = ThinVariables()
+        self.variables = Variables(self)
+        self.thinvariables = ThinVariables(self)
 
         self.modes = []  # Mode objects
         self.transitions = []  # Transition objects
@@ -20,6 +20,10 @@ class Automaton:
                 
         self.next_mode_id = 0
         self.next_transition_id = 0
+
+        self.mode_dict = {}
+
+        self.parent = None
 
     @property
     def vars(self):
@@ -60,48 +64,69 @@ class Automaton:
         return self.transitions
 
     def add_var(self, var):
+        var.parent = self
         self.variables.add_var(var)
         return
 
     def remove_var(self, var):
+        var.parent = None
         self.variables.remove_var(var)
         return
     
     def reset_vars(self):
-        self.variables = Variables()
+        self.variables = Variables(self)
         return
 
     def add_thinvar(self, thinvar):
+        thinvar.parent = self
         self.thinvariables.add_thinvar(thinvar)
         return
 
     def remove_thinvar(self, thinvar):
+        thinvar.parent = None
         self.thinvariables.remove_thinvar(thinvar)
         return
 
     def reset_thinvars(self):
-        self.thinvariables = ThinVariables()
+        self.thinvariables = ThinVariables(self)
         return
 
     def add_mode(self, mode, fileread=False):
         if(not fileread): 
             mode.id = self.next_mode_id
-            self.next_mode_id += 1 
+            self.next_mode_id += 1
+        mode.parent = self
+        self.mode_dict[mode.id] = mode.name
         self.modes.append(mode)
-       
         return
     
     def remove_mode(self, mode):
+        mode.parent = None
+        self.mode_dict[mode.id] = "MODE NOT FOUND"
         self.modes.remove(mode)
         return
 
     def add_transition(self, tran):
+        tran.parent = self
         self.transitions.append(tran)
         return
 
     def remove_transition(self, tran):
+        tran.parent = None
         self.transitions.remove(tran)
         return
+
+    def parse(self):
+        print("Parsing Automaton " + self.name + "...")
+        errors = []
+
+        for mode in self.modes:
+            errors += mode.parse()
+
+        for transition in self.transitions:
+            errors += transition.parse()
+
+        return errors
 
     # DEPRECATED?
         
@@ -146,11 +171,12 @@ class Automaton:
 
 class Variables:
     
-    def __init__(self):
+    def __init__(self, parent):
     
         self.local = []
         self.input = []
         self.output = []
+        self.parent = parent
 
     @property
     def names(self):
@@ -171,7 +197,7 @@ class Variables:
         return (self.input + self.local + self.output)
 
     def add_var(self, v):
-    
+   
         if v.scope=='LOCAL_DATA':
             self.local.append(v)
         elif v.scope=='OUTPUT_DATA':
@@ -189,6 +215,7 @@ class Variable:
         self.type = type
         self.scope = scope
         self.update_type = type
+        self.parent = None
 
     def __eq__(self, other):
         return self.name==other.name and self.update_type==other.update_type and self.type==other.type
@@ -196,10 +223,11 @@ class Variable:
 
 class ThinVariables:
 
-    def __init__(self):
+    def __init__(self, parent):
         self.local = []
         self.input = []
         self.output = []
+        self.parent = parent
 
     @property
     def names(self):
@@ -251,13 +279,42 @@ class Mode:
     dais - list of DAI objects representing the mode's governing differential equations
     '''
     def __init__(self, name="default_mode", id=-1, initial=False):
+
+        # Init the private "hidden" variables
+        self._invariants = None
+        self._dais = None
+        # Call setters to ensure transition/dai parents are set
+        self.invariants = []
+        self.dais = []
+        # Other variables, getters/setters not used
         self.name = name
         self.id = id
         self.initial = initial
         self.initialConditions = []
-        self.invariants = []
-        self.dais = []
         self.linear = True
+        self.parent = None
+
+    @property
+    def invariants(self):
+        return self._invariants
+
+    @invariants.setter
+    def invariants(self, invs):
+        for inv in invs:
+            inv.parent = self
+        self._invariants = invs
+        return
+
+    @property
+    def dais(self):
+        return self._dais
+
+    @dais.setter
+    def dais(self, ds):
+        for d in ds:
+            d.parent = self
+        self._dais = ds
+        return
 
     @property
     def invs(self):
@@ -275,51 +332,55 @@ class Mode:
         return
 
     def add_invariant(self, inv):
-        self.invariants.append(inv)
+        inv.parent = self
+        self._invariants.append(inv)
         return
 
-    def remove_invariants(self, inv):
-        self.invariants.remove(inv)
+    def remove_invariant(self, inv):
+        inv.parent = None
+        self._invariants.remove(inv)
         return
 
     def clear_invariants(self):
-        self.invariants = []
+        for inv in self._invariants:
+            inv.parent = None
+        self._invariants = []
         return
 
     def add_dai(self, dai):
-        self.dais.append(dai)
+        dai.parent = self
+        self._dais.append(dai)
         return
 
     def remove_dai(self, dai):
-        self.dais.remove(dai)
+        dai.parent = None
+        self._dais.remove(dai)
         return
 
     def clear_dais(self):
-        self.dais = []
+        for dai in self._dais:
+            dai.parent = None
+        self._dais = []
         return
-
-    def get_name(self):
-        return self.name
 
     def parse(self):
         """ Parse DAI equation and Invariant Equations """
         
-        self.linear = True  # LMB: Default to True, based on original code
+        errors = []
+        self.linear = True
         for dai in self.dais:
-            dai_eqn = dai.parse()
-            if(dai_eqn):  # Eqn is returned only if parsing fails.
-                return { 'flow': dai_eqn }
-            if self.linear:
+            errors += dai.parse()
+            if (self.linear and (dai.expr is not None)):
                 self.linear = SymEq.is_linear(dai.expr.rhs)
 
-        for inv in self.invariants:
-            inv_eqn = inv.parse()
-            if(inv_eqn):  # Eqn is returned only if parsing fails.
-                return { 'invariant': inv_eqn }
-            if not inv.expr:
-                self.remove_invariants(inv)
+        for inv in self._invariants:
+            p = inv.parse()
+            errors += inv.parse()
 
-        return None
+            #if not inv.expr:
+                #self.remove_invariants(inv)
+
+        return errors
 
 
 class Transition:
@@ -330,11 +391,53 @@ class Transition:
     dest - the destination of the transition
     ''' 
     def __init__(self, guard, actions, id=-1, source=-1, destination=-1):
+
+        # Init the private "hidden" variables
+        self._guard = None
+        self._actions = None
+        # Call setters to ensure guard/action parents are set
         self.guard = guard
         self.actions = actions
+        # Other variables, getters/setters not used
         self.id = id
         self.source = source
         self.destination = destination
+        self.parent = None
+
+    @property
+    def guard(self):
+        return self._guard
+
+    @guard.setter
+    def guard(self, g):
+        g.parent = self
+        self._guard = g
+        return
+
+    @property
+    def actions(self):
+        return self._actions
+
+    @actions.setter
+    def actions(self, acts):
+        for act in acts:
+            act.parent = self
+        self._actions = acts
+
+    @property
+    def name(self):
+        return self.parent.mode_dict[self.source] + " -> " + self.parent.mode_dict[self.destination]
+
+    def add_action(self, action):
+        action.parent = self
+        self._actions.append(action)
+        return
+
+    def clear_actions(self):
+        for act in self._actions:
+            act.parent = None
+        self._actions = []
+        return
 
     @property
     def src(self):
@@ -366,58 +469,49 @@ class Transition:
         self.destination = destination
         return
 
-        
-    def tostring(self, mode_dict):
-        return mode_dict[self.source] + " -> " + mode_dict[self.destination]
-
     def parse(self):
 
-        guard_eqn = self.guard.parse()
-        if(guard_eqn): # Eqn is returned only if parsing fails.
-            return { 'guard': guard_eqn }
+        errors = []
+        errors += self.guard.parse()
 
-        if(self.guard.expr):
-            for action in self.actions:
-                action_eqn = action.parse()
-                if(action_eqn): # Eqn is returned only if parsing fails.
-                    return { 'action': action_eqn }
-        else:
-            print("Under construction")
-            #self.clear_actions
-            #TODO: Flag this Transitions for deletion if not fixed
+        if not self.guard.expr:
+            errors.append(('WARNING', self, "Transition will be deleted when "
+                            + "composing. No guard expression.", None))
+            
+        for action in self.actions:
+            errors += action.parse()
 
-        return None
-
-    def add_action(self, action):
-        self.actions.append(action)
-        return
-
-    def clear_actions(self):
-        self.actions = []
-        return
+        return errors
 
 
 class DAI:
-    '''Deterministic algebraic inequalities'''
+    """Deterministic algebraic inequalities"""
 
     def __init__(self, raw=None):
         
         self.raw = raw
         self.expr = None
+        self.parent = None
+
+    @property
+    def name(self):
+        return self.raw
     
     def parse(self):
 
-        if(self.raw is None):
-            return "No Expression"
+        errors = []
+        if self.raw is None:
+            errors.append(('Flow', self, "No Expression", None))
+            return errors
         
         # Constructed returns None if operation fails
         constructed = SymEq.construct_eqn(self.raw, True, False)
-        if(constructed is None):
-            return self.raw
+        if constructed is None:
+            errors.append(('Flow', self, "Invalid Expression", self.raw))
+            return errors
 
         self.expr = constructed
-        
-        return None
+        return errors
 
 
 class Invariant:
@@ -426,31 +520,39 @@ class Invariant:
 
         self.raw = raw
         self.expr = None
+        self.parent = None
+
+    @property
+    def name(self):
+        return self.raw
 
     def parse(self):
         
-        if(self.raw is None):
-            return "No Expression"
+        errors = []
+        if self.raw is None:
+            errors.append(('Invariant', self, "No Expression", None))
+            return errors
 
         eqns = self.raw.split('||')
-        
         #self.expr = [ SymEq.construct_eqn(eqn, False, True) for eqn in eqns ]
         expr = []
         for eqn in eqns:
             constructed = SymEq.construct_eqn(eqn, False, True)
             if constructed is None:
-                return eqn
-            expr.append(constructed)
+                errors.append(('Invariant', self, "Invalid Expression", eqn))
+                return errors
+            else:
+                expr.append(constructed)
         self.expr = expr
 
         # Filter out equations that evaluate to False
         self.expr = filter(lambda eqn: eqn is not False, self.expr)
         self.expr = list(self.expr)
         if True in self.expr: 
-            print('Redundant Inv: ' + self.raw)
+            errors.append(('Invariant', self, "Redundant Invariant", self.raw))
             self.expr = []
 
-        return None
+        return errors
 
 
 class Guard:
@@ -459,31 +561,38 @@ class Guard:
 
         self.raw = raw
         self.expr = None
+        self.parent = None
+
+    @property
+    def name(self):
+        return self.raw
 
     def parse(self):
 
-        if(self.raw is None):
-            return "No Expression!" 
+        errors = []
+        if self.raw is None:
+            errors.append(('Guard', self, "No Expression", None)) 
+            return errors
 
         eqns = self.raw.split('&&')
-        
         #self.expr = [ SymEq.construct_eqn(eqn, False, True) for eqn in eqns ]
         expr = []
         for eqn in eqns:
             constructed = SymEq.construct_eqn(eqn, False, True)
-            if(constructed is None):
-                return eqn
-            expr.append(constructed)
+            if constructed is None:
+                errors.append(('Guard', self, "Invalid Expression", eqn))
+            else:
+                expr.append(constructed)
         self.expr = expr
 
         # Filter out equations that evaluate to True
         self.expr = filter(lambda eqn: eqn is not True, self.expr)
         self.expr = list(self.expr)
         if False in self.expr: 
-            print('Redundant Guard: ' + self.raw)
+            errors.append(('Guard', self, "Redundant Guard", self.raw))
             self.expr = []
         
-        return None
+        return errors
 
         
 class Action:
@@ -492,11 +601,19 @@ class Action:
 
         self.raw = raw
         self.expr = None
+        self.parent = None
+
+    @property
+    def name(self):
+        return self.raw
 
     def parse(self):
 
-        if(self.raw is None):
-            return "No Expression"
+        errors = []
+
+        if self.raw is None:
+            errors.append(('Action', self, "No Expression", None))
+            return errors
 
         eqns = self.raw.split('&&')
 
@@ -504,12 +621,13 @@ class Action:
         expr = []
         for eqn in eqns:
             constructed = SymEq.construct_eqn(eqn, True, True)
-            if(constructed is None):
-                return eqn
-            expr.append(constructed)
+            if constructed is None:
+                errors.append(('Action', self, "Invalid Expression", eqn))
+            else:
+                expr.append(constructed)
         self.expr = expr
 
-        return None
+        return errors
 
 
 class SymEq:
