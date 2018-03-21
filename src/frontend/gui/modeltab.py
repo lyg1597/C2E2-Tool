@@ -392,7 +392,7 @@ class TreeView(Treeview):
         # Wait for user response
         self.master.wait_window(entry)
 
-        if(entry.changed):
+        if entry.changed:
             # Update property status if the model was changed
             self.sidebar._expire_properties()
             # Changes may change validity of Initial Set / Unsafe Set
@@ -404,7 +404,7 @@ class TreeView(Treeview):
             Session.hybrid.parsed = False
             Session.hybrid.composed = False
         
-        # Refresh Model
+        # Refresh TreeView
         self._clear_model()
         self._display_model()
 
@@ -719,7 +719,8 @@ class ModelSidebar(Frame):
         self.list_view = Treeview(self.prop_list)
         self.list_view.pack(fill=BOTH, expand=TRUE)
         self.list_view.bind('<Button-1>', self._callback_btn_press)
-        self.list_view.bind('<Double-Button-1>', self._callback_btn_press_double)
+        self.list_view.bind('<Double-Button-1>', 
+                            self._callback_btn_press_double)
 
         self.list_view['show'] = 'headings'
         self.list_view['columns'] = ('name', 'status', 'result')
@@ -757,10 +758,12 @@ class ModelSidebar(Frame):
         row = Frame(self.prop_list)
         row.pack(fill=X)
 
-        self.parse_btn = Button(row, text='Parse', command=self._callback_parse)
+        self.parse_btn = Button(row, text='Parse', 
+                                     command=self._callback_parse)
         self.parse_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
-        self.compose_btn = Button(row, text='Compose', command=self._callback_compose)
+        self.compose_btn = Button(row, text='Compose', 
+                                       command=self._callback_compose)
         self.compose_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
 
@@ -847,11 +850,21 @@ class ModelSidebar(Frame):
 
     def _callback_parse(self):
         HyIR.parse(Session.hybrid)
-
+        return
 
     def _callback_compose(self):
-        HyIR.compose_all(Session.hybrid)
 
+        HyIR.compose_all(Session.hybrid)
+        
+        # Composition may change validity of Initial Set / Unsafe Set
+        self._callback_is(self.initial_set.get())
+        self._callback_us(self.unsafe_set.get())
+
+        # Refresh TreeView
+        self.parent.tree._clear_model()
+        self.parent.tree._display_model()
+
+        return
 
     def _callback_sim(self):
 

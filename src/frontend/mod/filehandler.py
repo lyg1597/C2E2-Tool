@@ -313,7 +313,7 @@ class FileHandler:
                 mode_id = int(mode.get("id"))
                 mode_init = (mode.get("initial") == "True")
                 
-                if(automaton.next_mode_id <= mode_id):
+                if automaton.next_mode_id <= mode_id:
                     automaton.next_mode_id = mode_id + 1
                     
                 mode_obj = Mode(name=mode_name, id=mode_id, initial=mode_init)
@@ -332,7 +332,15 @@ class FileHandler:
                     clean_eq = FileHandler.clean_eq(raw_eq)
                     mode_obj.add_invariant(Invariant(clean_eq))
                 
-                automaton.add_mode(mode_obj, True)  
+                automaton.add_mode(mode_obj, mode_id)
+            
+            # TODO LMB: How are we going to handled file parse errors?
+            if not automaton.verify_mode_ids():
+                print("FILE READ ERROR: MODE IDS NOT UNIQUE")
+                print("  Automaton: " + automaton.name)
+            if not automaton.verify_mode_names():
+                print("FILE READ ERROR: MODE NAMES NOT UNIQUE")
+                print("  Automaton: " + automaton.name)
 
             for tran in auto.iterfind("transition"):
 
@@ -352,8 +360,16 @@ class FileHandler:
                     clean_eq = FileHandler.clean_eq(raw_eq)
                     actions.append(Action(clean_eq))
 
-                transition = Transition(guard, actions, tran_id, tran_src, tran_dest)
+                transition = Transition(guard, actions, tran_id, 
+                                        tran_src, tran_dest)
                 automaton.add_transition(transition)
+
+            # TODO LMB: How are going to handle file parse errors?
+            #           This one causes errors when displaying the TreeView
+            if not automaton.verify_transition_src_dest():
+                print("FILE READ ERROR: TRANSITION SOURCE/DESTINATION IDS " +
+                      "NOT VALID MODE IDS")
+                print("  Automaton: " + automaton.name)
 
             automata.append(automaton)
 

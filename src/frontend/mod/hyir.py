@@ -28,45 +28,100 @@ class HyIR:
         self.composed = False
         self.parse_errors = []
 
+    # Variable Properties
+
     @property
     def vars(self):
         vars_ = []
-        seen = set()
         for automaton in self.automata:
             vars_ += automaton.vars
-        return vars_# [x for x in vars_ if not(x in seen or seen.add(x)) ]
+        return vars_
 
     @property
     def local_vars(self):
         vars_ = []
-        seen = set()
         for automaton in self.automata:
             vars_ += automaton.local_vars
-        return [x for x in vars_ if not(x in seen or seen.add(x)) ]
+        return vars_
+
+    @property
+    def output_vars(self):
+        vars_ = []
+        for automaton in self.automata:
+            vars_ += automaton.output_vars            
+        return vars_
+
+    @property
+    def input_vars(self):
+        vars_ = []
+        for automaton in self.automata:
+            vars_ += automaton.input_vars
+        return vars_
 
     @property
     def local_var_names(self):
         names = []
-        seen = set()
         for automaton in self.automata:
             names += automaton.local_var_names
-        return [x for x in names if not(x in seen or seen.add(x)) ]
+        return names
 
+    @property
+    def output_var_names(self):
+        names = []
+        for automaton in self.automata:
+            names += automaton.output_var_names
+        return names
+
+    @property
+    def input_var_names(self):
+        names = []
+        for automaton in self.automata:
+            names += automaton.input_var_names
+        return names
+
+    # Thinvariable Properties
+    
     @property
     def local_thinvars(self):
         thinvars = []
-        seen = set()
         for automaton in self.automata:
             thinvars += automaton.local_thinvars
-        return [x for x in thinvars if not(x in seen or seen.add(x)) ]
+        return thinvars
+
+    @property
+    def output_thinvars(self):
+        thinvars = []
+        for automaton in self.automata:
+            thinvars += automaton.output_thinvars
+        return thinvars
+
+    @property
+    def input_thinvars(self):
+        thinvars = []
+        for automaton in self.automata:
+            thinvars += automaton.input_thinvars
+        return thinvars
 
     @property
     def local_thinvar_names(self):
         names = []
-        seen = set()
         for automaton in self.automata:
             names += automaton.local_thinvar_names
-        return [x for x in names if not(x in seen or seen.add(x)) ]
+        return names
+
+    @property
+    def output_thinvar_names(self):
+        names = []
+        for automaton in self.automata:
+            names += automaton.output_thinvar_names
+        return names
+
+    @property
+    def input_thinvar_names(self):
+        names = []
+        for automaton in self.automata:
+            names += automaton.input_thinvar_names
+        return names
 
     @property
     def modes(self):
@@ -88,6 +143,8 @@ class HyIR:
         for automaton in self.automata:
             trans += automaton.transitions
         return trans
+
+    # Add/Remove Functions
 
     def add_automaton(self, automaton):
         self.automata.append(automaton)
@@ -113,9 +170,18 @@ class HyIR:
 
         # Do nothing if we're already parsed
         if self.parsed:
+            print("System Parsed.")
             return
-
+        
+        print("Parsing System...")
         self.parse_errors = []
+
+        print("  Parsing Variables...")
+        self.parse_errors += self.parse_local_variables()
+        self.parse_errors += self.parse_output_variables()
+        self.parse_errors += self.parse_input_variables()
+        print("  Variables Parsed.")
+
         for automaton in self.automata:
             self.parse_errors += automaton.parse()
             if len(self.parse_errors) == 0:
@@ -124,6 +190,7 @@ class HyIR:
                 self.parsed = False
                 self.print_parse_errors()
 
+        print("Parsing Complete.")
         return
 
     def print_parse_errors(self):
@@ -146,7 +213,132 @@ class HyIR:
                 print("\t" + error[3])
 
         return
+
+    def parse_local_variables(self):
+        """ 
+        Verify local variables based on the following:
+        - local variable names are all distinct from all other variables
+        """
+        errors = []
         
+        # Compare variables to those inside their automaton
+        for automaton in self.automata:
+            if not automaton.verify_local_variables():
+                errors.append(('Variable', automaton, "Local variables not "
+                               + "all unique within automaton", "Local "
+                               + "variable names must not match any other "
+                               + "variable name in the system"))
+
+        # Compare variables to those outside of their automaton
+        for var in (self.local_vars + self.local_thinvars):
+            for automaton in self.automata:
+                # Comparison within automaton already performed
+                if automaton is var.parent:
+                    continue
+                # Local variable names must be distinct from all others
+                if ((var.name in automaton.var_names) or 
+                    (var.name in automaton.thinvar_names)):
+                    errors.append(('Variable', var, "Local variable name not "
+                                   + "unique", "Local variable names must "
+                                   + "not match any other variable name in "
+                                   + "the system"))
+        
+        return errors
+
+    def parse_output_variables(self):
+        """ 
+        Verify output variables based on the following:
+        - output variables are distinct from all local variables
+        - output variables are distinct from all other output variables
+        """
+        errors = []
+
+        # Compare variables to those inside their automaton
+        for automaton in self.automata:
+            if not automaton.verify_output_variables():
+                errors.append(('Variable', automaton, "Output variables not "
+                               + "unique", "Output variable names must not "
+                               + "match any other variable name in the "
+                               + "system"))
+
+        # Compare variables to those outside of their automaton
+        for var in (self.output_vars + self.output_thinvars):
+            for automaton in self.automata:
+                # Comparison within automaton already performed
+                if automaton is var.parent:
+                    continue
+                # Output variables are distinct from all other output variables
+                # Output variables are distinct from all local variables
+                if ((var.name in automaton.output_var_names) or 
+                    (var.name in automaton.output_thinvar_names) or
+                    (var.name in automaton.local_var_names) or
+                    (var.name in automaton.local_thinvar_names)):
+                    errors.append(('Variable', automaton, "Output variable "
+                                   + "name not unique", "Output variable "
+                                   + "names must not match any other output "
+                                   + "variable name or any local variable "
+                                   + "name in the system"))
+
+        return errors
+
+    def parse_input_variables(self):
+        """ 
+        Verify input variables based on the following:
+        - input variables are distinct from all local variables
+        - input variables are distinct from other input variables within the
+          same automaton
+        - input varialbes MUST have a matching output variable from a different
+          automaton
+        """
+        errors = []
+
+        # Compare variables to those inside their automaton
+        for automaton in self.automata:
+            if not automaton.verify_input_variables():
+                errors.append(('Variable', automaton, "Input variables not "
+                              + "unique", "Input variable names must not "
+                              + "match any other variable name in the "
+                              + "system"))
+
+        # Compare variables to those outside of their automaton
+        for var in (self.input_vars + self.input_thinvars):
+            
+            output_var_found = False
+
+            for automaton in self.automata:
+                # Comparison within automaton already performed
+                if automaton is var.parent:
+                    continue
+                # Input variables are distinct from all local variables
+                if ((var.name in automaton.local_var_names) or
+                    (var.name in automaton.local_thinvar_names)):
+                    errors.append(('Variable', var, "Input variable name not "
+                                   + "unique", "Input variable names must not "
+                                   + "match any local variable name in the "
+                                   + "system"))
+                # Input variables must have a matching output variable
+                if ((var.name in automaton.output_var_names) or
+                    (var.name in automaton.output_thinvar_names)):
+                    output_var_found = True
+
+            if not output_var_found:
+                errors.append(('Variable', var, "Input variable without a "
+                               + "matching output variable", "Input variables "
+                               + "must match an output variable from another "
+                               + "automaton"))
+
+        return errors
+
+
+        # Loop over input vars
+            # Verify in var.parent (checks in-automaton requirements)
+            # Loop over all local vars not in var.parent
+                # var can't match any local var
+            # Loop over all output vars not in var.parent
+                # var MUST match with an output var
+
+        return errors
+
     # Compose Functions
 
     @classmethod
@@ -168,6 +360,8 @@ class HyIR:
             print("System not parsed. Exiting composition...")
             return
 
+        print("Composing System...")
+        
         automata_list = hybrid.automata
         automata_list.reverse()
         while len(automata_list) > 1:
@@ -202,11 +396,14 @@ class HyIR:
         Session.hybrid = hybrid
         Session.hybrid.composed = True
         
+        print("Composition complete.")
+        
         return
 
     @staticmethod
     def compose(automaton1, automaton2):
-        composed = Automaton()
+        print("  Composing " + automaton1.name + " and " + automaton2.name)
+        composed = Automaton(automaton1.name + "_" + automaton2.name)
         m1_len = len(automaton1.modes)
         m2_len = len(automaton2.modes)
 
@@ -214,7 +411,7 @@ class HyIR:
         for m1 in automaton1.modes:
             for m2 in automaton2.modes:
                 m_name = m1.name + '_' + m2.name
-                m_id = m1.id * m2_len + m2.id
+                m_id = m1.id * automaton2.next_mode_id + m2.id
                 m_initial = m1.initial and m2.initial
                 cross_mode = Mode(name=m_name, id=m_id, initial=m_initial)
 
@@ -234,36 +431,37 @@ class HyIR:
         # Construct guards of composed automata. (a,b)->(a',b) and (a,b)->(a,b')
         # for all transitions a->a' and b->b'. Note there is no (a,b)->(a',b')
         trans_id = 0
-        for t1 in automaton1.transition:
+        for t1 in automaton1.transitions:
             t_guard = t1.guard
             t_actions = t1.actions
           
-            for i in range(m2_len):    
-                t_src = t1.src*m2_len+i
-                t_dest = t1.dest*m2_len+i
+            for i in range(automaton2.next_mode_id):    
+                t_src = t1.source * automaton2.next_mode_id + i
+                t_dest = t1.destination * automaton2.next_mode_id + i
                 cross_trans = Transition(guard=t_guard, actions=t_actions, source=t_src, destination=t_dest, id=trans_id)
                 composed.add_transition(cross_trans)
                 trans_id += 1 
 
-        for t2 in automaton2.transition:
+        for t2 in automaton2.transitions:
             t_guard = t2.guard
             t_actions = t2.actions
          
             for i in range(m1_len):    
-                t_src = i*m2_len+t2.src
-                t_dest = i*m2_len+t2.dest
+                t_src = i * automaton2.next_mode_id + t2.source
+                t_dest = i * automaton2.next_mode_id + t2.destination
                 cross_trans = Transition(guard=t_guard, actions=t_actions, source=t_src, destination=t_dest, id=trans_id)
-                compsed.add_transition(cross_trans)
+                composed.add_transition(cross_trans)
                 trans_id += 1
 
         # Construct composed variables
-        composed.local_vars = automaton1.variables.local + automaton2.variables.local
+        composed.variables.local = automaton1.variables.local + automaton2.variables.local
         composed.variables.output = automaton1.variables.output + automaton2.variables.output
         composed.variables.input = automaton1.variables.input + automaton2.variables.input
         composed.variables.input = [var for var in composed.variables.input if var not in composed.variables.output]
         #composed.vars = composed.variables.local+composed.variables.output+composed.variables.input
         #composed.varList = [v.name for v in composed.variables.local]
 
+        print("  " + composed.name + " composition complete.")
         return composed
 
     @staticmethod
@@ -335,11 +533,11 @@ class HyIR:
         for t in self.transitions:
           g_eqs = t.guard.expr
           g_vars = SymEq.vars_used(t.guard.expr)
-          print (g_vars)
           action_eqs = []
           for act in t.actions:
             action_eqs.extend(act.expr)
-          guardResets[(t.src,t.dest)].append((g_eqs, action_eqs, g_vars))
+          guardResets[(t.source,t.destination)]\
+                                           .append((g_eqs, action_eqs, g_vars))
 
         self.guardResets = dict(guardResets)
         self.invariants = dict(invariants)
@@ -836,15 +1034,15 @@ def separateAutomata(hyir):
                     if breakAgain:
                         break
                     for key in mapID_List[autoNum].keys():
-                        if tran.src == key:
+                        if tran.source == key:
                             change = True
                             for x in mapID_List[autoNum].keys():
-                                if tran.dest == x:
-                                    tran.dest = mapID_List[autoNum][x]
+                                if tran.destination == x:
+                                    tran.destination = mapID_List[autoNum][x]
                                     change = False
                             if change:
                                 needsDestChange[tran] = autoNum
-                            tran.src = mapID_List[autoNum][tran.src]
+                            tran.source = mapID_List[autoNum][tran.source]
                             hyir.automata[autoNum].add_trans(tran)
                             BASE_AUTOMATON.remove_tran(tran)
                             breakAgain = True
@@ -852,12 +1050,12 @@ def separateAutomata(hyir):
             for mode in BASE_MODES_COPY[:]:
                 os.system('cd /Users/danielgrier/Desktop/; echo "%s" > HyLink_error_log' % "blah")
                 for tran in needsDestChange.keys():
-                    if mode.id == tran.dest:
+                    if mode.id == tran.destination:
                         auto_idx = needsDestChange[tran]
                         mode.id = hyir.automata[auto_idx].new_mode_id()
                         
-                        mapID_List[auto_idx][tran.dest] = mode.id
-                        tran.dest = mode.id
+                        mapID_List[auto_idx][tran.destination] = mode.id
+                        tran.destination = mode.id
     
                         hyir.automata[auto_idx].add_mode(mode)
                         
@@ -866,7 +1064,7 @@ def separateAutomata(hyir):
                         break
         #Some transitions still might need converting
         for tran in needsDestChange.keys():
-            tran.dest = mapID_List[needsDestChange[tran]][tran.dest]
+            tran.destination = mapID_List[needsDestChange[tran]][tran.destination]
 
 def collapseAction(node):
     '''There exists an implicit assumption due to the parsing of the tree 

@@ -25,6 +25,8 @@ class Automaton:
 
         self.parent = None
 
+    # Variable Properties
+
     @property
     def vars(self):
         return self.variables.all
@@ -34,8 +36,30 @@ class Automaton:
         return self.variables.local
 
     @property
+    def output_vars(self):
+        return self.variables.output
+
+    @property
+    def input_vars(self):
+        return self.variables.input
+
+    @property
+    def var_names(self):
+        return self.variables.names
+
+    @property
     def local_var_names(self):
         return self.variables.local_names
+
+    @property
+    def output_var_names(self):
+        return self.variables.output_names
+
+    @property
+    def input_var_names(self):
+        return self.variables.input_names
+
+    # Thinvariable Properties
 
     @property
     def thinvars(self):
@@ -46,8 +70,30 @@ class Automaton:
         return self.thinvariables.local
 
     @property
+    def output_thinvars(self):
+        return self.thinvariables.output
+
+    @property
+    def input_thinvars(self):
+        return self.thinvariables.input
+
+    @property
+    def thinvar_names(self):
+        return self.thinvariables.names
+
+    @property
     def local_thinvar_names(self):
         return self.thinvariables.local_names
+
+    @property
+    def output_thinvar_names(self):
+        return self.thinvariables.output_names
+
+    @property
+    def input_thinvar_names(self):
+        return self.thinvariables.input_names
+
+    # Mode/Transition Properties
         
     @property
     def mode_names(self):
@@ -91,10 +137,16 @@ class Automaton:
         self.thinvariables = ThinVariables(self)
         return
 
-    def add_mode(self, mode, fileread=False):
-        if(not fileread): 
+    def add_mode(self, mode, id_=None):
+
+        if id_ is not None: 
+            mode.id = id_
+            if id_ > self.next_mode_id:
+                self.next_mode_id = id_
+        else:
             mode.id = self.next_mode_id
-            self.next_mode_id += 1
+
+        self.next_mode_id += 1
         mode.parent = self
         self.mode_dict[mode.id] = mode.name
         self.modes.append(mode)
@@ -117,16 +169,98 @@ class Automaton:
         return
 
     def parse(self):
-        print("Parsing Automaton " + self.name + "...")
+        
+        print("  Parsing Automaton " + self.name + "...")
         errors = []
+
+        print("    Parsing Modes...")
+        if not self.verify_mode_names():
+            errors.append(('Mode', self, "Mode names not unique", None))
+        if not self.verify_mode_ids():
+            errors.append(('Mode', self, "Mode IDs not unique", None))
 
         for mode in self.modes:
             errors += mode.parse()
+        print("    Modes Parsed.")
 
+        print("    Parsing Transitions...")
+        if not self.verify_transition_src_dest():
+            errors.append(('Transition', self, 
+                           "Transition src/dest invalid", None))
+        
         for transition in self.transitions:
             errors += transition.parse()
+        print("    Transitions Parsed.")
 
+        print("  Automaton Parsed.")
         return errors
+
+    # Verify functions
+
+    def verify_local_variables(self):
+        """ Verify local variable names are unique within an Automaton """
+        
+        if len(self.local_var_names) > len(set(self.local_var_names)):
+            return False
+        
+        if len(self.local_thinvar_names) > len(set(self.local_thinvar_names)):
+            return False
+        
+        return True
+
+    def verify_output_variables(self):
+        """ Verify output variable names are unique within an Automaton """
+        
+        if len(self.output_var_names) > len(set(self.output_var_names)):
+            return False
+        
+        if len(self.output_thinvar_names) >len(set(self.output_thinvar_names)):
+            return False
+
+        return True
+
+    def verify_input_variables(self):
+        """ Verify input variable names are unique within an Automaton """
+        
+        if len(self.input_var_names) > len(set(self.input_var_names)):
+            return False
+        
+        if len(self.input_thinvar_names) > len(set(self.input_thinvar_names)):
+            return False
+        
+        return True
+
+    def verify_mode_ids(self):
+        """ Verify mode ids are unique within an Automaton """
+        id_set = set()
+        for mode in self.modes:
+            if mode.id in id_set:
+                return False
+            id_set.add(mode.id)
+        return True
+
+    def verify_mode_names(self):
+        """ Verify mode names are unqiue with an Automaton """
+        name_set = set()
+        for mode in self.modes:
+            name = mode.name.strip()
+            if name in name_set:
+                return False
+            name_set.add(name)
+        return True
+
+    def verify_transition_src_dest(self):
+        """ Verify transition src and destination IDs """
+
+        id_set = set()
+        for mode in self.modes:
+            id_set.add(mode.id)
+
+        for tran in self.transitions:
+            if ((tran.source not in id_set) or 
+                (tran.destination not in id_set)):
+                return False
+        return True
 
     # DEPRECATED?
         
@@ -193,6 +327,20 @@ class Variables:
         return names
 
     @property
+    def output_names(self):
+        names = []
+        for var in self.output:
+            names.append(var.name)
+        return names
+
+    @property
+    def input_names(self):
+        names = []
+        for var in self.input:
+            names.append(var.name)
+        return names
+
+    @property
     def all(self):
         return (self.input + self.local + self.output)
 
@@ -210,7 +358,8 @@ class Variables:
 
 class Variable:
     
-    def __init__(self, name="default_variable", update_type="", type=REAL, scope='LOCAL_DATA'):
+    def __init__(self, name="default_variable", update_type="", 
+                 type=REAL, scope='LOCAL_DATA'):
         self.name = name
         self.type = type
         self.scope = scope
@@ -218,7 +367,9 @@ class Variable:
         self.parent = None
 
     def __eq__(self, other):
-        return self.name==other.name and self.update_type==other.update_type and self.type==other.type
+        return (self.name==other.name\
+                and self.update_type==other.update_type\
+                and self.type==other.type)
 
 
 class ThinVariables:
@@ -244,6 +395,20 @@ class ThinVariables:
         return names
 
     @property
+    def output_names(self):
+        names = []
+        for var in self.output:
+            names.append(var.name)
+        return names
+
+    @property
+    def input_names(self):
+        names = []
+        for var in self.input:
+            names.append(var.name)
+        return names
+
+    @property
     def all(self):
         return (self.input + self.local + self.output)
 
@@ -261,22 +426,29 @@ class ThinVariables:
 
 class ThinVariable:
 
-    def __init__(self, name="default_thinvariable", update_type="", type=REAL, scope='LOCAL_DATA'):
+    def __init__(self, name="default_thinvariable", update_type="", 
+                 type=REAL, scope='LOCAL_DATA'):
         self.name = name
         self.type = type
         self.scope = scope
         self.update_type = type
 
     def __eq__(self, other):
-        return self.name==other.name and self.update_type==other.update_type and self.type==other.type
-    
-      
+        return (self.name==other.name\
+                and self.update_type==other.update_type\
+                and self.type==other.type)
+
+
 class Mode:
-    '''name - name of the mode (can be different from the one specified in simulink/stateflow
-    id - uniquely identifies mode. if mode created through HyIR, then id corresponds to its index in the HyIR's modes list
-    initial - True if this is the starting mode of the hybrid automata, false otherwise
+    '''name - name of the mode (can be different from the one specified in 
+              simulink/stateflow
+    id - uniquely identifies mode. if mode created through HyIR, then id 
+         corresponds to its index in the HyIR's modes list
+    initial - True if this is the starting mode of the hybrid automata, 
+              false otherwise
     invs - list of Invariant objects representing the mode's invariants
-    dais - list of DAI objects representing the mode's governing differential equations
+    dais - list of DAI objects representing the mode's governing differential 
+           equations
     '''
     def __init__(self, name="default_mode", id=-1, initial=False):
 
@@ -363,25 +535,78 @@ class Mode:
         self._dais = []
         return
 
+        
     def parse(self):
         """ Parse DAI equation and Invariant Equations """
         
         errors = []
-        self.linear = True
+
+        # Parse DAIs
+        self.linear = True        
         for dai in self.dais:
             errors += dai.parse()
             if (self.linear and (dai.expr is not None)):
                 self.linear = SymEq.is_linear(dai.expr.rhs)
 
+        # Parse DAI variables
+        errors += self.parse_dai_vars()
+
+        # Parse Invariants
         for inv in self._invariants:
             p = inv.parse()
             errors += inv.parse()
-
             #if not inv.expr:
                 #self.remove_invariants(inv)
 
         return errors
 
+    def parse_dai_vars(self):
+        """ 
+        Parse variables used in DAI equations
+        - Output variables on left-hand side must not end with _dot
+        - Local variables on left-hand side must end with _dot
+        - Input variables must not be used on the left-hand side
+        
+        Assumptions
+        - <DAI>.expr contains only one symbol on the left-hand side
+            - This check is done during <DAI>.parse()
+        """
+
+        errors = []
+        local_vars = set(self.parent.local_var_names)
+        output_vars = set(self.parent.output_var_names)
+        input_vars = set(self.parent.input_var_names)
+
+        for dai in self.dais:
+
+            if dai.expr is None:
+                continue
+
+            lhs = str(dai.expr.lhs)
+            var_ = lhs.replace('_dot', '')
+            
+            if var_ in local_vars:
+                if not lhs.endswith('_dot'):
+                    errors.append(('Flow', dai, "Incorrect Variable Usage",
+                                   "Local variable equations must end with "
+                                   + "_dot"))
+                local_vars.remove(var_)
+            elif var_ in output_vars:
+                if lhs.endswith('_dot'):
+                    errors.append(('Flow', dai, "Incorrect Variable Usage", 
+                                   "Output variable equations must not end "
+                                   + "with _dot"))
+                output_vars.remove(var_)
+            elif var_ in input_vars:
+                errors.append(('Flow', dai, "Incorrect Variable Usage",
+                               "Input variables should not appear on the "
+                               "left-hand side of an equation"))
+
+        for var_ in local_vars.union(output_vars):
+            errors.append(('WARNING', self, "Unused variable: " + var_, None))
+        
+        return errors
+        
 
 class Transition:
     '''guard - node representing the guard for the transition
@@ -426,7 +651,8 @@ class Transition:
 
     @property
     def name(self):
-        return self.parent.mode_dict[self.source] + " -> " + self.parent.mode_dict[self.destination]
+        return (self.parent.mode_dict[self.source] + " -> " 
+                + self.parent.mode_dict[self.destination])
 
     def add_action(self, action):
         action.parent = self
@@ -502,12 +728,21 @@ class DAI:
         errors = []
         if self.raw is None:
             errors.append(('Flow', self, "No Expression", None))
+            self.expr = None
             return errors
         
-        # Constructed returns None if operation fails
+        # Attempt to constructed a sympy equation
         constructed = SymEq.construct_eqn(self.raw, True, False)
-        if constructed is None:
-            errors.append(('Flow', self, "Invalid Expression", self.raw))
+        if constructed is None:  # construct_eqn returns None if it fails
+            errors.append(('Flow', self, "Invalid Expression", None))
+            self.expr = None
+            return errors
+
+        # Verify constructed equation has a single symbol on the left-hand side
+        if type(constructed.lhs) is not sympy.Symbol:
+            errors.append(('Flow', self, "Invalid Expession", "Left hand side "
+                           + "of equation must be a single symbol"))
+            self.expr = None
             return errors
 
         self.expr = constructed
@@ -611,6 +846,7 @@ class Action:
 
         errors = []
 
+        # TODO TODO TODO Remove now
         if self.raw is None:
             errors.append(('Action', self, "No Expression", None))
             return errors

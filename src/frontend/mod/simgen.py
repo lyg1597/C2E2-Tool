@@ -1,3 +1,4 @@
+import numpy as np
 import shlex, subprocess
 import sympy
 
@@ -24,7 +25,7 @@ def gen_simulator_master(file_path, **kwargs):
         print('Incorrect simulation type')
 
 
-def gen_simulator( file_path, hybrid_rep, **kwargs ):
+def gen_simulator(file_path, hybrid_rep, **kwargs):
     # Get kwargs
     step_type = kwargs.pop('step_type', 'adaptive')
 
@@ -440,18 +441,18 @@ def gen_simulator_simulink(dir_path, model_name, in_labels, in_vals,
 
 def simulate():
 
-    result = _sim_ver( 1 )
+    result = _sim_ver(1)
 
-    if( not result ):
+    if(not result):
         Session.cur_prop.status = "Invalid" 
         Session.cur_prop.result = "Invalid"
         return None
 
     Session.cur_prop.status = Simulated
 
-    if( result == 1 ):
+    if(result == 1):
         Session.cur_prop.result = "Safe"
-    elif( result == 0 ):
+    elif(result == 0):
         Session.cur_prop.result = "Unknown"
     else:
         Session.cur_prop.result = "Unsafe"
@@ -460,105 +461,104 @@ def simulate():
 
 def verify():
 
-    result = _sim_ver( 0 )
+    result = _sim_ver(0)
 
-    if( not result ):
+    if(not result):
         Session.cur_prop.status = "Invalid" 
         Session.cur_prop.result = "Invalid"
         return None
         
     Session.cur_prop.status = Verified
-    if( result == 1 ):
+    if(result == 1):
         Session.cur_prop.result = "Safe"
-    elif( result == 0 ):
+    elif(result == 0):
         Session.cur_prop.result = "Unknown"
     else:
         Session.cur_prop.result = "Unsafe"
     
     return result
 
-def _sim_ver( action ):
+def _sim_ver(action):
 
-    if( not Session.cur_prop.is_valid() ):
-        print( "\nProperty invalid, abandoning operation..." )
+    if(not Session.cur_prop.is_valid()):
+        print("\nProperty invalid, abandoning operation...")
         return None
 
-    # Parse and Compose ( HyIR.compose_all calss HyIR.parse_all )
-    HyIR.compose_all( Session.hybrid )
+    # Parse and Compose (HyIR.compose_all calss HyIR.parse_all)
+    HyIR.compose_all(Session.hybrid)
 
-    if( not Session.hybrid.composed ):
-        print( "\nError: System not composed, abandoning operation..." )
+    if(not Session.hybrid.composed):
+        print("\nError: System not composed, abandoning operation...")
         return None
 
     # Generate Simulator
-    if( Session.simulator == CAPD ):
-        Session.hybrid.convertToCAPD( 'simulator' )
+    if(Session.simulator == CAPD):
+        Session.hybrid.convertToCAPD('simulator')
     else:
-        if( Session.simulator == ODEINT_FIX ):
+        if(Session.simulator == ODEINT_FIX):
             st = 'constant'
-        elif( Session.simulator == ODEINT_ADP ):
+        elif(Session.simulator == ODEINT_ADP):
             st = 'adaptive'
         path = '../work-dir/simulator.cpp'
-        gen_simulator( path, Session.hybrid, step_type=st )
+        gen_simulator(path, Session.hybrid, step_type=st)
 
     Session.hybrid.printHybridSimGuardsInvariants()
     Session.hybrid.printBloatedSimGuardsInvariants()
 
     # Simulate selected model
-    initialize_cpp_model( action )
+    initialize_cpp_model(action)
     compile_executable()
 
-    print( "Running simulate_verify...\n" )
+    print("Running simulate_verify...\n")
     result = Session.cpp_model.simulate_verify()
-    print( "RESULT: ", result )
+    print("RESULT: ", result)
 
     return result
     
 
-def initialize_cpp_model( sim_bool ):
+def initialize_cpp_model(sim_bool):
 
-    
     model = Session.new_cpp_model()
 
     # Initialize set variables
     initial_set_obj = Session.cur_prop.initial_set_obj
     initial_mode = initial_set_obj[0]
     initial_eqns = initial_set_obj[3]
-    initial_matrix = extract_matrix( initial_set_obj[1], initial_eqns )
-    initial_b = extract_matrix( initial_set_obj[2], initial_eqns )
+    initial_matrix = extract_matrix(initial_set_obj[1], initial_eqns)
+    initial_b = extract_matrix(initial_set_obj[2], initial_eqns)
     mode_names = Session.hybrid.mode_names
-    initial_mode_idx = mode_names.index( initial_mode ) + 1
+    initial_mode_idx = mode_names.index(initial_mode) + 1
 
     # Unsafe set variables
     unsafe_set_obj = Session.cur_prop.unsafe_set_obj
     unsafe_eqns = unsafe_set_obj[2]
-    unsafe_matrix = extract_matrix( unsafe_set_obj[0], unsafe_eqns )
-    unsafe_b = extract_matrix( unsafe_set_obj[1], unsafe_eqns )
+    unsafe_matrix = extract_matrix(unsafe_set_obj[0], unsafe_eqns)
+    unsafe_b = extract_matrix(unsafe_set_obj[1], unsafe_eqns)
 
     # FIXME remove file readind and store in memory instead
     mode_linear = []
     gammas = []
     k_consts = []
-    for m_i, m in enumerate( Session.hybrid.modes ):
+    for m_i, m in enumerate(Session.hybrid.modes):
         fn = '../work-dir/jacobiannature' + str(m_i+1) + '.txt'
-        fid = open( fn, 'r' ).read().split( '\n' )
-        num_var = int( fid[0] )
+        fid = open(fn, 'r').read().split('\n')
+        num_var = int(fid[0])
 
-        if( num_var == 0 ):
+        if num_var == 0:
             m.linear = False
 
-        if( m.linear ):
+        if m.linear:
             list_var = []
-            for i in range( num_var ):
-                list_var.append( fid[i+1] )
+            for i in range(num_var):
+                list_var.append(fid[i+1])
 
             eqn_pos = num_var + 1
-            num_eqn = int( fid[eqn_pos] )
+            num_eqn = int(fid[eqn_pos])
             eqn_pos += 1
 
             list_eqn = []
-            for i in range( num_eqn ):
-                list_eqn.append( fid[eqn_pos+i] )
+            for i in range(num_eqn):
+                list_eqn.append(fid[eqn_pos+i])
 
             # FIXME see if we can avoid create functions dynamically
 
@@ -577,36 +577,36 @@ def initialize_cpp_model( sim_bool ):
                 codestring += '\n'
                 codestring += ' ret.append(Entry)\n'
             codestring += ' return ret'
-            exec( codestring, globals() )
+            exec(codestring, globals())
 
-            constant_jacobian = jcalc( list_var, np.ones( (1, num_var) )[0] )
-            constant_jacobian = np.reshape( constant_jacobian, (num_var, num_var) )
+            constant_jacobian = jcalc(list_var, np.ones((1, num_var))[0])
+            constant_jacobian = np.reshape(constant_jacobian, (num_var, num_var))
 
-            gamma_rate = np.linalg.eigvals( constant_jacobian ).real
-            gamma = max( gamma_rate )
-            if( abs( max(gamma_rate) ) < 0.00001 ):
+            gamma_rate = np.linalg.eigvals(constant_jacobian).real
+            gamma = max(gamma_rate)
+            if(abs(max(gamma_rate)) < 0.00001):
                 gamma = 0
-            k = np.linalg.norm( constant_jacobian )
+            k = np.linalg.norm(constant_jacobian)
 
         else:
             gamma = 0
             k = Session.cur_prop.k_value
 
         # Append calculated value
-        mode_linear.append( int( m.linear ) )
-        gammas.append( gamma )
-        k_consts.append( k )
+        mode_linear.append(int(m.linear))
+        gammas.append(gamma)
+        k_consts.append(k)
 
     # Unsigned integers
-    model.dimensions = len( Session.hybrid.local_var_names )
-    model.modes = len( Session.hybrid.modes )
+    model.dimensions = len(Session.hybrid.local_var_names)
+    model.modes = len(Session.hybrid.modes)
     model.initial_mode = initial_mode_idx
-    model.initial_eqns = len( initial_eqns )
-    model.unsafe_eqns = len( unsafe_eqns )
+    model.initial_eqns = len(initial_eqns)
+    model.unsafe_eqns = len(unsafe_eqns)
     model.annot_type = 3
 
     # Integers
-    if( Session.refine_strat == DEF_STRAT ):
+    if(Session.refine_strat == DEF_STRAT):
         model.refine = 0
     else:
         model.refine = 1
@@ -640,48 +640,48 @@ def initialize_cpp_model( sim_bool ):
     model.visualize_filename = '../work-dir/' + Session.cur_prop.name
 
 
-def extract_matrix( mat_in, mat_eqn ):
+def extract_matrix(mat_in, mat_eqn):
     
     mat = []
-    for row, eqn in zip( mat_in, mat_eqn ):
-        if( eqn[0] == '>=' ):
+    for row, eqn in zip(mat_in, mat_eqn):
+        if(eqn[0] == '>='):
             row_new = [float(-d) for d in row]
         else:
             row_new = [float(d) for d in row]
-        mat.extend( row_new )
+        mat.extend(row_new)
     return mat
 
 
 def compile_executable():
 
-    if( Session.lib_compiled ):
+    if(Session.lib_compiled):
         return
 
-    print( "Compiling essential libraries for C2E2. Compilation may take a few minutes." )
-    if( (Session.simulator == ODEINT_ADP) or (Session.simulator == ODEINT_FIX) ):
-        print( "Using ODEINT Simulator..." )
+    print("Compiling essential libraries for C2E2. Compilation may take a few minutes.")
+    if((Session.simulator == ODEINT_ADP) or (Session.simulator == ODEINT_FIX)):
+        print("Using ODEINT Simulator...")
         command_line = "g++ -w -O2 -std=c++11 simulator.cpp -o simu"
-        args = shlex.split( command_line )
-        p = subprocess.Popen( args, cwd= "../work-dir" )
+        args = shlex.split(command_line)
+        p = subprocess.Popen(args, cwd= "../work-dir")
         p.communicate()
     else:
-        print( "Using CAPD Simulator..." )
+        print("Using CAPD Simulator...")
         command_line = "g++ -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`"
-        p = subprocess.Popen( command_line, cwd= "../work-dir", shell=True )
+        p = subprocess.Popen(command_line, cwd= "../work-dir", shell=True)
         p.communicate()
 
     command_line = "g++ -fPIC -shared hybridSimGI.cpp -o libhybridsim.so -lppl -lgmp"
-    args = shlex.split( command_line )
-    p = subprocess.Popen( args, cwd= "../work-dir" )
+    args = shlex.split(command_line)
+    p = subprocess.Popen(args, cwd= "../work-dir")
     p.communicate()
 
     command_line = "g++ -fPIC -shared bloatedSimGI.cpp -o libbloatedsim.so -lppl -lgmp"
-    args = shlex.split( command_line )
-    p = subprocess.Popen( args, cwd= "../work-dir" )
+    args = shlex.split(command_line)
+    p = subprocess.Popen(args, cwd= "../work-dir")
     p.communicate()
 
     Session.lib_compiled = True
     
-    print( "Libraries successfully compiled." )
+    print("Libraries successfully compiled.")
 
     return
