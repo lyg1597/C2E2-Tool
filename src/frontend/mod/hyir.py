@@ -170,7 +170,6 @@ class HyIR:
 
         # Do nothing if we're already parsed
         if self.parsed:
-            print("System Parsed.")
             return
         
         print("Parsing System...")
@@ -184,11 +183,15 @@ class HyIR:
 
         for automaton in self.automata:
             self.parse_errors += automaton.parse()
-            if len(self.parse_errors) == 0:
-                self.parsed = True
-            else:
-                self.parsed = False
-                self.print_parse_errors()
+        
+        if len(self.parse_errors) == 0:
+            self.parsed = True
+            print("------------------------")
+            print("    No Parse Errors!")
+            print("------------------------")
+        else:
+            self.parsed = False
+            self.print_parse_errors()
 
         print("Parsing Complete.")
         return
@@ -329,16 +332,6 @@ class HyIR:
 
         return errors
 
-
-        # Loop over input vars
-            # Verify in var.parent (checks in-automaton requirements)
-            # Loop over all local vars not in var.parent
-                # var can't match any local var
-            # Loop over all output vars not in var.parent
-                # var MUST match with an output var
-
-        return errors
-
     # Compose Functions
 
     @classmethod
@@ -393,6 +386,9 @@ class HyIR:
 
         cls.compose_properties(hybrid.automata[0], Session.hybrid.properties)
         
+        hybrid.parsed = False
+        cls.parse(hybrid)
+
         Session.hybrid = hybrid
         Session.hybrid.composed = True
         
@@ -407,13 +403,13 @@ class HyIR:
         m1_len = len(automaton1.modes)
         m2_len = len(automaton2.modes)
 
-        #Construct Cartesian product of modes
+        # Construct Cartesian product of modes
         for m1 in automaton1.modes:
             for m2 in automaton2.modes:
                 m_name = m1.name + '_' + m2.name
                 m_id = m1.id * automaton2.next_mode_id + m2.id
                 m_initial = m1.initial and m2.initial
-                cross_mode = Mode(name=m_name, id=m_id, initial=m_initial)
+                cross_mode = Mode(name=m_name, initial=m_initial)
 
                 # Replace input variables with corresponding output variables
                 dai_dict = {}
@@ -426,9 +422,11 @@ class HyIR:
                     cross_mode.add_invariant(inv1)
                 for inv2 in m2.invariants:
                     cross_mode.add_invariant(inv2)
-                composed.add_mode(cross_mode)
 
-        # Construct guards of composed automata. (a,b)->(a',b) and (a,b)->(a,b')
+                # Add Mode with specified mode ID
+                composed.add_mode(cross_mode, m_id)
+
+        # Construct guards of composed automata. (a,b)->(a',b) & (a,b)->(a,b')
         # for all transitions a->a' and b->b'. Note there is no (a,b)->(a',b')
         trans_id = 0
         for t1 in automaton1.transitions:
@@ -438,7 +436,11 @@ class HyIR:
             for i in range(automaton2.next_mode_id):    
                 t_src = t1.source * automaton2.next_mode_id + i
                 t_dest = t1.destination * automaton2.next_mode_id + i
-                cross_trans = Transition(guard=t_guard, actions=t_actions, source=t_src, destination=t_dest, id=trans_id)
+                cross_trans = Transition(guard=t_guard, 
+                                         actions=t_actions,
+                                         source=t_src, 
+                                         destination=t_dest, 
+                                         id=trans_id)
                 composed.add_transition(cross_trans)
                 trans_id += 1 
 
@@ -449,17 +451,28 @@ class HyIR:
             for i in range(m1_len):    
                 t_src = i * automaton2.next_mode_id + t2.source
                 t_dest = i * automaton2.next_mode_id + t2.destination
-                cross_trans = Transition(guard=t_guard, actions=t_actions, source=t_src, destination=t_dest, id=trans_id)
+                cross_trans = Transition(guard=t_guard, 
+                                         actions=t_actions, 
+                                         source=t_src, 
+                                         destination=t_dest, 
+                                         id=trans_id)
                 composed.add_transition(cross_trans)
                 trans_id += 1
 
         # Construct composed variables
-        composed.variables.local = automaton1.variables.local + automaton2.variables.local
-        composed.variables.output = automaton1.variables.output + automaton2.variables.output
-        composed.variables.input = automaton1.variables.input + automaton2.variables.input
-        composed.variables.input = [var for var in composed.variables.input if var not in composed.variables.output]
+        composed.variables.local = automaton1.variables.local \
+                                   + automaton2.variables.local
+        composed.variables.output = automaton1.variables.output \
+                                    + automaton2.variables.output
+        composed.variables.input = automaton1.variables.input \
+                                   + automaton2.variables.input
+        composed.variables.input = [var for var in composed.variables.input \
+                                    if var not in composed.variables.output]
         #composed.vars = composed.variables.local+composed.variables.output+composed.variables.input
         #composed.varList = [v.name for v in composed.variables.local]
+
+        # Required to update the parents of the variable objects
+        composed.variables.update_parents(composed)
 
         print("  " + composed.name + " composition complete.")
         return composed
@@ -512,8 +525,10 @@ class HyIR:
                 for var in free_syms:
                     var_name = str(var)
                     if var_name in dai_dict:
-                        dai.expr = dai.expr.func(dai.expr.lhs, dai.expr.rhs.subs(var, dai_dict[var_name]))
-                dai.raw = str(dai.expr)
+                        dai.expr = dai.expr.func(dai.expr.lhs, 
+                            dai.expr.rhs.subs(var, dai_dict[var_name]))
+
+                dai.raw = str(dai.expr.lhs) + ' = ' + str(dai.expr.rhs)
 
     
     def populateInvGuards(self):

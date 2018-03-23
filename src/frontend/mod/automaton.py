@@ -345,6 +345,7 @@ class Variables:
         return (self.input + self.local + self.output)
 
     def add_var(self, v):
+        """ Add Variable to appropriate list based on scope """
    
         if v.scope=='LOCAL_DATA':
             self.local.append(v)
@@ -353,6 +354,15 @@ class Variables:
         elif v.scope=='INPUT_DATA':
             self.input.append(v)
     
+        return
+
+    def update_parents(self, parent):
+        """ Update Variable parents. Needed for composition """
+
+        for var in (self.local + self.input + self.output):
+            var.parent = parent
+        self.parent = parent
+
         return
 
 
