@@ -16,7 +16,7 @@ class MenuBar(Menu):
         Menu.__init__(self, parent)
     
         self.parent = parent
-        self.tree = notebook.model_tab.tree  # LMB: Menu needs to interact with Notebook and it's Treeview
+        self.tree = notebook.model_tab.tree # Menu interacts with TreeView
 
         # Open file constants
         self.OPEN_OPT = {
@@ -45,8 +45,8 @@ class MenuBar(Menu):
         file_menu = Menu(self, tearoff=0)
         file_menu.add_command(label='Open', accelerator='Crtl+O', underline=0,
                 command=self.open_callback)
-        file_menu.add_command( label='New', accelerator='Ctrl+N', underline=0, 
-                command=self.new_callback )
+        file_menu.add_command(label='New', accelerator='Ctrl+N', underline=0, 
+                command=self.new_callback)
         file_menu.add_command(label='Save', accelerator='Ctrl+S', underline=0, 
                 command=self.save_callback)
         file_menu.add_command(label='Save As', accelerator='Ctrl+Shift+S', 
@@ -59,28 +59,28 @@ class MenuBar(Menu):
 
         # Edit menu 
 
-        edit_menu = Menu( self, tearoff=0, postcommand=self._update_edit_menu )
+        edit_menu = Menu(self, tearoff=0, postcommand=self._update_edit_menu)
 
-        self.variables_submenu = Menu( self, tearoff=0 )
-        self.variables_submenu.add_command( label='Edit Variables', command=lambda: self.tree.launch_entry_popup( VARIABLES, EDIT ) )
+        self.variables_submenu = Menu(self, tearoff=0)
+        self.variables_submenu.add_command(label='Edit Variables', command=lambda: self.tree.launch_entry_popup(VARIABLES, EDIT))
 
-        self.modes_submenu = Menu( self, tearoff=0 )
-        self.modes_submenu.add_command( label='Add Mode', command=lambda: self.tree.launch_entry_popup( MODES, ADD ) )
-        self.modes_submenu.add_command( label='Edit Mode', command=lambda: 
-        self.tree.launch_entry_popup( MODES, EDIT ) )
-        self.modes_submenu.add_command( label='Delete Mode', command=lambda: self.tree.launch_entry_popup( MODES, DELETE ) )
+        self.modes_submenu = Menu(self, tearoff=0)
+        self.modes_submenu.add_command(label='Add Mode', command=lambda: self.tree.launch_entry_popup(MODES, ADD))
+        self.modes_submenu.add_command(label='Edit Mode', command=lambda: 
+        self.tree.launch_entry_popup(MODES, EDIT))
+        self.modes_submenu.add_command(label='Delete Mode', command=lambda: self.tree.launch_entry_popup(MODES, DELETE))
         
-        self.transitions_submenu = Menu( self, tearoff=0 )
-        self.transitions_submenu.add_command( label='Add Transition', command=lambda: self.tree.launch_entry_popup( TRANSITIONS, ADD ) )
-        self.transitions_submenu.add_command( label='Edit Transition', command=lambda: 
-        self.tree.launch_entry_popup( TRANSITIONS, EDIT ) )
-        self.transitions_submenu.add_command( label='Delete Transition', command=lambda: self.tree.launch_entry_popup( TRANSITIONS, DELETE ) )
+        self.transitions_submenu = Menu(self, tearoff=0)
+        self.transitions_submenu.add_command(label='Add Transition', command=lambda: self.tree.launch_entry_popup(TRANSITIONS, ADD))
+        self.transitions_submenu.add_command(label='Edit Transition', command=lambda: 
+        self.tree.launch_entry_popup(TRANSITIONS, EDIT))
+        self.transitions_submenu.add_command(label='Delete Transition', command=lambda: self.tree.launch_entry_popup(TRANSITIONS, DELETE))
  
-        edit_menu.add_cascade( label='Variables', menu=self.variables_submenu )
-        edit_menu.add_cascade( label='Modes', menu=self.modes_submenu )
-        edit_menu.add_cascade( label='Transitions', menu=self.transitions_submenu )
+        edit_menu.add_cascade(label='Variables', menu=self.variables_submenu)
+        edit_menu.add_cascade(label='Modes', menu=self.modes_submenu)
+        edit_menu.add_cascade(label='Transitions', menu=self.transitions_submenu)
 
-        self.add_cascade( label='Edit', menu=edit_menu )
+        self.add_cascade(label='Edit', menu=edit_menu)
 
         # Help menu
 
@@ -92,31 +92,38 @@ class MenuBar(Menu):
         # Bind accelerators
         
         self.parent.bind_all('<Control-o>', lambda event: self.open_callback())
-        self.parent.bind_all( '<Control-n>', lambda event: self.new_callback() )
+        self.parent.bind_all('<Control-n>', lambda event: self.new_callback())
         self.parent.bind_all('<Control-s>', lambda event: self.save_callback())
-        self.parent.bind_all('<Control-Shift-s>', lambda event: self.save_as_callback())
-        self.parent.bind_all('<Control-l>', lambda event: self.close_callback())
+        self.parent.bind_all('<Control-Shift-s>', 
+                             lambda event: self.save_as_callback())
+        self.parent.bind_all('<Control-l>', 
+                             lambda event: self.close_callback())
         self.parent.bind_all('<Control-q>', lambda event: self.quit_callback())
 
 
-    def _update_edit_menu( self ):
-        """ Disable menu options based on item selected in Treeview ( in ModelTab ) """
+    def _update_edit_menu(self):
+        """ Disable menu options based on item selected in TreeView """
 
-        context = self.tree.get_selection_context()
-        root_selected = ( self.tree.get_selection_root() == self.tree.get_selection_parent() )
+        self.variables_submenu.entryconfig(0, state=DISABLED)
+        for i in range(3):
+            self.modes_submenu.entryconfig(i, state=DISABLED)
+            self.transitions_submenu.entryconfig(i, state=DISABLED)
 
-        for i in range( 1, 3 ):
-            self.modes_submenu.entryconfig( i, state=DISABLED )
-            self.transitions_submenu.entryconfig( i, state=DISABLED )
-        
-        if( context == MODES and not root_selected ):       
-            self.modes_submenu.entryconfig( 1, state=NORMAL )
-            self.modes_submenu.entryconfig( 2, state=NORMAL )
+        if (not Session.file_opened) or (self.tree.slct_automaton is None):
+            return
+        else:
+            self.variables_submenu.entryconfig(0, state=NORMAL)
+            self.modes_submenu.entryconfig(0, state=NORMAL)
+            self.transitions_submenu.entryconfig(0, state=NORMAL)
+       
+        if self.tree.slct_mode is not None:       
+            self.modes_submenu.entryconfig(1, state=NORMAL)
+            self.modes_submenu.entryconfig(2, state=NORMAL)
+        elif self.tree.slct_transition is not None:
+            self.transitions_submenu.entryconfig(1, state=NORMAL)
+            self.transitions_submenu.entryconfig(2, state=NORMAL)
 
-        elif( context == TRANSITIONS and not root_selected ):
-            self.transitions_submenu.entryconfig( 1, state=NORMAL )
-            self.transitions_submenu.entryconfig( 2, state=NORMAL )
-           
+        return           
 
     def open_callback(self):
         """ Select and open file """
@@ -127,22 +134,22 @@ class MenuBar(Menu):
         self.parent.email.pack_forget()
 
         # If a file is already open, close it.
-        if( Session.file_opened ):
+        if Session.file_opened:
             self.close_callback()
        
         file_path = filedialog.askopenfilename(**self.OPEN_OPT)
-        if( file_path ):            
+        if(file_path):            
             Session.file_path = file_path
             
             status = FileHandler.open_file(file_path)
 
-            if( status ):
+            if(status):
                 Session.file_opened = True
                 EventHandler.event_generate(OPEN_EVENT)
                 
         return
 
-    def new_callback( self ):
+    def new_callback(self):
         """ Open template file """
 
         # Forget welcome screen widgets
@@ -151,14 +158,14 @@ class MenuBar(Menu):
         self.parent.email.pack_forget()
 
         # If a file is already open, close it.
-        if( Session.file_opened ):
+        if(Session.file_opened):
             self.close_callback()
 
         Session.hybrid = HyIR.create_template()
 
         Session.file_path = None
         Session.file_opened = True
-        EventHandler.event_generate( OPEN_EVENT )
+        EventHandler.event_generate(OPEN_EVENT)
 
         return
 
@@ -167,7 +174,7 @@ class MenuBar(Menu):
         if not Session.file_opened:
             return
 
-        if( Session.file_path is None ):
+        if(Session.file_path is None):
             self.save_as_callback()
             return
 
@@ -193,16 +200,16 @@ class MenuBar(Menu):
 
 
     def save_model(self, filepath):
-        savedModelString = FileHandler.save_model( Session.hybrid, Session.hybrid.properties, filepath )
+        savedModelString = FileHandler.save_model(Session.hybrid, Session.hybrid.properties, filepath)
 
 
     # FIXME destroy the session
     def close_callback(self, event=None):
 
         # TODO LMB
-        print( "**************************" )
-        print( "TODO: PROMPT USER TO SAVE" )
-        print( "**************************" )
+        print("**************************")
+        print("TODO: PROMPT USER TO SAVE")
+        print("**************************")
 
         Session.lib_compiled = False
         Session.simulator = ODEINT_FIX
