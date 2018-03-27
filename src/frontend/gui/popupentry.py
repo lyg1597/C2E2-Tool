@@ -238,14 +238,14 @@ class VariableEntry(PopupEntry):
 
         # Thin
         Checkbutton(self, var=self.thins[self.var_index])\
-            .grid(row=self.var_index+2, column=2)
+            .grid(row=self.var_index+2, column=1)
 
         # Type
         self.types[self.var_index].set(REAL)
         OptionMenu(self, self.types[self.var_index], 
                    self.types[self.var_index].get(), 
                    *VARIABLE_TYPES)\
-                   .grid(row=self.var_index+2, column=1)
+                   .grid(row=self.var_index+2, column=2)
 
         # Scope
         self.scopes[self.var_index].set('Local')
@@ -309,12 +309,15 @@ class ModeEntry(PopupEntry):
     """ 
     Popup window for Mode adding, editing, and deleting.
 
-    The ModelEntry class is designed to be the popup displayed to users when editing their model's Modes, or adding/deleting Modes. It controls the GUI elements of the popup, and interacts with the Session variables to commit changes to the currently active models.
+    The ModelEntry class is designed to be the popup displayed to users when
+    editing their model's Modes, or adding/deleting Modes. It controls the GUI
+    elements of the popup, and interacts with the Session variables to commit 
+    changes to the currently active models.
     
     Args:
         parent (obj): Popup's parent object
-        action (str): Action to be performed (use constants ADD, EDIT, or DELETE)
-        mode (Mode obj): Mode to be edited or deleted, not required for ADD action
+        action (str): Action to be performed (constants ADD, EDIT, or DELETE)
+        mode (Mode obj): Mode to be edited or deleted, not required for ADD 
     """
 
     def __init__(self, parent, automaton, action=ADD, mode=None):
@@ -370,8 +373,12 @@ class ModeEntry(PopupEntry):
         
         self.btn_frame = Frame(self)
 
-        self.cancel_btn = Button(self.btn_frame, text='Cancel', command=self._cancel)
-        self.confirm_btn = Button(self.btn_frame, text='Confirm', command=self._confirm)
+        self.cancel_btn = Button(self.btn_frame, 
+                                 text='Cancel', 
+                                 command=self._cancel)
+        self.confirm_btn = Button(self.btn_frame, 
+                                  text='Confirm', 
+                                  command=self._confirm)
         
         self.cancel_btn.grid(row=0, column=0)
         self.confirm_btn.grid(row=0, column=1)
@@ -419,7 +426,6 @@ class ModeEntry(PopupEntry):
         self.invariant_toggle.add_row()
         self.invariant_toggle.toggle()
 
-        # Prefill ID assuming IDs are sequential. Not doing this defaults it to 0.
         self.mode_id.set(self.automaton.next_mode_id)
 
         return
@@ -492,10 +498,11 @@ class ModeEntry(PopupEntry):
         # Build list of transitions that would be deleted
         del_trans = []
         for tran in self.automaton.transitions:
-            if((tran.source == self.mode.id) or (tran.destination == self.mode.id)):
+            if((tran.source == self.mode.id) or \
+               (tran.destination == self.mode.id)):
                 del_trans.append(tran)
 
-        # Build messagebox message warning user of transitions that also will be deleted
+        # Messagebox warning user of transitions that also will be deleted
         msg = "Delete " + self.mode.name + "(" + str(self.mode.id) + ") ?\n"
         msg += "WARNING: The following transitions will also be deleted:\n"
         for tran in del_trans:
@@ -526,13 +533,18 @@ class TransitionEntry(PopupEntry):
     """ 
     Popup window for Transition adding, editing, and deleting.
 
-    The TransitionEntry class is designed to be the popup displayed to users when editing their model's Modes, or adding/deleting Modes. It controls the GUI elements of the popup, and interacts with the Session variables to commit changes to the currently active models.
+    The TransitionEntry class is designed to be the popup displayed to users 
+    when editing their model's Modes, or adding/deleting Modes. It controls the
+    GUI elements of the popup, and interacts with the Session variables to 
+    commit changes to the currently active models.
     
     Args:
         parent (obj): Popup's parent object
-        action (str): Action to be performed (use constants ADD, EDIT, or DELETE)
-        mode_dict (dictionary: int keys, str values): Dictionary connect mode IDs to mode names
-        trans (Transition obj): Transition to be edited or deleted, not required for ADD action
+        action (str): Action to be performed (constants ADD, EDIT, or DELETE)
+        mode_dict (dictionary: int keys, str values): Dictionary connect mode 
+                                                      IDs to mode names
+        trans (Transition obj): Transition to be edited or deleted, not 
+                                required for ADD action
     """    
 
     def __init__(self, parent, automaton, action=ADD, transition=None):
@@ -583,10 +595,17 @@ class TransitionEntry(PopupEntry):
         self.source_str.trace_variable('w', self._callback_mode_select)
         self.destination_str.trace_variable('w', self._callback_mode_select)
 
-        # Arbitrarily set default source/destination. These are overwritten to be correct in _load_session when appropriate
-        self.source_option_menu = OptionMenu(self, self.source_str, self.mode_list[0], *self.mode_list)
+        # Arbitrarily set default source/destination. 
+        # These are overwritten to be correct in _load_session when appropriate
+        self.source_option_menu = OptionMenu(self, 
+                                             self.source_str, 
+                                             self.mode_list[0], 
+                                             *self.mode_list)
         self.source_option_menu.grid(row=3, column=1, sticky=W+E)        
-        self.destination_option_menu = OptionMenu(self, self.destination_str, self.mode_list[1], *self.mode_list)
+        self.destination_option_menu = OptionMenu(self, 
+                                                  self.destination_str, 
+                                                  self.mode_list[1], 
+                                                  *self.mode_list)
         self.destination_option_menu.grid(row=4, column=1, sticky=W+E)
 
         # Guards
@@ -603,7 +622,9 @@ class TransitionEntry(PopupEntry):
          
         self.btn_frame = Frame(self)
 
-        self.cancel_btn = Button(self.btn_frame, text='Cancel', command=self._cancel)
+        self.cancel_btn = Button(self.btn_frame, 
+                                 text='Cancel', 
+                                 command=self._cancel)
         self.confirm_btn = Button(self.btn_frame, text='Confirm', command=self._confirm)
 
         self.cancel_btn.grid(row=0, column=0)
@@ -738,7 +759,8 @@ class TransitionEntry(PopupEntry):
     def _delete(self):
         """ Delete active Transiiton """
         
-        if(messagebox.askyesno('Delete Transition', 'Delete ' + self.transition_str.get() + '?')):
+        if(messagebox.askyesno('Delete Transition', 'Delete ' + \
+           self.transition_str.get() + '?')):
             self.automaton.remove_transition(self.transition)
         
         print('Transition Deleted.')
