@@ -264,7 +264,7 @@ class Session():
 
     file_opened = False
     file_modified = False
-    file_saved = False
+    file_saved = True
     file_path = ''
     file_type = None
 

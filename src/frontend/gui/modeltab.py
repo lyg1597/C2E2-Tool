@@ -372,21 +372,22 @@ class TreeView(Treeview):
 
     def launch_entry_popup(self, context, action):
         
-        if(context == VARIABLES or context == THINVARIABLES):
+        if (context == VARIABLES) or (context == THINVARIABLES):
             entry = VariableEntry(self.master, self.slct_automaton)
-        elif(context == MODES):
+        elif context == MODES:
             entry = ModeEntry(self.master, 
                               self.slct_automaton, 
                               action, 
                               self.slct_mode)   
-        elif(context == TRANSITIONS):
+        elif context == TRANSITIONS:
             entry = TransitionEntry(self.master,
                                     self.slct_automaton,
                                     action, 
                                     self.slct_transition)
-        elif(context == AUTOMATON):
+        elif context == AUTOMATON:
             entry = AutomatonEntry(self.master, 
-                                   Session.hybrid, action,
+                                   Session.hybrid, 
+                                   action,
                                    self.slct_automaton)
         
         # Wait for user response
@@ -403,6 +404,8 @@ class TreeView(Treeview):
             # Flag Session for parsing and compilation
             Session.hybrid.parsed = False
             Session.hybrid.composed = False
+            # Flag Session as not being saved
+            Session.file_saved = False
         
         # Refresh TreeView
         self._clear_model()
@@ -863,6 +866,9 @@ class ModelSidebar(Frame):
         # Refresh TreeView
         self.parent.tree._clear_model()
         self.parent.tree._display_model()
+
+        # Mark file as being unsaved
+        Session.file_saved = False
 
         return
 

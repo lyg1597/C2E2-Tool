@@ -138,12 +138,10 @@ class MenuBar(Menu):
             self.close_callback()
        
         file_path = filedialog.askopenfilename(**self.OPEN_OPT)
-        if(file_path):            
+        if file_path:            
             Session.file_path = file_path
-            
             status = FileHandler.open_file(file_path)
-
-            if(status):
+            if status:
                 Session.file_opened = True
                 EventHandler.event_generate(OPEN_EVENT)
                 
@@ -158,13 +156,13 @@ class MenuBar(Menu):
         self.parent.email.pack_forget()
 
         # If a file is already open, close it.
-        if(Session.file_opened):
+        if Session.file_opened:
             self.close_callback()
 
         Session.hybrid = HyIR.create_template()
-
         Session.file_path = None
         Session.file_opened = True
+        Session.file_saved = False
         EventHandler.event_generate(OPEN_EVENT)
 
         return
@@ -174,7 +172,7 @@ class MenuBar(Menu):
         if not Session.file_opened:
             return
 
-        if(Session.file_path is None):
+        if Session.file_path is None:
             self.save_as_callback()
             return
 
@@ -183,33 +181,36 @@ class MenuBar(Menu):
             return
             
         self.save_model(Session.file_path)
+        Session.file_saved = True
 
+        return
 
     def save_as_callback(self, event=None):
 
         if not Session.file_opened:
             return 
+
         file_path = filedialog.asksaveasfile(**self.SAVE_OPT)
         if file_path:
-            
             self.save_model(file_path.name)
             if Session.file_type == MDL_FILE and not Session.file_saved:
                 Session.file_path = file_path.name
             Session.file_saved = True
+        
         return 
 
-
     def save_model(self, filepath):
-        savedModelString = FileHandler.save_model(Session.hybrid, Session.hybrid.properties, filepath)
-
+        savedModelString = FileHandler.save_model(Session.hybrid, 
+                                                  Session.hybrid.properties, 
+                                                  filepath)
+        return
 
     # FIXME destroy the session
     def close_callback(self, event=None):
 
-        # TODO LMB
-        print("**************************")
-        print("TODO: PROMPT USER TO SAVE")
-        print("**************************")
+        if not Session.file_saved:
+            if messagebox.askyesno('Save', "Save file before closing?"):
+                self.save_callback()
 
         Session.lib_compiled = False
         Session.simulator = ODEINT_FIX
@@ -217,7 +218,6 @@ class MenuBar(Menu):
         Session.file_saved = False
         Session.file_type = ''
         Session.file_path = ''
-
 
         if Session.file_opened:
             EventHandler.event_generate(CLOSE_EVENT)

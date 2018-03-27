@@ -759,8 +759,8 @@ class TransitionEntry(PopupEntry):
     def _delete(self):
         """ Delete active Transiiton """
         
-        if(messagebox.askyesno('Delete Transition', 'Delete ' + \
-           self.transition_str.get() + '?')):
+        if messagebox.askyesno('Delete Transition', 'Delete ' + \
+           self.transition_str.get() + '?'):
             self.automaton.remove_transition(self.transition)
         
         print('Transition Deleted.')
