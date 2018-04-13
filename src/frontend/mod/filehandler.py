@@ -61,7 +61,7 @@ class FileHandler:
 
         file_path = filedialog.asksaveasfile(**SAVE_OPT)
         if file_path:
-            Session.file_path = file_path
+            Session.file_path = file_path.name
             FileHandler.save(hyxml_text)
 
     @staticmethod
@@ -138,7 +138,7 @@ class FileHandler:
     @staticmethod
     def save_model(hybrid, property_list, file_path):
 
-        print("Saving filepath: " + file_path)
+        print("Saving filepath: " + str(file_path))
         print("Saving...")
         hyxml = ET.Element("hyxml", {"type":"Model"})
 
