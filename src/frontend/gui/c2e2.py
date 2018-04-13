@@ -46,5 +46,5 @@ class C2E2(Tk):
     def _init_widgets(self):
         """ Initialize Notebook and MenuBar widgets """
 
-        self.notebook = ModelNotebook( self )
-        self.menu = MenuBar( self, self.notebook )
+        self.notebook = ModelNotebook(self)
+        self.menu = MenuBar(self, self.notebook)

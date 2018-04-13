@@ -48,3 +48,18 @@ TRANSITIONS = 'Transitions'
 ADD = 'Add'
 EDIT = 'Edit' 
 DELETE = 'Delete'
+
+# Save Dialog options / LMB 3/26/2018 / Save Dialog popup options
+SAVE = 'Save'
+SAVE_AS = 'Save As'
+DISCARD = 'Discard'
+
+# Save Contexts / LMB 4/9/2018 / Determines what we're saving - the XML or the TreeView Model
+MODEL = 'Model'
+EDITOR = 'Editor'
+
+# Save Options / LMB 4/2/2018 / Save Options
+SAVE_OPT = {
+    'defaultextension': '.hyxml',
+    'filetypes': [('HyXML files', '.hyxml')],
+    'title': 'Save File' }

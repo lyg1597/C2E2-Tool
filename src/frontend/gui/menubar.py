@@ -16,23 +16,27 @@ class MenuBar(Menu):
         Menu.__init__(self, parent)
     
         self.parent = parent
+        self.notebook = notebook
         self.tree = notebook.model_tab.tree # Menu interacts with TreeView
 
         # Open file constants
         self.OPEN_OPT = {
             'defaultextension': ['.hyxml','.mdl'],
-            'filetypes': [('HyXML files', '.hyxml'), ('Simulink files', '.mdl')],
+            'filetypes': [('HyXML files', '.hyxml'), 
+                ('Simulink files', '.mdl')],
             'multiple': 0,
             'parent': self.parent,
             'title': 'Open File',
         }
 
+        """
         self.SAVE_OPT = {
             'defaultextension': '.hyxml',
             'filetypes': [('HyXML files', '.hyxml')],
             'parent': self.parent,
             'title': 'Save File',
         }
+        """
 
         self._init_widgets()
         
@@ -44,17 +48,17 @@ class MenuBar(Menu):
 
         file_menu = Menu(self, tearoff=0)
         file_menu.add_command(label='Open', accelerator='Crtl+O', underline=0,
-                command=self.open_callback)
+            command=self.open_callback)
         file_menu.add_command(label='New', accelerator='Ctrl+N', underline=0, 
-                command=self.new_callback)
+            command=self.new_callback)
         file_menu.add_command(label='Save', accelerator='Ctrl+S', underline=0, 
-                command=self.save_callback)
+            command=self.save_callback)
         file_menu.add_command(label='Save As', accelerator='Ctrl+Shift+S', 
-                underline=5, command=self.save_as_callback)
+            underline=5, command=self.save_as_callback)
         file_menu.add_command(label='Close', accelerator='Ctrl+L', underline=1, 
-                command=self.close_callback)
+            command=self.close_callback)
         file_menu.add_command(label='Quit', accelerator='Ctrl+Q', underline=0, 
-                command=self.quit_callback)
+            command=self.quit_callback)
         self.add_cascade(label='File', menu=file_menu)
 
         # Edit menu 
@@ -62,23 +66,28 @@ class MenuBar(Menu):
         edit_menu = Menu(self, tearoff=0, postcommand=self._update_edit_menu)
 
         self.variables_submenu = Menu(self, tearoff=0)
-        self.variables_submenu.add_command(label='Edit Variables', command=lambda: self.tree.launch_entry_popup(VARIABLES, EDIT))
-
+        self.variables_submenu.add_command(label='Edit Variables', 
+            command=lambda: self.tree.launch_entry_popup(VARIABLES, EDIT))
         self.modes_submenu = Menu(self, tearoff=0)
-        self.modes_submenu.add_command(label='Add Mode', command=lambda: self.tree.launch_entry_popup(MODES, ADD))
-        self.modes_submenu.add_command(label='Edit Mode', command=lambda: 
-        self.tree.launch_entry_popup(MODES, EDIT))
-        self.modes_submenu.add_command(label='Delete Mode', command=lambda: self.tree.launch_entry_popup(MODES, DELETE))
+        self.modes_submenu.add_command(label='Add Mode', 
+            command=lambda: self.tree.launch_entry_popup(MODES, ADD))
+        self.modes_submenu.add_command(label='Edit Mode', 
+            command=lambda: self.tree.launch_entry_popup(MODES, EDIT))
+        self.modes_submenu.add_command(label='Delete Mode', 
+            command=lambda: self.tree.launch_entry_popup(MODES, DELETE))
         
         self.transitions_submenu = Menu(self, tearoff=0)
-        self.transitions_submenu.add_command(label='Add Transition', command=lambda: self.tree.launch_entry_popup(TRANSITIONS, ADD))
-        self.transitions_submenu.add_command(label='Edit Transition', command=lambda: 
-        self.tree.launch_entry_popup(TRANSITIONS, EDIT))
-        self.transitions_submenu.add_command(label='Delete Transition', command=lambda: self.tree.launch_entry_popup(TRANSITIONS, DELETE))
+        self.transitions_submenu.add_command(label='Add Transition', 
+            command=lambda: self.tree.launch_entry_popup(TRANSITIONS, ADD))
+        self.transitions_submenu.add_command(label='Edit Transition', 
+            command=lambda: self.tree.launch_entry_popup(TRANSITIONS, EDIT))
+        self.transitions_submenu.add_command(label='Delete Transition', 
+            command=lambda: self.tree.launch_entry_popup(TRANSITIONS, DELETE))
  
         edit_menu.add_cascade(label='Variables', menu=self.variables_submenu)
         edit_menu.add_cascade(label='Modes', menu=self.modes_submenu)
-        edit_menu.add_cascade(label='Transitions', menu=self.transitions_submenu)
+        edit_menu.add_cascade(label='Transitions', 
+            menu=self.transitions_submenu)
 
         self.add_cascade(label='Edit', menu=edit_menu)
 
@@ -95,9 +104,9 @@ class MenuBar(Menu):
         self.parent.bind_all('<Control-n>', lambda event: self.new_callback())
         self.parent.bind_all('<Control-s>', lambda event: self.save_callback())
         self.parent.bind_all('<Control-Shift-s>', 
-                             lambda event: self.save_as_callback())
+            lambda event: self.save_as_callback())
         self.parent.bind_all('<Control-l>', 
-                             lambda event: self.close_callback())
+            lambda event: self.close_callback())
         self.parent.bind_all('<Control-q>', lambda event: self.quit_callback())
 
 
@@ -108,6 +117,9 @@ class MenuBar(Menu):
         for i in range(3):
             self.modes_submenu.entryconfig(i, state=DISABLED)
             self.transitions_submenu.entryconfig(i, state=DISABLED)
+
+        if self.notebook.current_tab == EDITOR:
+            return  # Edit menu options not valid in Editor tab
 
         if (not Session.file_opened) or (self.tree.slct_automaton is None):
             return
@@ -169,41 +181,41 @@ class MenuBar(Menu):
 
     def save_callback(self):
 
-        if not Session.file_opened:
-            return
+        print("Enter Save Callback")
+        if self.notebook.current_tab == EDITOR:
+            FileHandler.save(self.notebook.editor_tab.editor.get())
+            # Load XML into HyIR object
+            FileHandler.open_file(Session.file_path)
+            # Refresh Model Tab
+            self.tree._clear_model()
+            self.tree._display_model()
+            # Refresh Property Sidebar
+            self.notebook.model_tab.sidebar._display_property(Session.cur_prop)
+        else:
+            FileHandler.save()
+            # Refresh Editor Tab
+            self.editor_tab.open_xml()
 
-        if Session.file_path is None:
-            self.save_as_callback()
-            return
-
-        if Session.file_type == MDL_FILE and not Session.file_saved:
-            self.save_as_callback()
-            return
-            
-        self.save_model(Session.file_path)
-        Session.file_saved = True
-
+        print("Exit Save Callback")
+        
         return
 
     def save_as_callback(self, event=None):
 
-        if not Session.file_opened:
-            return 
-
-        file_path = filedialog.asksaveasfile(**self.SAVE_OPT)
-        if file_path:
-            self.save_model(file_path.name)
-            if Session.file_type == MDL_FILE and not Session.file_saved:
-                Session.file_path = file_path.name
-            Session.file_saved = True
+        if self.notebook.current_tab == EDITOR:
+            FileHandler.save_as(self.notebook.editor_tab.editor.get())
+        else:
+            FileHandler.save_as()
         
         return 
 
+    """
     def save_model(self, filepath):
         savedModelString = FileHandler.save_model(Session.hybrid, 
                                                   Session.hybrid.properties, 
                                                   filepath)
         return
+    """
 
     # FIXME destroy the session
     def close_callback(self, event=None):

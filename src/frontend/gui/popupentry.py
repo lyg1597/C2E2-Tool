@@ -1,10 +1,30 @@
 from tkinter import *
 from tkinter.ttk import *
-from frontend.gui.widgets import PopupEntry, ToggleFrame
+from frontend.gui.widgets import ToggleFrame
 from frontend.mod.automaton import *
 from frontend.mod.constants import *
 from frontend.mod.hyir import *
 from frontend.mod.session import Session
+
+
+class PopupEntry(Toplevel):
+
+    def __init__(self, parent):
+        Toplevel.__init__(self, parent)
+
+        self.parent = parent
+        self.resizable(width=False, height=False)
+
+        self.title_label = Label(self, text='C2E2')
+        self.title_label.grid(row=0, column=0, columnspan=2)
+        
+        self.TEXTBOX_HEIGHT = 10
+        self.TEXTBOX_WIDTH = 30
+
+        # Prevent interaction with main window until Popup is Confirmed/Canceled
+        self.wait_visibility()
+        self.focus_set()
+        self.grab_set()
 
 
 class AutomatonEntry(PopupEntry):

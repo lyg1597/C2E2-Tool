@@ -9,20 +9,20 @@ import PIL.ImageTk
 
 
 
-# class StdRedirector( object ):
+# class StdRedirector(object):
     
-#     def __init__( self, widget ):
+#     def __init__(self, widget):
 #         self.widget = widget
     
 
-#     def write( self, string ):
-#         self.widget.config( state=NORMAL )
-#         self.widget.insert( END, string )
-#         self.widget.see( END )
-#         self.widget.config( state=DISABLED )
+#     def write(self, string):
+#         self.widget.config(state=NORMAL)
+#         self.widget.insert(END, string)
+#         self.widget.see(END)
+#         self.widget.config(state=DISABLED)
 #         return
 
-#     def flush( self ):
+#     def flush(self):
 #         pass
 
 
@@ -95,6 +95,7 @@ class ValidLabel(Label):
             self.config(image=self.inv_img)
 
 class SetText(Frame):
+    
     def __init__(self, parent, width=0, height=0, callback=None, **options):
         Frame.__init__(self, parent, width=width, height=height)
         self.parent = parent
@@ -117,59 +118,45 @@ class SetText(Frame):
         Frame.grid(self, *args, **kwargs)
         self.pack_propagate(False)
 
-    def get(self):
-        txt = self.text.get('1.0', END).strip()
+    def get(self, end=END):
+        txt = self.text.get('1.0', end).strip()
         return txt
 
-    def set(self, str):
+    def set(self, str_):
         self.text.delete('1.0', END)
-        self.text.insert(END, str)
+        self.text.insert(END, str_)
         self._callback()
 
+    def delete(self):
+        self.text.delete('1.0', END)
 
-class PopupEntry( Toplevel ):
-
-    def __init__( self, parent ):
-        Toplevel.__init__( self, parent )
-
-        self.parent = parent
-        self.resizable( width=False, height=False )
-
-        self.title_label = Label( self, text='C2E2' )
-        self.title_label.grid( row=0, column=0, columnspan=2 )
-        
-        self.TEXTBOX_HEIGHT = 10
-        self.TEXTBOX_WIDTH = 30
-
-        # Prevent interaction with main window until Popup is Confirmed/Canceled
-        self.wait_visibility()
-        self.focus_set()
-        self.grab_set()
+    def insert(self, str_):
+        self.text.insert(INSERT, str_)
 
 
-class ToggleFrame( Frame ):
+class ToggleFrame(Frame):
 
-    def __init__( self, parent, text ):
-        Frame.__init__( self, parent )
+    def __init__(self, parent, text):
+        Frame.__init__(self, parent)
           
         
         # Title / Collapse button
         
-        self.header_frame = Frame( self )
+        self.header_frame = Frame(self)
         
-        Label( self.header_frame, text=text ).pack( side=LEFT, fill=X, expand=TRUE )
+        Label(self.header_frame, text=text).pack(side=LEFT, fill=X, expand=TRUE)
         
         self.visible = BooleanVar()
-        self.visible.set( False )
-        self.toggle_btn = Checkbutton( self.header_frame, text='+', width=2, variable=self.visible, command=self._btn_toggle, style='Toolbutton' )
-        self.toggle_btn.pack( side=LEFT )
+        self.visible.set(False)
+        self.toggle_btn = Checkbutton(self.header_frame, text='+', width=2, variable=self.visible, command=self._btn_toggle, style='Toolbutton')
+        self.toggle_btn.pack(side=LEFT)
 
-        self.header_frame.pack( fill=X, expand=TRUE )
+        self.header_frame.pack(fill=X, expand=TRUE)
     
 
         # Content (Entry Fields)
 
-        self.body_frame = Frame( self )
+        self.body_frame = Frame(self)
 
         self.rows = []  # StringVar()
         self.entry_fields = []  # Entry fields 
@@ -178,54 +165,56 @@ class ToggleFrame( Frame ):
 
         # Add Button
 
-        self.btn_frame = Frame( self.body_frame )
-        Button( self.btn_frame, text='Add Row', command=self.add_row ).pack()
+        self.btn_frame = Frame(self.body_frame)
+        Button(self.btn_frame, text='Add Row', command=self.add_row).pack()
         
     
-    def _btn_toggle( self ):
+    def _btn_toggle(self):
         """ Toggle visibility when user clicks button """
 
-        if( self.visible.get() ):
-            self.body_frame.pack( fill=X, expand=TRUE )
-            self.toggle_btn.config( text='-' )
+        if(self.visible.get()):
+            self.body_frame.pack(fill=X, expand=TRUE)
+            self.toggle_btn.config(text='-')
         else:
             self.body_frame.forget()
-            self.toggle_btn.config( text='+' )
+            self.toggle_btn.config(text='+')
 
 
-    def toggle( self ):
-        """ Toggle visibility ( simulates a button click ) """
+    def toggle(self):
+        """ Toggle visibility (simulates a button click) """
 
-        if( self.visible.get() ):
-            self.visible.set( False )
+        if(self.visible.get()):
+            self.visible.set(False)
         else:
-            self.visible.set( True )
+            self.visible.set(True)
 
         self._btn_toggle()       
 
 
-    def add_row( self, text='' ):
+    def add_row(self, text=''):
         """ Add entry row, optionally filled in with text """
         
-        self.rows.append( StringVar() )
+        self.rows.append(StringVar())
         self.btn_frame.forget()
 
-        if( text ):
-            self.rows[self.row_index].set( text )
+        if(text):
+            self.rows[self.row_index].set(text)
 
-        self.entry_fields.append( Entry( self.body_frame, textvariable=self.rows[self.row_index] ) )
-        self.entry_fields[self.row_index].pack( fill=X, expand=TRUE )
+        self.entry_fields.append(Entry(self.body_frame, textvariable=self.rows[self.row_index]))
+        self.entry_fields[self.row_index].pack(fill=X, expand=TRUE)
 
         self.btn_frame.pack()
 
         self.row_index += 1
 
-    def get_rows( self ):
+    def get_rows(self):
         return self.rows
     
-    def disable_fields( self ):
+    def disable_fields(self):
         """ Add readonly display row, must have text """
 
         self.btn_frame.forget()
         for entry in self.entry_fields:
-            entry.config( state=DISABLED )
+            entry.config(state=DISABLED)
+
+

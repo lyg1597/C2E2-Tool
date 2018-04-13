@@ -1,5 +1,8 @@
 import os
+import xml.dom.minidom
 import xml.etree.ElementTree as ET
+from tkinter import *
+from tkinter.ttk import *
 
 from frontend.mod.hyir import *
 from frontend.mod.session import Session, Property
@@ -7,11 +10,130 @@ from frontend.mod.constants import *
 from frontend.mod.SFParse import extract_sf
 from frontend.mod.hierarchy import IsHierarchical,RemoveHierarchy
 from frontend.mod.automaton import *
+from frontend.gui.popupentry import PopupEntry
 
 import pdb
 
 
+class SaveDialog(PopupEntry):
+
+    def __init__(self, parent, hyxml_text=None):
+        PopupEntry.__init__(self, parent)
+
+        self.parent = parent
+        self.hyxml_text = hyxml_text
+
+        self._init_widgets()
+
+    def _init_widgets(self):
+
+        Label(self, text="Save changes before continuing?")\
+            .grid(row=0, column=0)
+        
+        btn_row = Frame(self)
+        btn_row.grid(row=1, column=0)
+        Button(btn_row, text='Save', command=self._save_callback)\
+            .pack(expand=TRUE, fill=X, side=LEFT)
+        Button(btn_row, text='Save As', command=self._save_as_callback)\
+            .pack(expand=TRUE, fill=X, side=LEFT)
+        Button(btn_row, text='Discard', command=self._discard_callback)\
+            .pack(expand=TRUE, fill=X, side=LEFT)
+
+    def _save_callback(self):
+
+        FileHandler.save(self.hyxml_text)
+        self.destroy()
+    
+    def _save_as_callback(self):
+        FileHandler.save_as(self.hyxml_text)
+        self.destroy()
+
+    def _discard_callback(self):
+        # If changes are discarded, the file is reloaded and in a saved state
+        Session.file_saved = True
+        self.destroy()
+
+
 class FileHandler:
+
+    @staticmethod
+    def save_as(hyxml_text=None):
+
+        file_path = filedialog.asksaveasfile(**SAVE_OPT)
+        if file_path:
+            Session.file_path = file_path
+            FileHandler.save(hyxml_text)
+
+    @staticmethod
+    def save(hyxml_text=None):
+
+        if Session.file_path is None:
+            print("ERROR: SAVING WITH NO FILEPATH")
+
+        if hyxml_text is None:
+            FileHandler.save_tree()
+        else:
+            FileHandler.save_hyxml(hyxml_text)
+            FileHandler.open_file(Session.file_path)
+
+        return
+
+    @staticmethod
+    def save_tree():
+
+        if not Session.file_opened:
+            return
+
+        if Session.file_path is None:
+            FileHandler.save_as()
+            return
+
+        if Session.file_type == MDL_FILE and not Session.file_saved:
+            FileHandler.save_as()
+            return
+
+        FileHandler.save_model(
+            Session.hybrid,
+            Session.hybrid.properties,
+            Session.file_path)
+        
+        Session.file_saved = True
+
+        return
+
+    # @staticmethod
+    # def save_as():
+
+    #     if not Session.file_opened:
+    #         return
+
+    #     file_path = filedialog.asksaveasfile(**SAVE_OPT)
+    #     if file_path:
+    #         Session.file_path = file_path
+    #         FileHandler.save()
+
+    #         # FileHandler.save_model(
+    #         #     Session.hybrid,
+    #         #     Session.hybrid.property_list,
+    #         #     file_path)
+
+    #     Session.file_saved = True
+
+    #     return
+
+    @staticmethod
+    def save_hyxml(hyxml_text):
+
+        if not Session.file_path:
+            Session.file_path = filedialog.asksaveasfile(**SAVE_OPT)
+
+        if Session.file_path:
+            with open(Session.file_path, 'w') as f:
+                f.write(hyxml_text)
+        
+        Session.file_saved = True
+
+        return
 
     @staticmethod
     def save_model(hybrid, property_list, file_path):
@@ -80,8 +202,8 @@ class FileHandler:
         tree.write(file_path)
 
         print("Saved.")
-        return    
 
+        return    
 
     @staticmethod
     def open_file(file_path):
@@ -142,6 +264,7 @@ class FileHandler:
         hybrid.properties = properties
 
         Session.hybrid = hybrid
+        Session.cur_prop = properties[0]
 
         print("File opened.")
         return True
@@ -227,7 +350,7 @@ class FileHandler:
 
             if i.type == "SFTransition":
                 actions = []
-                initialFlag = False;
+                initialFlag = False
                 for j in i.children:
                     if j.type == "id":
                         tid = automaton.new_transition_id()
@@ -264,7 +387,6 @@ class FileHandler:
 
         return hybrid
         
-    
     @staticmethod
     def open_hyxml_model(root):
         """

@@ -3,7 +3,9 @@ from tkinter.ttk import *
 
 from frontend.gui.eventhandler import EventHandler
 from frontend.gui.modeltab import ModelTab
+from frontend.mod.filehandler import SaveDialog
 from frontend.mod.constants import *
+from frontend.mod.session import Session
 from frontend.gui.plotwindow import PlotterModelTab
 from frontend.gui.editortab import EditorTab 
 
@@ -14,10 +16,12 @@ class ModelNotebook(Notebook):
         Notebook.__init__(self, parent, **options)
 
         self.parent = parent
-        self._init_widgets()
-        self._bind_events()
+        self.previous_tab = 'None'
+        self.current_tab =  'None'
         self.plot_tab_dic = {}
 
+        self._init_widgets()
+        self._bind_events()
 
     def _bind_events(self):
 
@@ -25,15 +29,18 @@ class ModelNotebook(Notebook):
         EventHandler.add_event_listeners(self, OPEN_EVENT)
         self.bind(CLOSE_EVENT,self.hide_widgets)
         EventHandler.add_event_listeners(self, CLOSE_EVENT)
+        self.bind('<<NotebookTabChanged>>', self._tab_changed)
 
+        return
 
     def _init_widgets(self):
 
         self.model_tab = ModelTab(self)
-        self.add(self.model_tab, text='Model')
-        #self.editor_tab = EditorTab( self )
-        #self.add( self.editor_tab, text='Editor')
+        self.add(self.model_tab, text=MODEL)
+        self.editor_tab = EditorTab(self)
+        self.add(self.editor_tab, text=EDITOR)
 
+        return
 
     def _init_plot_widgets(self,*args):
 
@@ -45,18 +52,41 @@ class ModelNotebook(Notebook):
         self.plot_tab_dic[name] = plot_model_tab
         self.add(plot_model_tab, text =name)
 
+        return
 
     def _close_plot_tab(self, tabname):
         
         self.forget(self.plot_tab_dic[tabname])
         self.plot_tab_dic.pop(tabname,None)
+
         return
 
+    def _tab_changed(self, event=None):
+        
+        self.previous_tab = self.current_tab
+        self.current_tab = self.tab(self.select(), 'text')
+
+        if not Session.file_saved:
+            if self.previous_tab == EDITOR:
+                hyxml_text = self.editor_tab.editor.get()
+            else:
+                hyxml_text = None
+            save_dialog = SaveDialog(self, hyxml_text)
+            self.wait_window(save_dialog)
+
+            # Refresh Edit Tab
+            self.editor_tab.open_xml()
+            # Refresh Model Tab
+            self.model_tab.tree._clear_model()
+            self.model_tab.tree._display_model()
+
+        return
 
     def display_widgets(self, event=None):
 
         self.pack(fill=BOTH, expand=True)
 
+        return
 
     def hide_widgets(self,event=None):
 
@@ -66,3 +96,4 @@ class ModelNotebook(Notebook):
             self.plot_tab_dic.pop(key,None)
         self.pack_forget()
 
+        return
