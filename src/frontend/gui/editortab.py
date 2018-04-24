@@ -1,5 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
+from tkinter.scrolledtext import *
+
 from frontend.gui.eventhandler import EventHandler
 from frontend.gui.modeltab import ModelSidebar
 from frontend.gui.widgets import SetText
@@ -23,7 +25,8 @@ class EditorTab(Frame):
         print("Initialize the XML Editor and Editor Sidebar")
 
         # Main Editor
-        self.editor = SetText(self, callback=self._edit_callback)
+        #self.editor = SetText(self, callback=self._edit_callback)
+        self.editor = ScrolledText(self, wrap=WORD)
         self.editor.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor=E)
 
         # Sidebar
@@ -72,14 +75,14 @@ class EditorTab(Frame):
 
     def open_xml(self, event=None):
 
-        self.editor.delete()
+        self.editor.delete('1.0', 'end-1c')
         
         if not Session.file_path:
             return
 
         print('Opening xml...')
         with open(Session.file_path, 'r') as f:
-            self.editor.insert(f.read())
+            self.editor.insert('end-1c', f.read())
         print('Success!')
 
         # print('Loading properties...')
