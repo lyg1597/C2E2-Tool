@@ -330,7 +330,7 @@ class Session():
     @classmethod
     def write(cls, string):
         cls.writer.write(string)
-        print(string)
+        print(string, end='')
 
     @classmethod
     def add_feedback_frame(cls, parent):

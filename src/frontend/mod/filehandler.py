@@ -68,7 +68,7 @@ class FileHandler:
     def save(hyxml_text=None):
 
         if Session.file_path is None:
-            print("ERROR: SAVING WITH NO FILEPATH")
+            Session.write("ERROR: SAVING WITH NO FILEPATH\n")
 
         if hyxml_text is None:
             FileHandler.save_tree()
@@ -138,8 +138,8 @@ class FileHandler:
     @staticmethod
     def save_model(hybrid, property_list, file_path):
 
-        print("Saving filepath: " + str(file_path))
-        print("Saving...")
+        Session.write("Saving filepath: " + str(file_path) + "\n")
+        Session.write("Saving...")
         hyxml = ET.Element("hyxml", {"type":"Model"})
 
         for automaton in hybrid.automata:
@@ -201,7 +201,7 @@ class FileHandler:
         indent(hyxml)
         tree.write(file_path)
 
-        print("Saved.")
+        Session.write("  Done.\n")
 
         return    
 
@@ -217,7 +217,7 @@ class FileHandler:
             True/False status (True if file opened successfully)
         """
 
-        print("Opening File...")
+        Session.write("Opening File...\n")
 
         base_name = os.path.basename(file_path) 
         raw_name, ext = os.path.splitext(base_name)
@@ -266,7 +266,7 @@ class FileHandler:
         Session.hybrid = hybrid
         Session.cur_prop = properties[0]
 
-        print("File opened.")
+        Session.write("File Opened.\n")
         return True
 
     # Open HyXML Model file
@@ -399,7 +399,7 @@ class FileHandler:
             List of Automaton() objects
         """
 
-        print("Loading hyxml model...")
+        Session.write("  Loading hyxml model...")
 
         automata = []
 
@@ -458,11 +458,11 @@ class FileHandler:
             
             # TODO LMB: How are we going to handled file parse errors?
             if not automaton.verify_mode_ids():
-                print("FILE READ ERROR: MODE IDS NOT UNIQUE")
-                print("  Automaton: " + automaton.name)
+                Session.write("  FILE READ ERROR: MODE IDS NOT UNIQUE\n")
+                Session.write("  Automaton: " + automaton.name + "\n")
             if not automaton.verify_mode_names():
-                print("FILE READ ERROR: MODE NAMES NOT UNIQUE")
-                print("  Automaton: " + automaton.name)
+                Session.write("  FILE READ ERROR: MODE NAMES NOT UNIQUE\n")
+                Session.write("  Automaton: " + automaton.name + "\n")
 
             for tran in auto.iterfind("transition"):
 
@@ -489,13 +489,13 @@ class FileHandler:
             # TODO LMB: How are going to handle file parse errors?
             #           This one causes errors when displaying the TreeView
             if not automaton.verify_transition_src_dest():
-                print("FILE READ ERROR: TRANSITION SOURCE/DESTINATION IDS " +
-                      "NOT VALID MODE IDS")
-                print("  Automaton: " + automaton.name)
+                Session.write("  FILE READ ERROR: TRANSITION SOURCE/DESTINATION IDS " +
+                      "NOT VALID MODE IDS\n")
+                Session.write("  Automaton: " + automaton.name +"\n")
 
             automata.append(automaton)
 
-        print("Model Loaded.")
+        Session.write("  Done.\n")
         return automata
 
     """
@@ -554,7 +554,7 @@ class FileHandler:
             List of Proerty() objects
         """
         
-        print("Loading hyxml properties...")
+        Session.write("  Loading hyxml properties...")
 
         prop_list = []
         for prop in root.iterfind('property'):
@@ -589,7 +589,7 @@ class FileHandler:
 
             prop_list.append(p)
 
-        print("Properties loaded.")
+        Session.write("  Done.\n")
         return prop_list
     
     @staticmethod

@@ -42,7 +42,7 @@ class AutomatonEntry(PopupEntry):
         self.title_label.config(text="Automaton")
 
         if hybrid is not Session.hybrid:
-            print("ERROR: Attempting to edit non-Session hybrid")
+            Session.write("ERROR: Attempting to edit non-Session hybrid.\n")
             self._cancel()
 
         self.parent = parent
@@ -112,7 +112,7 @@ class AutomatonEntry(PopupEntry):
 
         self.hybrid.add_automaton(Automaton(self.name.get()))
 
-        print("Automaton Entry Confirmed.")
+        Session.write("Automaton Entry Confirmed.\n")
         self.changed = True
         self.destroy()
 
@@ -122,7 +122,7 @@ class AutomatonEntry(PopupEntry):
 
         self.automaton.name = self.name.get()
         
-        print("Automaton Entry Confirmed.")
+        Session.write("Automaton Entry Confirmed.\n")
         self.changed = True
         self.destroy()
 
@@ -131,11 +131,14 @@ class AutomatonEntry(PopupEntry):
     def _delete(self):
 
         if messagebox.askyesno("Delete Automaton", 
-                               "Delete " + self.automaton.name + "?"):
+            "Delete " + self.automaton.name + "?"):
+            
             self.hybrid.remove_automaton(self.automaton)
-
-        print("Automaton Deleted")
-        self.changed = True
+            Session.write("Automaton Deleted.\n")
+            self.changed = True
+        else:
+            Session.write("Automaton Deletion Canceled.\n")
+            self.chagned = False
         self.destroy()
 
         return
@@ -143,7 +146,7 @@ class AutomatonEntry(PopupEntry):
     def _cancel(self):
         """ Cancels changes made in popup """
 
-        print("Automaton Entry Canceled.")
+        Session.write("Automaton Entry Canceled.\n")
         self.changed = False
         self.destroy()
 
@@ -309,7 +312,7 @@ class VariableEntry(PopupEntry):
                 self.automaton.add_var(
                     Variable(name=name, type=type_, scope=scope))
             
-        print("Variable Entry Confirmed.")
+        Session.write("Variable Entry Confirmed.\n")
         self.changed = True
         self.destroy()
 
@@ -318,7 +321,7 @@ class VariableEntry(PopupEntry):
     def _cancel(self):
         """ Cancels changes made in popup """
 
-        print("Variable Entry Canceled.")
+        Session.write("Variable Entry Canceled.")
         self.changed = False
         self.destroy()
 
@@ -506,7 +509,7 @@ class ModeEntry(PopupEntry):
             if((raw_text.get()).strip()): 
                 self.mode.add_invariant(Invariant(raw_text.get()))
         
-        print('Mode Entry Confirmed.')
+        Session.write("Mode Entry Confirmed.\n")
         self.changed = True
         self.destroy()
 
@@ -533,8 +536,11 @@ class ModeEntry(PopupEntry):
             for tran in del_trans:
                 self.automaton.remove_transition(tran)
         
-        print('Mode Deleted.')
-        self.changed = True
+            Session.write("Mode Deleted.\n")
+            self.changed = True
+        else:
+            Session.write("Mode Deletion Canceled.\n")
+            self.changed = False
         self.destroy()
 
         return
@@ -542,7 +548,7 @@ class ModeEntry(PopupEntry):
     def _cancel(self):
         """ Cancels changes made in popup """
 
-        print('Mode Entry Canceled.')
+        Session.write("Mode Entry Canceled.\n")
         self.changed = False
         self.destroy()
 
@@ -742,7 +748,7 @@ class TransitionEntry(PopupEntry):
         transition = Transition(guard, actions, trans_id, src, dest)
         self.automaton.add_transition(transition)
 
-        print('Transition Entry Confirmed.')
+        Session.write("Transition Entry Confirmed.\n")
         self.changed = True
         self.destroy()     
         
@@ -770,7 +776,7 @@ class TransitionEntry(PopupEntry):
             if((action.get()).strip()):
                 self.transition.add_action(Action(action.get()))
                 
-        print('Transition Entry Confirmed.')
+        Session.write("Transition Entry Confirmed.\n")
         self.changed = True
         self.destroy()
 
@@ -783,8 +789,11 @@ class TransitionEntry(PopupEntry):
            self.transition_str.get() + '?'):
             self.automaton.remove_transition(self.transition)
         
-        print('Transition Deleted.')
-        self.changed = True
+            Session.write("Transition Deleted.\n")
+            self.changed = True
+        else:
+            Session.write("Transition Deletion Canceled.\n")
+            self.changed = False
         self.destroy()
 
         return
@@ -792,7 +801,7 @@ class TransitionEntry(PopupEntry):
     def _cancel(self):
         """ Cancels changes made in popup """
 
-        print('Transition Entry Canceled.')
+        Session.write("Transition Entry Canceled.\n")
         self.changed = False
         self.destroy()
 

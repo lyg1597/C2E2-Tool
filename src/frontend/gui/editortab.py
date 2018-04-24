@@ -22,7 +22,7 @@ class EditorTab(Frame):
 
     def _init_widgets(self):
 
-        print("Initialize the XML Editor and Editor Sidebar")
+        Session.write("Initializing XML Editor...")
 
         # Main Editor
         #self.editor = SetText(self, callback=self._edit_callback)
@@ -31,6 +31,8 @@ class EditorTab(Frame):
 
         self.feedback = Session.add_feedback_frame(self)
         self.feedback.pack(fill=X, side=BOTTOM, anchor=E)
+
+        Session.write("  Done.\n")
 
         # Sidebar
         # self._init_sidebar()
@@ -83,10 +85,10 @@ class EditorTab(Frame):
         if not Session.file_path:
             return
 
-        print('Opening xml...')
+        Session.write("Opening xml...")
         with open(Session.file_path, 'r') as f:
             self.editor.insert('end-1c', f.read())
-        print('Success!')
+        Session.write("  Done.\n")
 
         # print('Loading properties...')
         # self.property_list._clear_properties()
@@ -97,16 +99,16 @@ class EditorTab(Frame):
     
     def _save_xml(self, event=None):
         
-        if(not Session.file_path):
-            print('No session filepath\n')
+        if not Session.file_path:
+            Session.write("No session filepath\n")
             return
-        print('Saving xml...')
+        Session.write("Saving xml...")
         
         text = self.editor.get('1.0', 'end-1c') 
         with open(Session.file_path, 'w') as f:
             f.write(text)
         
-        print('Saved as:' + Session.file_path + '\n')
+        Session.write("\n  Saved as: " + Session.file_path + ".\n")
 
         self._reload_xml()
 
@@ -117,19 +119,19 @@ class EditorTab(Frame):
         if(not Session.file_path):
             print('No session filepath\n')
             return
-        print('Reloading xml...')
+        Session.write("Reloading xml...")
 
         file_path = Session.file_path
         file = FileHandler.open_file(file_path)
         if(HYXML_FILE in file_path): 
-            print('.hyxml file reloaded\n')
+            Session.write("  hyxml file reloaded.\n")
             Session.file_type = HYXML_FILE
         elif(MDL_FILE in file_path):
-            print ('.mdl file opened\n')
+            Session.write("  mdl file opened\n")
             Session.file_type = MDL_FILE
 
         if file == None:
-            print('File reload failed: No file\n')
+            print("File reload failed: No file\n")
             return
 
         # Obtain parsed results
@@ -139,7 +141,6 @@ class EditorTab(Frame):
             Session.prop_list.append(Property())
         Session.file_opened = True
 
-        print('File reloaded!')
         self.open_xml()
 
         return
