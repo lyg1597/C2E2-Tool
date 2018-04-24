@@ -2,6 +2,7 @@ import sympy
 from scipy import optimize as opt
 
 from frontend.mod.constants import *
+from frontend.mod.session import Session, SymEq
 
 
 class Automaton:
@@ -170,10 +171,10 @@ class Automaton:
 
     def parse(self):
         
-        print("  Parsing Automaton " + self.name + "...")
+        Session.write("  Parsing Automaton " + self.name + "...\n")
         errors = []
 
-        print("    Parsing Modes...")
+        Session.write("    Parsing Modes...")
         if not self.verify_mode_names():
             errors.append(('Mode', self, "Mode names not unique", None))
         if not self.verify_mode_ids():
@@ -181,18 +182,18 @@ class Automaton:
 
         for mode in self.modes:
             errors += mode.parse()
-        print("    Modes Parsed.")
+        Session.write(" Modes Parsed.\n")
 
-        print("    Parsing Transitions...")
+        Session.write("    Parsing Transitions...")
         if not self.verify_transition_src_dest():
             errors.append(('Transition', self, 
                            "Transition src/dest invalid", None))
         
         for transition in self.transitions:
             errors += transition.parse()
-        print("    Transitions Parsed.")
+        Session.write(" Transitions Parsed.\n")
 
-        print("  Automaton Parsed.")
+        Session.write("  Automaton Parsed.\n")
         return errors
 
     # Verify functions
@@ -876,205 +877,4 @@ class Action:
         return errors
 
 
-class SymEq:
-    """ Symbolic Equation Library """
 
-    @staticmethod
-    def construct_eqn(eqn, is_eq, rationalize):
-        """ 
-        Construct equation with sympy. Rationalize it if flag is set to True. is_eq is True for DAIs and Actions 
-        
-        NOTE: sympy.sympify(eqn) converts eqn into a type that can be used inside SymPy
-        """
-
-        try:
-            if is_eq:
-                eqn_split = eqn.split('=')
-                lhs, rhs = eqn_split[0], eqn_split[1]
-                #print (lhs, rhs)
-                eqn = sympy.Eq(sympy.sympify(lhs), sympy.sympify(rhs))
-            else:
-                eqn = sympy.sympify(eqn)
-                if type(eqn) is bool:
-                    return eqn
-        except:
-            print("Invalid expression.")
-            return None
-
-        if rationalize:
-            eqn = SymEq.rationalize(eqn)
-        return eqn
-
-    def to_str(self):
-        return str(self.eqn)
-
-    # Given an equation convert all decimals to integers by multiplying by LCM
-    @staticmethod
-    def rationalize(expr):
-        if expr.is_Relational:
-            mult = max(SymEq.get_factor(expr.lhs), SymEq.get_factor(expr.rhs))
-            return expr.func(mult*expr.lhs, mult*expr.rhs)
-
-    @staticmethod
-    def get_factor(expr):
-        exp = 0
-        if expr.is_Add:
-            terms = expr.args
-        else:
-            terms = [expr]
-
-        for term in terms:
-            if term.is_Number:
-                exp = max(exp, SymEq.get_term_exp(term))
-            for unit in term.args:
-                if unit.is_Number:
-                    exp = max(exp, SymEq.get_term_exp(unit))
-
-        return 10**exp
-
-    @staticmethod
-    def get_term_exp(unit):
-        return len(str(float(unit)))-str(float(unit)).index('.')-1
-
-    # Return A, B matrices for expressions with x as varList
-    @staticmethod
-    def get_eqn_matrix(expressions, varList):
-        exprs = []
-        for expr in expressions.split('&&'):
-            if '==' in expr:
-                eq = expr.split('==')
-                exprs.append(sympy.sympify(eq[0]+'<='+eq[1]))
-                exprs.append(sympy.sympify(eq[0]+'>='+eq[1]))
-            else:
-                sym_expr = sympy.sympify(expr)
-                if sym_expr.func==sympy.StrictLessThan:
-                    sym_expr = sympy.LessThan(sym_expr.lhs, sym_expr.rhs)
-                elif sym_expr.func==sympy.StrictGreaterThan:
-                    sym_expr = sympy.GreaterThan(sym_expr.lhs, sym_expr.rhs)
-                exprs.append(sym_expr)
-        aMatrix=[[0 for v in varList] for expr in exprs]
-        bMatrix=[0 for expr in exprs]
-        eqMatrix=[]
-        for i,expr in enumerate(exprs):
-            eqMatrix.append([expr.rel_op])
-            expr = expr.lhs-expr.rhs
-            expr *= SymEq.get_factor(expr)
-            for v in expr.free_symbols:
-                aMatrix[i][varList.index(str(v))] = expr.as_coefficients_dict()[v]
-                bMatrix[i] = [-expr.as_coefficients_dict()[sympy.numbers.One()]]
-        return [aMatrix, bMatrix, eqMatrix]
-
-    # Return whether the initial set is bounded or not
-    @staticmethod
-    def check_boundedness(a_m, b_m, eq_m, var_list):
-        A, B = [], []
-        for r, a in enumerate(a_m):
-            if eq_m[r][0] == '<=':
-                A.append(a)
-                B.append(b_m[r][0])
-            else:
-                A.append([-1 * x for x in a])
-                B.append(-1 * b_m[r][0])
-
-        # Solve minimum
-        C = [0.0 for v in var_list]
-        bounds = [(None, None) for v in var_list]
-        for i, v in enumerate(var_list):
-            C[i] = 1.0
-            min = opt.linprog(C, A_ub=A, b_ub=B, bounds=bounds)
-            if not min.success:
-                return False
-
-            C[i] = 0.0
-
-        # A, B = [], []
-        # for r, a in enumerate(a_m):
-        #     if eq_m[r][0] == '>=' or eq_m[r][0] == '==':
-        #         A.append(a)
-        #         B.append(-b_m[r][0])
-        #     else:
-        #         A.append([-1 * x for x in a])
-        #         B.append(b_m[r][0])
-
-        # # Solve minimum
-        # C = [0.0 for v in var_list]
-        # bounds = [(None, None) for v in var_list]
-        # for i, v in enumerate(var_list):
-        #     C[i] = 1.0
-        #     min = opt.linprog(C, A_ub=A, b_ub=B, bounds=bounds)
-        #     if not min.success:
-        #         print ("max unbound")
-        #         return False
-        #     C[i] = 0.0
-        return True
-
-    # Represent u**n as u*u*...u for the simulators.
-    @staticmethod
-    def convert_pow(expr):
-        #SymEq.pow_to_mul(expr)
-        return str(SymEq.convert_pow_helper(expr))
-
-    @staticmethod
-    def convert_pow_helper(expr):
-        if not expr.args:
-            return expr
-        conv_args = [SymEq.convert_pow_helper(arg) for arg in expr.args]
-        if expr.is_Pow and expr.exp>0:
-            print("this expr is pow:", expr)
-            print(expr.base, expr.exp)
-            return sympy.Symbol('*'.join(['('+str(conv_args[0])+')']*int(conv_args[1])))
-        return expr.func(*conv_args)
-
-    @staticmethod
-    def pow_to_mul(expr):
-        """
-        Convert integer powers in an expression to Muls, like a**2 => a*a.
-        """
-        pows = list(expr.atoms(sympy.Pow))
-        if any(not e.is_Integer for b, e in (i.as_base_exp() for i in pows)):
-            raise ValueError("A power contains a non-integer exponent")
-        print(pows)
-        for b,e in (i.as_base_exp() for i in pows):
-            print(b,e)
-        repl = zip(pows, (sympy.Mul(*[b]*e,evaluate=False) for b,e in (i.as_base_exp() for i in pows)))
-        #print repl
-        return expr.subs(repl)
-
-    # Negate guard to construct invariant
-    @staticmethod
-    def construct_invariant(guard):
-        inv_eqn = []
-        for eqn in guard.expr:
-            print('Eqn is: ' + str(eqn))
-            if eqn.func==sympy.LessThan:
-                inv = sympy.GreaterThan(*eqn.args)
-            elif eqn.func==sympy.GreaterThan:
-                inv = sympy.LessThan(*eqn.args)    
-            elif eqn.func==sympy.StrictLessThan:
-                inv = sympy.StrictGreaterThan(*eqn.args)    
-            elif eqn.func==sympy.StrictGreaterThan:
-                inv = sympy.StrictLessThan(*eqn.args)
-            inv_eqn.append(inv)
-        inv_eqn = [str(inv) for inv in inv_eqn]
-        return Invariant('||'.join(inv_eqn))
-
-    # Return all free vars in exprs
-    @staticmethod
-    def vars_used(exprs):
-        var_set = set()
-        for eqn in exprs:
-            var_set = var_set.union(eqn.free_symbols)
-        return [str(v) for v in var_set]
-
-    # Return if expr is linear
-    @staticmethod
-    def is_linear(expr):
-        syms = expr.free_symbols
-        for x in syms:
-            for y in syms:
-                try:
-                    if not sympy.Eq(sympy.diff(expr, x, y), 0):
-                        return False
-                except TypeError:
-                    return False
-        return True

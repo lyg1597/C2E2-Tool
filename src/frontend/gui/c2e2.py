@@ -1,9 +1,11 @@
 from tkinter import *
 from tkinter.ttk import *
+import sys
 import webbrowser
 from frontend.gui.eventhandler import EventHandler
 from frontend.gui.menubar import MenuBar
 from frontend.gui.modelnotebook import *
+from frontend.mod.session import *
 
 
 class C2E2(Tk):
@@ -46,5 +48,6 @@ class C2E2(Tk):
     def _init_widgets(self):
         """ Initialize Notebook and MenuBar widgets """
 
+        Session.window = self
         self.notebook = ModelNotebook(self)
         self.menu = MenuBar(self, self.notebook)

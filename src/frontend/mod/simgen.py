@@ -481,14 +481,14 @@ def verify():
 def _sim_ver(action):
 
     if(not Session.cur_prop.is_valid()):
-        print("\nProperty invalid, abandoning operation...")
+        Session.write("Property invalid, abandoning operation...\n")
         return None
 
     # Parse and Compose (HyIR.compose_all calss HyIR.parse_all)
     HyIR.compose_all(Session.hybrid)
 
     if(not Session.hybrid.composed):
-        print("\nError: System not composed, abandoning operation...")
+        Session.write("ERROR: System not composed, abandoning operation...\n")
         return None
 
     # Generate Simulator
@@ -509,9 +509,10 @@ def _sim_ver(action):
     initialize_cpp_model(action)
     compile_executable()
 
-    print("Running simulate_verify...\n")
+    Session.write("Running simulate/verify...\n")
+    Session.update()
     result = Session.cpp_model.simulate_verify()
-    print("RESULT: ", result)
+    Session.write("RESULT: " + str(result) + "\n")
 
     return result
     
@@ -657,17 +658,21 @@ def compile_executable():
     if(Session.lib_compiled):
         return
 
-    print("Compiling essential libraries for C2E2. Compilation may take a few minutes.")
+    Session.write("Compiling essential libraries for C2E2...\n")
+    Session.write("  Compilation may take a few minutes.\n")
+    Session.update()
     if((Session.simulator == ODEINT_ADP) or (Session.simulator == ODEINT_FIX)):
-        print("Using ODEINT Simulator...")
+        Session.write("  Using ODEINT Simulator.\n")
         command_line = "g++ -w -O2 -std=c++11 simulator.cpp -o simu"
         args = shlex.split(command_line)
         p = subprocess.Popen(args, cwd= "../work-dir")
+        print()
         p.communicate()
     else:
-        print("Using CAPD Simulator...")
+        Session.write("  Using CAPD Simulator.\n")
         command_line = "g++ -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`"
         p = subprocess.Popen(command_line, cwd= "../work-dir", shell=True)
+        print()
         p.communicate()
 
     command_line = "g++ -fPIC -shared hybridSimGI.cpp -o libhybridsim.so -lppl -lgmp"
@@ -682,6 +687,7 @@ def compile_executable():
 
     Session.lib_compiled = True
     
-    print("Libraries successfully compiled.")
+    Session.write("Libraries successfully compiled.\n")
+    Session.update()
 
     return

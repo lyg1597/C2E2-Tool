@@ -172,48 +172,48 @@ class HyIR:
         if self.parsed:
             return
         
-        print("Parsing System...")
+        Session.write("Parsing System...\n")
         self.parse_errors = []
 
-        print("  Parsing Variables...")
+        Session.write("  Parsing Variables...")
         self.parse_errors += self.parse_local_variables()
         self.parse_errors += self.parse_output_variables()
         self.parse_errors += self.parse_input_variables()
-        print("  Variables Parsed.")
+        Session.write(" Variables Parsed.\n")
 
         for automaton in self.automata:
             self.parse_errors += automaton.parse()
         
         if len(self.parse_errors) == 0:
             self.parsed = True
-            print("------------------------")
-            print("    No Parse Errors!")
-            print("------------------------")
+            Session.write("---------------\n")
+            Session.write("No Parse Errors\n")
+            Session.write("---------------\n")
         else:
             self.parsed = False
             self.print_parse_errors()
 
-        print("Parsing Complete.")
+        Session.write("Parsing Complete.\n")
         return
 
     def print_parse_errors(self):
         
-        print("------------------------")
-        print("      PARSE ERRORS")
-        print("------------------------")
+        Session.write("------------\n")
+        Session.write("PARSE ERRORS\n")
+        Session.write("------------\n")
         
         for error in self.parse_errors:
-            print(error[0] + ": " + error[2])
+            Session.write(error[0] + ": " + error[2] + "\n")
 
             error_obj = error[1]
             error_str = "\t"
             while(error_obj is not None):
                 error_str += error_obj.name + " / "
                 error_obj = error_obj.parent
-            print(error_str)
+            Session.write(error_str + "\n")
 
             if error[3] is not None:
-                print("\t" + error[3])
+                Session.write("\t" + error[3] + "\n")
 
         return
 
@@ -350,10 +350,10 @@ class HyIR:
         cls.parse(hybrid)
 
         if not hybrid.parsed:
-            print("System not parsed. Exiting composition...")
+            Session.write("System not parsed. Exiting composition...\n")
             return
 
-        print("Composing System...")
+        Session.write("Composing System...\n")
         
         automata_list = hybrid.automata
         automata_list.reverse()
@@ -392,13 +392,14 @@ class HyIR:
         Session.hybrid = hybrid
         Session.hybrid.composed = True
         
-        print("Composition complete.")
+        Session.write("Composition complete.")
         
         return
 
     @staticmethod
     def compose(automaton1, automaton2):
-        print("  Composing " + automaton1.name + " and " + automaton2.name)
+        Session.write("  Composing " + automaton1.name + " and " 
+            + automaton2.name + "\n")
         composed = Automaton(automaton1.name + "_" + automaton2.name)
         m1_len = len(automaton1.modes)
         m2_len = len(automaton2.modes)
@@ -474,7 +475,7 @@ class HyIR:
         # Required to update the parents of the variable objects
         composed.variables.update_parents(composed)
 
-        print("  " + composed.name + " composition complete.")
+        Session.write("  " + composed.name + " composition complete.\n")
         return composed
 
     @staticmethod
@@ -837,7 +838,7 @@ class HyIR:
 
 
     def convertToCAPD(self, filename):
-        print("CAPD CONVERTING START")
+        Session.write("CAPD CONVERTING START\n")
         
         delete_element_list = []
         annotfile = open(filename+"annot", "w")

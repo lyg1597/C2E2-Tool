@@ -181,7 +181,6 @@ class MenuBar(Menu):
 
     def save_callback(self):
 
-        print("Enter Save Callback")
         if self.notebook.current_tab == EDITOR:
             FileHandler.save(self.notebook.editor_tab.editor.get())
             # Load XML into HyIR object
@@ -195,8 +194,6 @@ class MenuBar(Menu):
             FileHandler.save()
             # Refresh Editor Tab
             self.editor_tab.open_xml()
-
-        print("Exit Save Callback")
         
         return
 
