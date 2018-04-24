@@ -271,7 +271,7 @@ class Feedback(Frame):
 
         # #EBEBEB = (235, 235, 235)
         # #DCDCDC = (220, 220, 220) = Disabled Entry widget bg color
-        self.display = ScrolledText(self, state=DISABLED, bg='#EBEBEB')
+        self.display = ScrolledText(self,state=DISABLED,bg='#EBEBEB',wrap=WORD)
         self.display.pack(fill=BOTH, side=TOP, expand=TRUE)
 
 
