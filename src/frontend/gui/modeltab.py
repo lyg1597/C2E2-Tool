@@ -29,21 +29,13 @@ class ModelTab(Frame):
 
         self.sidebar = ModelSidebar(self)
 
-        # self.leftside = Frame(self)
-        # self.tree = TreeView(self.leftside, self.sidebar, selectmode='browse')
-        # self.feedback = Text(self.leftside, state=DISABLED)
-
-        # sys.stdout = StdRedirector(self.feedback)
-
-        # self.tree.grid(row=0, column=0, sticky=NSEW)
-        # self.feedback.grid(row=1, column=0, sticky=NSEW)
-
-        # self.leftside.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor=E) 
-        # self.sidebar.pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
-
-        self.tree = TreeView(self, self.sidebar, selectmode='browse')
+        leftside = Frame(self)
+        self.tree = TreeView(leftside, self.sidebar, selectmode='browse')
+        self.feedback = Session.add_feedback_frame(leftside)
+        self.tree.pack(expand=TRUE, fill=BOTH, side=TOP, anchor=E)
+        self.feedback.pack(fill=X, side=BOTTOM, anchor=E)
         
-        self.tree.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor=E)
+        leftside.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor=E)     
         self.sidebar.pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
         
         return
@@ -99,16 +91,16 @@ class TreeView(Treeview):
     def _clear_model(self, event=None):
         """ Clear treeview display """
 
-        print("Updating Model...")
+        Session.write("Clearing model tree...")
         self.delete(*self.get_children())
-        print("Done.")
+        Session.write("  Done.\n")
 
         return
 
     def _display_model(self, event=None):
         """ Display Session automata in Treeview """
         
-        print("Displaying Model...")
+        Session.write("Displaying model tree...")
 
         hybrid = Session.hybrid
 
@@ -200,7 +192,7 @@ class TreeView(Treeview):
                 for act in tran.actions:
                     self.insert(act_id, 'end', text=act.raw)
 
-        print("Done.")
+        Session.write("  Done.\n")
         return
 
     def _init_rc_menus(self):
@@ -414,6 +406,12 @@ class TreeView(Treeview):
         # Clear out selections vars
         self._init_selection_vars()
 
+        return
+
+    def pack_feedback(self):
+
+        Session.feedback_widget.parent = self
+        Session.feedback_widget.pack(fill=X)
         return
 
 

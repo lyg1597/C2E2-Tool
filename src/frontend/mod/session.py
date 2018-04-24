@@ -1,4 +1,5 @@
 import re
+from tkinter import *
 
 from backend.lib.libc2e2 import Model
 from frontend.mod.automaton import SymEq
@@ -260,6 +261,38 @@ class PlotProperty():
         return ""
 
 
+class Feedback(Frame):
+
+    def __init__(self, parent):
+        Frame.__init__(self, parent, height=128)
+
+        self.pack_propagate(0)
+
+        self.display = Text(self, state=DISABLED)
+        self.display.pack(fill=BOTH, side=TOP, expand=TRUE)
+
+
+class StdRedirector(object):
+
+    def __init__(self):
+        self.widgets = []
+
+    def add_feedback_frame(self, frame):
+        self.widgets.append(frame)
+
+    def write(self, string):
+        # The Widgets are Feedback objects, <Feedback>.display = Text()
+        for widget in self.widgets:
+            widget.display.config(state=NORMAL)
+            widget.display.insert(END, string)
+            widget.display.see(END)
+            widget.display.config(state=DISABLED)
+        return
+    
+    def flush(self):
+        pass
+
+
 class Session():
 
     file_opened = False
@@ -283,7 +316,21 @@ class Session():
 
     cpp_model = None
 
+    # User Feedback
+    writer = StdRedirector()
+
     @classmethod
     def new_cpp_model( cls ):
         cls.cpp_model = Model()
         return cls.cpp_model
+
+    @classmethod
+    def write(cls, string):
+        cls.writer.write(string)
+        print(string)
+
+    @classmethod
+    def add_feedback_frame(cls, parent):
+        frame = Feedback(parent)
+        cls.writer.add_feedback_frame(frame)
+        return frame
