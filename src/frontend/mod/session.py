@@ -1,5 +1,6 @@
 import re
 from tkinter import *
+from tkinter.scrolledtext import *
 
 from backend.lib.libc2e2 import Model
 from frontend.mod.automaton import SymEq
@@ -268,7 +269,9 @@ class Feedback(Frame):
 
         self.pack_propagate(0)
 
-        self.display = Text(self, state=DISABLED)
+        # #EBEBEB = (235, 235, 235)
+        # #DCDCDC = (220, 220, 220) = Disabled Entry widget bg color
+        self.display = ScrolledText(self, state=DISABLED, bg='#EBEBEB')
         self.display.pack(fill=BOTH, side=TOP, expand=TRUE)
 
 
