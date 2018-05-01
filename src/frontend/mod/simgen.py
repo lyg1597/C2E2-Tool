@@ -660,9 +660,9 @@ def compile_executable():
 
     Session.write("Compiling essential libraries for C2E2...\n")
     Session.write("  Compilation may take a few minutes.\n")
-    Session.update()
     if((Session.simulator == ODEINT_ADP) or (Session.simulator == ODEINT_FIX)):
         Session.write("  Using ODEINT Simulator.\n")
+        Session.update()
         command_line = "g++ -w -O2 -std=c++11 simulator.cpp -o simu"
         args = shlex.split(command_line)
         p = subprocess.Popen(args, cwd= "../work-dir")
@@ -670,6 +670,7 @@ def compile_executable():
         p.communicate()
     else:
         Session.write("  Using CAPD Simulator.\n")
+        Session.update()
         command_line = "g++ -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`"
         p = subprocess.Popen(command_line, cwd= "../work-dir", shell=True)
         print()
