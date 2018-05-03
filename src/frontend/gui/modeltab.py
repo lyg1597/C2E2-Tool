@@ -23,7 +23,7 @@ class ModelTab(Frame):
         Frame.__init__(self, parent)
         self.parent = parent
         self._init_widgets()
-
+        
     def _init_widgets(self):
         """ Initialize the Treeview and Property Editory """
 

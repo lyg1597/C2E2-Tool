@@ -76,6 +76,8 @@ class FileHandler:
             FileHandler.save_hyxml(hyxml_text)
             FileHandler.open_file(Session.file_path)
 
+        Session.file_saved = True
+
         return
 
     @staticmethod

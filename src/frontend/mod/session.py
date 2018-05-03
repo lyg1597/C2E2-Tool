@@ -554,4 +554,5 @@ class Session():
 
     @classmethod
     def update(cls):
-        cls.window.update()
+        if cls.window is not None:
+            cls.window.update()
