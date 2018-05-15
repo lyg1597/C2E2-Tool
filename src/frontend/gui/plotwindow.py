@@ -16,30 +16,33 @@ class PlotterModelTab(Frame):
         Frame.__init__(self, parent)
         
         self.parent = parent
-
         self._init_widgets(*args)
 
     def _init_widgets(self,*args):
+
         Session.write("Initialize the Plot PropertyEditor and plotter view.\n")
         self.display = PlotterDisplay(self)
         self.display.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
-        PlotterPropertyEditor(self,*args).pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
+        PlotterPropertyEditor(self,*args)\
+            .pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
 
 
 class PlotterDisplay(tk.Canvas):
+    
     def __init__(self,parent, **options):
-        tk.Canvas.__init__(self,parent,borderwidth=0, background="#ffffff",**options)
-        self.frame = tk.Frame(self,**options)
+        tk.Canvas.__init__(self, parent, borderwidth=0, background="#ffffff", 
+            **options)
+        
+        self.frame = tk.Frame(self, **options)
         self.frame.config(bg="white")
         self.vsb = tk.Scrollbar(parent, orient="vertical", command=self.yview)
         self.configure(yscrollcommand=self.vsb.set)
         
-        
-
         self.pack(side="left", fill="both", expand=True)
         self.vsb.pack(side="left", fill="y")
         
-        self.create_window((0,0), window=self.frame, anchor="nw",tags="self.frame")
+        self.create_window((0,0), window=self.frame, anchor="nw",
+            tags="self.frame")
         
         #self.frame.pack(fill=BOTH, expand=TRUE)
         self.frame.bind("<Configure>", self.onFrameConfigure)
@@ -51,9 +54,9 @@ class PlotterDisplay(tk.Canvas):
         self.imgcounter = 0
         #self.populate()
     
-    
     #test function for scroll
     def populate(self):
+    
         for row in range(50):
             tk.Label(self.frame, text="%s" % row, width=3, borderwidth="1", 
                      relief="solid").grid(row=row, column=0)
@@ -63,7 +66,7 @@ class PlotterDisplay(tk.Canvas):
     def onFrameConfigure(self,event):
         self.configure(scrollregion=self.bbox("all"))
 
-    def _add_image(self, filename,identifier):
+    def _add_image(self, filename, identifier):
         path = '../work-dir/plotresult/'+filename+'.png'
         if platform == 'linux':
             smallimage = PIL.Image.open(path)
@@ -212,7 +215,7 @@ class PlotterPropertyEditor(Frame):
         # Property view frame
         self.prop_view = LabelFrame(self, text='Plot Property')
         # Name
-        Label(self.prop_view, text='Property name:').grid(row=0, sticky=W)
+        Label(self.prop_view, text='File name:').grid(row=0, sticky=W)
         self.name_vl = ValidLabel(self.prop_view)
         self.name_vl.grid(row=0, column=2, sticky=E)
         self.name_var = StringVar()
@@ -372,8 +375,8 @@ class PlotterPropertyEditor(Frame):
         self.plot_btn = Button(row, text='Plot', command=self._callback_plot)
         self.plot_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
-        self.plot_btn = Button(row, text='Close', command=self._callback_close)
-        self.plot_btn.pack(expand=TRUE, fill=X, side=LEFT)
+        self.close_btn = Button(row, text='Close', command=self._callback_close)
+        self.close_btn.pack(expand=TRUE, fill=X, side=LEFT)
 
 
 
@@ -503,7 +506,18 @@ class PlotterPropertyEditor(Frame):
 
             indexlist = tuple(indexlist)
             #print indexlist
-            plotGraph(self.file_path, self.unsafe_set, self.varlist, self.modelist,indexlist, self.time_step,self.time_horizon,self.cur_prop.plot_name, self.cur_prop.name, self.cur_prop.x, y_list, self.sim_adpative)
+            plotGraph(self.file_path, 
+                      self.unsafe_set, 
+                      self.varlist, 
+                      self.modelist,
+                      indexlist, 
+                      self.time_step,
+                      self.time_horizon,
+                      self.cur_prop.plot_name, 
+                      self.cur_prop.name, 
+                      self.cur_prop.x, 
+                      y_list, 
+                      self.sim_adpative)
             self._update_property_status()
             self._disable_enable_button(False)
             self.parent.display.upload_new_img(self.cur_prop.name,self.cur_prop.identifier)
@@ -523,11 +537,13 @@ class PlotterPropertyEditor(Frame):
             self.cpy_btn['state'] = 'disabled'
             self.rmv_btn['state'] = 'disabled'
             self.plot_btn['state'] = 'disabled'
+            self.close_btn['state'] = 'disabled'
         else:
             self.new_btn['state'] = 'normal'
             self.cpy_btn['state'] = 'normal'
             self.rmv_btn['state'] = 'normal'
             self.plot_btn['state'] = 'normal'
+            self.close_btn['state'] = 'normal'
 
         self.update()
 

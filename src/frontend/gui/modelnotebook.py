@@ -3,7 +3,7 @@ from tkinter.ttk import *
 
 from frontend.gui.eventhandler import EventHandler
 from frontend.gui.modeltab import ModelTab
-from frontend.mod.filehandler import SaveDialog
+from frontend.mod.filehandler import *
 from frontend.mod.constants import *
 from frontend.mod.session import Session
 from frontend.gui.plotwindow import PlotterModelTab
@@ -68,11 +68,13 @@ class ModelNotebook(Notebook):
 
         if not Session.file_saved:
             if self.previous_tab == EDITOR:
-                hyxml_text = self.editor_tab.editor.get()
+                hyxml_text = self.editor_tab.editor.get('1.0', 'end-1c')
             else:
                 hyxml_text = None
             save_dialog = SaveDialog(self, hyxml_text)
             self.wait_window(save_dialog)
+
+            FileHandler.open_file(Session.hybrid.file_name)
 
             # Refresh Edit Tab
             self.editor_tab.open_xml()

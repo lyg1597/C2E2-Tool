@@ -882,7 +882,7 @@ class ModelSidebar(Frame):
         self._disable_enable_button(0)
         self._update_property_status(1, result, 0)
 
-        if(result != 0):
+        if result == 1:
             self._open_the_plotter_window(3)
 
         return
@@ -899,7 +899,7 @@ class ModelSidebar(Frame):
         self._disable_enable_button(0)
         self._update_property_status(0, result, 0)
 
-        if(result != 0):
+        if result == 1:
             
             if(Session.cur_prop.simulator == ODEINT_ADP):
                 self._open_the_plotter_window(2)        
@@ -922,7 +922,14 @@ class ModelSidebar(Frame):
         modelist = Session.hybrid.mode_names
 
         # self.parent.parent is the ModelNotebook object (modelnotebook.py)
-        self.parent.parent._init_plot_widgets(varlist, modelist, time_step, time_horizon, unsafe_set, file_path, sim_adpative, Session.cur_prop.name)
+        self.parent.parent._init_plot_widgets(varlist, 
+                                              modelist, 
+                                              time_step, 
+                                              time_horizon, 
+                                              unsafe_set, 
+                                              file_path, 
+                                              sim_adpative, 
+                                              Session.cur_prop.name)
         
     def _expire_properties(self):
         """ Expire all Simulated and Verified properties """
@@ -968,12 +975,16 @@ class ModelSidebar(Frame):
             self.rmv_btn['state'] = 'disabled'
             self.sim_btn['state'] = 'disabled'
             self.ver_btn['state'] = 'disabled'
+            self.parse_btn['state'] = 'disabled'
+            self.compose_btn['state'] = 'disabled'
         else:
             self.new_btn['state'] = 'normal'
             self.cpy_btn['state'] = 'normal'
             self.rmv_btn['state'] = 'normal'
             self.sim_btn['state'] = 'normal'
             self.ver_btn['state'] = 'normal'
+            self.parse_btn['state'] = 'normal'
+            self.compose_btn['state'] = 'normal'
 
         self.update()
 

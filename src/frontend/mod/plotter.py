@@ -19,7 +19,7 @@ def plotGraph(reachSetPath,unsafeSet,varList,modeList,varPlotTuple,
   type_simulation = open(reachSetPath,'r').readline().rstrip()
   
   if type_simulation=="hybrid simulation" or plotterversion==3:
-    if len(varPlotTuple)>2:
+    if True: #len(varPlotTuple)>2: LMB
       return plotMultipleVarsV2(reachSetPath,varList,modeList,varPlotTuple,timeStep,timeHoriz,
                               title,filename,xindex,yindexlist)
     else:
@@ -903,7 +903,7 @@ def plotMultipleModesV3(reachSetPath,unsafeset,varlist,modelist,varPlotTuple,
       plotstring+= modelist[i]+':'+colors[i%10]+' '
     plotstring+="'\n"
   
-  for i in range (len(tubeorder)):
+  for i in range(len(tubeorder)):
     if i == 0:
       plotstring+= 'plot "-" u '
     else:
@@ -920,7 +920,7 @@ def plotMultipleModesV3(reachSetPath,unsafeset,varlist,modelist,varPlotTuple,
 
     if i!=len(tubeorder)-1:
       plotstring+=','
-
+  
   if len(listofunsafetube)==0:
     plotstring+='\n'
   else:

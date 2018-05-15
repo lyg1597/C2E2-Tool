@@ -26,7 +26,7 @@ class EditorTab(Frame):
 
         # Main Editor
         #self.editor = SetText(self, callback=self._edit_callback)
-        self.editor = ScrolledText(self, wrap=WORD)
+        self.editor = ScrolledText(self)
         self.editor.pack(expand=TRUE, fill=BOTH, side=TOP, anchor=E)
 
         self.feedback = Session.add_feedback_frame(self)
@@ -51,6 +51,8 @@ class EditorTab(Frame):
     
         self.bind(OPEN_EVENT, self.open_xml)
         EventHandler.add_event_listeners(self, OPEN_EVENT)
+
+        self.editor.bind('<KeyRelease>', self._edit_callback)
 
         return
 

@@ -480,12 +480,12 @@ def verify():
 
 def _sim_ver(action):
 
+    # Parse and Compose (HyIR.compose_all calss HyIR.parse_all)
+    HyIR.compose_all(Session.hybrid)
+
     if(not Session.cur_prop.is_valid()):
         Session.write("Property invalid, abandoning operation...\n")
         return None
-
-    # Parse and Compose (HyIR.compose_all calss HyIR.parse_all)
-    HyIR.compose_all(Session.hybrid)
 
     if(not Session.hybrid.composed):
         Session.write("ERROR: System not composed, abandoning operation...\n")

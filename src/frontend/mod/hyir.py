@@ -179,16 +179,18 @@ class HyIR:
         self.parse_errors += self.parse_local_variables()
         self.parse_errors += self.parse_output_variables()
         self.parse_errors += self.parse_input_variables()
-        Session.write(" Variables Parsed.\n")
+        Session.write("  Variables Parsed.\n")
 
         for automaton in self.automata:
             self.parse_errors += automaton.parse()
         
+        Session.write("  Validating Current Property...\n")
+        Property.validate_cur_prop()
+        Session.write("  Current Property Valid.\n")
+        
         if len(self.parse_errors) == 0:
             self.parsed = True
-            Session.write("---------------\n")
-            Session.write("No Parse Errors\n")
-            Session.write("---------------\n")
+            Session.write("No Parse Errors.\n")
         else:
             self.parsed = False
             self.print_parse_errors()

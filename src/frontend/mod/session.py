@@ -50,27 +50,27 @@ class Property():
 
         prop = Session.cur_prop
 
-        Property.validate_name( prop.name )
-        Property.validate_type( prop.type )
-        Property.validate_time_step( prop.time_step )
-        Property.validate_time_horizon( prop.time_horizon )
-        Property.validate_k_value( prop.k_value )
-        ( is_status, is_error ) = Property.validate_initial_set( prop.initial_set_str )
-        Property.validate_unsafe_set( prop.unsafe_set_str )
+        Property.validate_name(prop.name)
+        Property.validate_type(prop.type)
+        Property.validate_time_step(prop.time_step)
+        Property.validate_time_horizon(prop.time_horizon)
+        Property.validate_k_value(prop.k_value)
+        (is_status, is_error)= Property.validate_initial_set(prop.initial_set_str)
+        Property.validate_unsafe_set(prop.unsafe_set_str)
 
         return
 
     @staticmethod
-    def validate_name( name ):
+    def validate_name(name):
         
         valid = True
-        if( name == '' ):
+        if(name == ''):
             valid = False
         else:
-            for prop in Session.prop_list:
-                if( prop == Session.cur_prop ):
+            for prop in Session.hybrid.properties:
+                if(prop == Session.cur_prop):
                     continue
-                elif( name == prop.name ):
+                elif(name == prop.name):
                     valid = False
                     break
 
@@ -78,41 +78,41 @@ class Property():
         return valid
 
     @staticmethod
-    def validate_type( type ):
+    def validate_type(type):
 
         # TODO: LMB Not sure where this is ever invalidated (after being initialized to True). This function is a placeholder until I learn more.
         Session.cur_prop.type_valid = True
         return True
         
     @staticmethod
-    def validate_time_step( time_step ):
+    def validate_time_step(time_step):
         
-        #valid = ( is_number(time_step) and (time_step >= 0) )
-        valid = ( time_step >= 0 )
+        #valid = (is_number(time_step) and (time_step >= 0))
+        valid = (time_step >= 0)
 
         Session.cur_prop.time_step_valid = valid
         return valid
 
     @staticmethod
-    def validate_time_horizon( horizon ):
+    def validate_time_horizon(horizon):
         
-        #valid = ( is_number(horizon) and (horizon >= 0) )
-        valid = ( horizon >= 0 )
+        #valid = (is_number(horizon) and (horizon >= 0))
+        valid = (horizon >= 0)
 
         Session.cur_prop.time_horizon_valid = valid
         return valid
 
     @staticmethod
-    def validate_k_value( k_value ):
+    def validate_k_value(k_value):
 
-        #valid = ( is_number(k_value) and (k_value >= 0) )
-        valid = ( k_value >= 0 )
+        #valid = (is_number(k_value) and (k_value >= 0))
+        valid = (k_value >= 0)
 
         Session.cur_prop.k_value_valid = valid
         return valid
 
     @staticmethod
-    def validate_initial_set( initial_set ):
+    def validate_initial_set(initial_set):
         
         # Regex building blocks
         flt = '(-?(\d*\.?\d+))'
@@ -133,53 +133,53 @@ class Property():
         re_is = init_set
         re_us = unsafe_set
 
-        match = re.match( re_is, initial_set )
+        match = re.match(re_is, initial_set)
         Session.cur_prop.initial_set_str = initial_set
 
-        if( match == None ):
+        if(match == None):
             Session.cur_prop.initial_set_obj = None
             Session.cur_prop.initial_set_valid = False
-            return ( False, "Incorrect Syntax" )
+            return (False, "Incorrect Syntax")
         else:
-            is_sep = initial_set.split( ':' )
+            is_sep = initial_set.split(':')
 
             # Validate Mode
-            mode = re.search( re_var, is_sep[0] ).group(0)
+            mode = re.search(re_var, is_sep[0]).group(0)
             mode_list = Session.hybrid.mode_names
 
-            if( mode not in mode_list ):
+            if(mode not in mode_list):
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
-                return ( False, "No matching modes" )
+                return (False, "No matching modes")
 
             # Validate Vars
-            vars_ = re.findall( re_var, is_sep[1] )
+            vars_ = re.findall(re_var, is_sep[1])
             var_list = Session.hybrid.local_var_names
-            var_union= set(vars_) | set(var_list )
+            var_union= set(vars_) | set(var_list)
 
-            if( len(var_union) > len(var_list) ):
+            if(len(var_union) > len(var_list)):
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
-                return ( False, "Variable mismatch" )
+                return (False, "Variable mismatch")
 
             # Parse equations
-            a_m, b_m, eq_m = SymEq.get_eqn_matrix( is_sep[1], var_list )
-            bounded = SymEq.check_boundedness( a_m, b_m, eq_m, var_list )
+            a_m, b_m, eq_m = SymEq.get_eqn_matrix(is_sep[1], var_list)
+            bounded = SymEq.check_boundedness(a_m, b_m, eq_m, var_list)
 
-            if( is_sep[1].count('>')!= is_sep[1].count('<') ):
+            if(is_sep[1].count('>')!= is_sep[1].count('<')):
                 bounded = False
             
             if bounded:
                 Session.cur_prop.initial_set_obj = [is_sep[0], a_m, b_m, eq_m]
                 Session.cur_prop.initial_set_valid = True
-                return ( True, "" )
+                return (True, "")
             else:
                 Session.cur_prop.initial_set_obj = None
                 Session.cur_prop.initial_set_valid = False
-                return ( False, "Set unbounded" )
+                return (False, "Set unbounded")
 
 
-    def validate_unsafe_set( unsafe_set ):
+    def validate_unsafe_set(unsafe_set):
 
         # Regex building blocks
         flt = '(-?(\d*\.?\d+))'
@@ -200,29 +200,29 @@ class Property():
         re_is = init_set
         re_us = unsafe_set_reg
 
-        match = re.match( re_us, unsafe_set )
+        match = re.match(re_us, unsafe_set)
         Session.cur_prop.unsafe_set_str = unsafe_set
 
         # Check if input is valid
-        if( match == None ):
+        if(match == None):
             Session.cur_prop.unsafe_set_obj = None
             Session.cur_prop.unsafe_set_valid = False
-            return ( False, "Incorrect Syntax" )
+            return (False, "Incorrect Syntax")
         
         # Validate vars
         else:
-            vars_ = re.findall( re_var, unsafe_set )
+            vars_ = re.findall(re_var, unsafe_set)
             var_list = Session.hybrid.local_var_names
             var_union = set(vars_) | set(var_list)
 
-            if( len(var_union) > len(var_list) ):
+            if(len(var_union) > len(var_list)):
                 Session.cur_prop.unsafe_set_obj = None
                 Session.cur_prop.unsafe_set_valid = False
-                return ( False, "Variable mismatch" )
+                return (False, "Variable mismatch")
 
-            Session.cur_prop.unsafe_set_obj = SymEq.get_eqn_matrix( unsafe_set, var_list)
+            Session.cur_prop.unsafe_set_obj = SymEq.get_eqn_matrix(unsafe_set, var_list)
             Session.cur_prop.unsafe_set_valid = True
-            return ( True, "" )
+            return (True, "")
 
 
 class PlotProperty():
@@ -533,7 +533,7 @@ class Session():
     window = None
 
     @classmethod
-    def new_cpp_model( cls ):
+    def new_cpp_model(cls):
         cls.cpp_model = Model()
         return cls.cpp_model
 
