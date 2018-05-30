@@ -42,9 +42,9 @@ class ModelNotebook(Notebook):
 
         return
 
-    def _init_plot_widgets(self,*args):
+    def _init_plot_widgets(self, *args):
 
-        name = args[-1]+" plot"
+        name = args[-1] + " plot"
         if name in self.plot_tab_dic:
             self.forget(self.plot_tab_dic[name])
 

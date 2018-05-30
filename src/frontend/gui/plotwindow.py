@@ -23,7 +23,7 @@ class PlotterModelTab(Frame):
         Session.write("Initialize the Plot PropertyEditor and plotter view.\n")
         self.display = PlotterDisplay(self)
         self.display.pack(expand=TRUE, fill=BOTH, side=LEFT, anchor =E)
-        PlotterPropertyEditor(self,*args)\
+        PlotterPropertyEditor(self, *args)\
             .pack(expand=TRUE, fill=Y, side=TOP, anchor=E)
 
 
