@@ -19,9 +19,12 @@ CROSS_IMG = 'frontend/res/cross.png'
 TICK_IMG = 'frontend/res/tick.png'
 
 #Status
-Simulated = "Simulated"
-Verified = "Verified"
-Plotted = "Plotted"
+Simulated = "Simulated"  #TODO LMB REMOVE ME
+Verified = "Verified" #TODO LMB REMOVE ME
+Plotted = "Plotted"  #TODO LMB REMOVE ME
+SIMULATED = "Simulated"
+VERIFIED = "Verified"
+PLOTTED = "Plotted"
 
 #Result
 
@@ -63,3 +66,6 @@ SAVE_OPT = {
     'defaultextension': '.hyxml',
     'filetypes': [('HyXML files', '.hyxml')],
     'title': 'Save File' }
+
+# Plot colors
+PLOT_COLORS = ['blue', 'green', 'red', 'yellow', 'orange', 'cyan', 'pink']

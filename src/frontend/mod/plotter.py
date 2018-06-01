@@ -4,34 +4,56 @@ import time
 from bokeh.io import save, export_png
 from bokeh.plotting import figure
 
+from fromend.mod.constants import *
 
-def plotGraph(reach_set_filepath, unsafe_set, var_list, mode_list,
+
+def plotGraph(data_filepath, unsafe_set, var_list, mode_list,
     var_index_list, time_step, time_horizon, title, filename, x_var, 
     y_var_list, plotter_version):
 
-    return bookeh_minimum(reach_set_filepath, var_list, var_index_list, title,
-        filename)
-
-def bookeh_minimum(reach_set_filepath, var_list, var_index_list, title, 
-    filename):
-
-    COLORS = ['blue', 'green', 'red', 'yellow', 'orange', 'cyan', 'pink']
-
-    file_object = open(reach_set_filepath, 'r')
-    bokeh_plot = figure()
+    file_object = open(data_filepath, 'r')
 
     variables = []
     for i in range(len(var_index_list)):
         variables.append([])
+    lines = file_object.readlines()
 
-    for line in iter(file_object):
-        points = line.split()
+    for i in range(1, len(lines)):
+        points = lines[i].split()
         if points[0] == '%':
             continue
-        j = 0
-        for i in var_index_list:
-            variables[j].append(float(points[i]))
-            j += 1
+        for j, k in enumerate(var_index_list):
+            variables[j].append(float(points[k]))
+
+    if lines[0].split()[0] == SIMULATED:
+        bokeh_line(variables, var_list, var_index_list, title, filename)
+        return
+    else:
+        bokeh_quad(variables, var_list, var_index_list, title, filename)
+        return
+
+
+def bokeh_line(variables, var_list, var_index_list, title, filename):
+
+    bokeh_plot = figure()
+
+    for i in range(1, len(variables)):
+        x_axis = []
+        y_axis = []
+        for j in range(len(variables[0]), 2):
+            x_axis.append(variables[0][j])
+            y_axis.append(variables[i][j])
+
+        bokeh_plot.line(x_axis, y_axis)
+
+    filedir = '../work-dir/plotresult/'
+    save(bokeh_plot, filename=filedir+filename+'.html', title=title)
+    export_png(bokeh_plot, filename=filedir+filename+'.png')
+
+
+def bokeh_quad(variables, var_list, var_index_list, title, filename):
+
+    bokeh_plot = figure()
 
     for i in range(1, len(variables)):
         top = []
@@ -47,7 +69,7 @@ def bookeh_minimum(reach_set_filepath, var_list, var_index_list, title,
             bottom.append(min(variables[i][j-1], variables[i][j]))
         
         bokeh_plot.quad(top=top, bottom=bottom, left=left, right=right,
-            color=COLORS[i])
+            color=PLOT_COLORS[i-1])
 
     filedir = '../work-dir/plotresult/'
     save(bokeh_plot, filename=filedir+filename+'.html', title=title)
