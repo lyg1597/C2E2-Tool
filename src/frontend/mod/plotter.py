@@ -4,7 +4,7 @@ import time
 from bokeh.io import save, export_png
 from bokeh.plotting import figure
 
-from fromend.mod.constants import *
+from frontend.mod.constants import *
 
 
 def plotGraph(data_filepath, unsafe_set, var_list, mode_list,
@@ -18,7 +18,7 @@ def plotGraph(data_filepath, unsafe_set, var_list, mode_list,
         variables.append([])
     lines = file_object.readlines()
 
-    for i in range(1, len(lines)):
+    for i in range(3, len(lines)):
         points = lines[i].split()
         if points[0] == '%':
             continue
@@ -35,16 +35,25 @@ def plotGraph(data_filepath, unsafe_set, var_list, mode_list,
 
 def bokeh_line(variables, var_list, var_index_list, title, filename):
 
+    print("***** bokeh_line entry point *****")
+    print("variables: " + str(variables))
+    print("var_list: " + str(var_list))
+    print("var_index_list: " + str(var_index_list))
+    print("title: " + str(title))
+    print("filename: " + str(filename))
+
     bokeh_plot = figure()
 
     for i in range(1, len(variables)):
         x_axis = []
         y_axis = []
-        for j in range(len(variables[0]), 2):
+        for j in range(0, len(variables[0]), 2):
             x_axis.append(variables[0][j])
             y_axis.append(variables[i][j])
 
-        bokeh_plot.line(x_axis, y_axis)
+        print("x_axis " + str(i) + ": " + str(x_axis))
+        print("y_axis " + str(i) + ": " + str(y_axis))
+        bokeh_plot.line(x_axis, y_axis, line_width=2)
 
     filedir = '../work-dir/plotresult/'
     save(bokeh_plot, filename=filedir+filename+'.html', title=title)

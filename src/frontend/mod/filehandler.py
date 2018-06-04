@@ -593,7 +593,27 @@ class FileHandler:
 
         Session.write("  Done.\n")
         return prop_list
-    
+
+    @staticmethod
+    def prepend(filename, line):
+        with open(filename, 'r+') as f:
+            content = f.read()
+            f.seek(0, 0)
+            f.write(line.rstrip('\r\n') + '\n' + content)
+
+    @staticmethod
+    def prepend_cur_prop(simver):
+        
+        lines = simver + '\n'
+        for mode in Session.hybrid.mode_names:
+            lines += mode + ' '
+        lines += '\n'
+        for var_ in Session.hybrid.local_var_names:
+            lines += var_ + ' '
+        lines += '\n'
+
+        FileHandler.prepend('../work-dir/' + Session.cur_prop.name, lines)
+   
     @staticmethod
     def clean_eq(eq):
         r_dict = {'&lt;':'<', '&gt;':'>', '&amp;':'&', ' and ':'&&', ' or ':'||'}

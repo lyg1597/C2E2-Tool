@@ -12,6 +12,7 @@ from frontend.gui.popupentry import *
 from frontend.gui.widgets import *
 from frontend.mod.automaton import SymEq
 from frontend.mod.constants import *
+from frontend.mod.filehandler import FileHandler
 from frontend.mod.session import Session, Property
 from frontend.mod.simgen import * # FIXME
 
@@ -883,6 +884,7 @@ class ModelSidebar(Frame):
         self._update_property_status(1, result, 0)
 
         if result == 1:
+            FileHandler.prepend_cur_prop(SIMULATED)
             self._open_the_plotter_window(3)
 
         return
@@ -900,7 +902,7 @@ class ModelSidebar(Frame):
         self._update_property_status(0, result, 0)
 
         if result == 1:
-            
+            FileHandler.prepend_cur_prop(VERIFIED)
             if(Session.cur_prop.simulator == ODEINT_ADP):
                 self._open_the_plotter_window(2)        
             else:
