@@ -1,85 +1,157 @@
-import numpy as np
-import time
-
 from bokeh.io import save, export_png
 from bokeh.plotting import figure
 
 from frontend.mod.constants import *
 
 
-def plotGraph(data_filepath, unsafe_set, var_list, mode_list,
-    var_index_list, time_step, time_horizon, title, filename, x_var, 
-    y_var_list, plotter_version):
+def plot_graph(data_filepath, horizontal_index, vertical_indices, 
+    variable_list, mode_list, type_, title, filename):
+    """
+    File Format for input files:
+        Line 0 - 10: Header information
+        Line 11+: Simulation/Verification Data
 
+    data_filepath:      File path containing information to plot
+    horizontal_index:   Index of horizontal axis variable in variable_list
+    vertical_indices:   List of indices of variables in variable_list to be 
+                            plotted on the vertical axis
+    type_:              VERIFIED or SIMULATED
+                            VERIFIED = Reach Tube plotting
+                            SIMULATED = Line plotting
+    variable_list:      List of variables
+    mode_list:          List of modes
+    title:              Plot title
+    filename:           Output file name. 
+                            filename.png and filename.html will be output
+    """
+
+    if DEBUG:
+        print("\n***** plot_graph entry point *****")
+        print("data_filepath: ", data_filepath)
+        print("horizontal_index: ", horizontal_index)
+        print("vertical_indices: ", vertical_indices)
+        print("variable_list: ", variable_list)
+        print("mode_list: ", mode_list)
+        print("type_: ", type_)
+        print("title: ", title)
+        print("filename: ", filename)
+
+    # Load data from file into 2D list
     file_object = open(data_filepath, 'r')
-
-    variables = []
-    for i in range(len(var_index_list)):
-        variables.append([])
     lines = file_object.readlines()
-
-    for i in range(3, len(lines)):
+    data_points = []
+    for i in range(11, len(lines)):  # Output starts on line 11
         points = lines[i].split()
         if points[0] == '%':
             continue
-        for j, k in enumerate(var_index_list):
-            variables[j].append(float(points[k]))
+        else:
+            data_points.append(points)
 
-    if lines[0].split()[0] == SIMULATED:
-        bokeh_line(variables, var_list, var_index_list, title, filename)
-        return
+    if type_ == SIMULATED:
+        plot_line(data_points, horizontal_index, vertical_indices, 
+            variable_list, mode_list, title, filename)
     else:
-        bokeh_quad(variables, var_list, var_index_list, title, filename)
-        return
+        plot_quad(data_points, horizontal_index, vertical_indices, 
+            variable_list, mode_list, title, filename)
 
+def plot_line(data_points, horizontal_index, vertical_indices, variable_list, 
+    mode_list, title, filename):
 
-def bokeh_line(variables, var_list, var_index_list, title, filename):
-
-    print("***** bokeh_line entry point *****")
-    print("variables: " + str(variables))
-    print("var_list: " + str(var_list))
-    print("var_index_list: " + str(var_index_list))
-    print("title: " + str(title))
-    print("filename: " + str(filename))
-
-    bokeh_plot = figure()
-
-    for i in range(1, len(variables)):
-        x_axis = []
-        y_axis = []
-        for j in range(0, len(variables[0]), 2):
-            x_axis.append(variables[0][j])
-            y_axis.append(variables[i][j])
-
-        print("x_axis " + str(i) + ": " + str(x_axis))
-        print("y_axis " + str(i) + ": " + str(y_axis))
-        bokeh_plot.line(x_axis, y_axis, line_width=2)
-
-    filedir = '../work-dir/plotresult/'
-    save(bokeh_plot, filename=filedir+filename+'.html', title=title)
-    export_png(bokeh_plot, filename=filedir+filename+'.png')
-
-
-def bokeh_quad(variables, var_list, var_index_list, title, filename):
+    if DEBUG:
+        print("\n***** plot_line entry point *****")
+        print("data_points: ", data_points)
+        print("horizontal_index: ", horizontal_index)
+        print("vertical_indices: ", vertical_indices)
+        print("variable_list: ", variable_list)
+        print("mode_list: ", mode_list)
+        print("title: ", title)
+        print("filename:", filename)
 
     bokeh_plot = figure()
 
-    for i in range(1, len(variables)):
+    x_axis = []
+    y_axes = []
+    for i in range(len(vertical_indices)):
+        y_axes.append([])
+    
+    toggle = True
+    for line in data_points:
+        if toggle:
+            x_axis.append(float(line[horizontal_index]))
+            for y_index, vert_index in enumerate(vertical_indices):
+                y_axes[y_index].append(float(line[vert_index]))
+            toggle = False
+        else:
+            toggle = True
+
+    if DEBUG:
+        print("*** plot_line debug ***")
+        print("x_axis: ", x_axis)
+        print("y_axes: ", y_axes)
+
+    for i, y_axis in enumerate(y_axes):
+        bokeh_plot.line(x_axis, y_axis, line_width=2, color=PLOT_COLORS[i-1])
+
+
+    #  TODO: Send to Yangge
+    # # X - axis
+    # bokeh_plot.xaxis.axis_label = var_list[var_index_list[0]]
+    # # Y - axis
+    # y_axis_label = var_list[var_index_list[1]]
+    # for i in range(2, len(var_index_list)):
+    #     y_axis_label += ", " + var_list[var_index_list[i]]
+    # bokeh_plot.yaxis.axis_label = y_axis_label
+
+    # X - axis
+    bokeh_plot.xaxis.axis_label = variable_list[0]
+    # Y - axis
+    y_axis_label = variable_list[vertical_indices[0]]
+    for i in range(1, len(vertical_indices)):
+        y_axis_label += ", " + variable_list[vertical_indices[i]]
+
+    bokeh_plot.yaxis.axis_label = y_axis_label
+
+    save(bokeh_plot, filename=filename+'.html', title=title)
+    export_png(bokeh_plot, filename=filename+'.png' )
+
+
+def plot_quad(data_points, horizontal_index, vertical_indices, variable_list, 
+    mode_list, title, filename):
+
+    if DEBUG:
+        print("\n***** plot_quad entry point *****")
+        print("data_points: ", data_points)
+        print("horizontal_index: ", horizontal_index)
+        print("vertical_indices: ", vertical_indices)
+        print("variable_list: ", variable_list)
+        print("mode_list: ", mode_list)
+        print("title: ", title)
+        print("filename:", filename)
+
+    bokeh_plot = figure()
+
+    for i, vertical_index in enumerate(vertical_indices):
         top = []
         bottom = []
         left = []
         right = []
-        for j in range(1, len(variables[0]), 2):
-            # Left/Right side defined by time values, always 0th column
-            left.append(variables[0][j-1])
-            right.append(variables[0][j])
-            # Top/Bottom defined by max/min of variable values, ith column
-            top.append(max(variables[i][j-1], variables[i][j]))
-            bottom.append(min(variables[i][j-1], variables[i][j]))
-        
-        bokeh_plot.quad(top=top, bottom=bottom, left=left, right=right,
-            color=PLOT_COLORS[i-1])
 
-    filedir = '../work-dir/plotresult/'
-    save(bokeh_plot, filename=filedir+filename+'.html', title=title)
-    export_png(bokeh_plot, filename=filedir+filename+'.png')
+        for j in range(1, len(data_points), 2):
+            # Left and Right side defined by horizontal axis variable
+            # left.append(min(float(data_points[j-1][horizontal_index]), 
+            #     float(data_points[j][horizontal_index])))
+            # right.append(max(float(data_points[j-1][horizontal_index]), 
+            #     float(data_points[j][horizontal_index])))
+            left.append(float(data_points[j-1][horizontal_index]))
+            right.append(float(data_points[j][horizontal_index]))
+            # Top and Bottom are defined by vertical axis variable
+            bottom.append(min(float(data_points[j-1][vertical_index]),
+                float(data_points[j][vertical_index])))
+            top.append(max(float(data_points[j-1][vertical_index]),
+                float(data_points[j][vertical_index])))
+
+        bokeh_plot.quad(left=left, right=right, bottom=bottom, top=top,
+            color=PLOT_COLORS[i])
+
+    save(bokeh_plot, filename=filename + '.html', title=title)
+    export_png(bokeh_plot, filename=filename + '.png')

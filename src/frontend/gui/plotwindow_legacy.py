@@ -9,6 +9,7 @@ from frontend.mod.plotter import plotGraph
 from sys import platform
 
 
+
 class PlotterModelTab(Frame):
 
     def __init__(self, parent, *args):
@@ -33,30 +34,39 @@ class PlotterDisplay(tk.Canvas):
             **options)
         
         self.frame = tk.Frame(self, **options)
-        self.frame.config(bg='white')
-        self.vsb = tk.Scrollbar(parent, orient='vertical', command=self.yview)
+        self.frame.config(bg="white")
+        self.vsb = tk.Scrollbar(parent, orient="vertical", command=self.yview)
         self.configure(yscrollcommand=self.vsb.set)
         
-        self.pack(side=LEFT, fill=BOTH, expand=True)
-        self.vsb.pack(side=LEFT, fill=Y)
+        self.pack(side="left", fill="both", expand=True)
+        self.vsb.pack(side="left", fill="y")
         
-        self.create_window((0,0), window=self.frame, anchor=NW,
+        self.create_window((0,0), window=self.frame, anchor="nw",
             tags="self.frame")
         
         #self.frame.pack(fill=BOTH, expand=TRUE)
-        self.frame.bind("<Configure>", self._on_frame_configure)
+        self.frame.bind("<Configure>", self.onFrameConfigure)
 
         self.parent = parent
         self.result_list = {}
         self.imagelist = {}
         self.large_imagelist = {}
         self.imgcounter = 0
-        
-    def _on_frame_configure(self, event):
-        self.configure(scrollregion=self.bbox('all'))
+        #self.populate()
+    
+    #test function for scroll
+    def populate(self):
+    
+        for row in range(50):
+            tk.Label(self.frame, text="%s" % row, width=3, borderwidth="1", 
+                     relief="solid").grid(row=row, column=0)
+            t="this is the second column for row %s" %row
+            tk.Label(self.frame, text=t).grid(row=row, column=1)
+
+    def onFrameConfigure(self,event):
+        self.configure(scrollregion=self.bbox("all"))
 
     def _add_image(self, filename, identifier):
-
         path = '../work-dir/plotresult/'+filename+'.png'
         if platform == 'linux':
             smallimage = PIL.Image.open(path)
@@ -69,8 +79,7 @@ class PlotterDisplay(tk.Canvas):
         self.result_list[identifier] = tk.LabelFrame(self.frame, text=filename)
         self.result_list[identifier].config(bg="white", bd = 5)
         #fix this position
-        self.result_list[identifier].grid(row=int(self.imgcounter/3), 
-                                          column=self.imgcounter%3) 
+        self.result_list[identifier].grid(row=int(self.imgcounter/3),column=self.imgcounter%3) 
 
         if platform == 'linux':
             display_image = PIL.Image.open(path)
@@ -81,12 +90,12 @@ class PlotterDisplay(tk.Canvas):
 
         image = tk.Label(self.result_list[identifier], image=smallimage)
         image.pack()
-        image.config(bg='white')
+        image.config(bg="white")
         image.bind('<Double-Button-1>', lambda event,x=filename :self._callback_btn_press_double(x))
         self.imgcounter+=1
 
     def _edit_image(self,filename,identifier):
-        path = '../work-dir/plotresult/' + filename + '.png'
+        path = '../work-dir/plotresult/'+filename+'.png'
         if platform == 'linux':
             smallimage = PIL.Image.open(path)
         else:
@@ -150,41 +159,38 @@ class PlotterDisplay(tk.Canvas):
 
 class PlotterPropertyEditor(Frame):
     
-    def __init__(self, parent, **options):
+    def __init__(self, parent, *args, **options):
         Frame.__init__(self, parent, **options)
         
         # args for plotter
         self.parent = parent
-
-        self.file_path = StringVar()
-        self.varlist = []
-        self.modelist = []
-
-        self.cur_prop  = None
-        self.propertylist = []
-        self.identifier = 0
         self.sel_iid = None
-
-        self.propname = StringVar()
-        self.status = StringVar()
-        self.time_step = StringVar()
-        self.time_horizon = StringVar()
-        self.simu_adpative = StringVar()  # TODO LMB is this Simulator?
-        self.refine_strat = StringVar()
-        self.initial_set = StringVar()
-        self.unsafe_set = StringVar()
+        self.varlist = list(args[0])
+        self.varlist.insert(0,'time')
+        self.modelist = list(args[1])
+        self.time_step = args[2]
+        self.time_horizon = args[3]
+        self.unsafe_set = args[4]
+        #print (self.unsafe_set)
+        self.file_path = args[5]
+        self.sim_adpative = args[6]
+        self.propname = args[7]
 
         self.y_var_list=[]
-        self.firstvaridx = None
-        
-        # for i in range(len(self.varlist)):
-        #     self.y_var_list.append(StringVar())
-        #     self.y_var_list[i].set('0')
-        # self.y_var_list[1].set('1')
-        # self.firstvaridx = int(str(self.y_var_list[0])[6:])
+        for i in range(len(self.varlist)):
+            self.y_var_list.append(StringVar())
+            self.y_var_list[i].set('0')
+        self.y_var_list[1].set('1')
+        self.firstvaridx = int(str(self.y_var_list[0])[6:])
 
         self._bind_events()
         self._init_widgets()
+
+        self.cur_prop = None
+        self.propertylist = []
+        self.sel_iid = None
+
+        self.identifier = 0
 
         self._callback_new()
 
@@ -197,27 +203,17 @@ class PlotterPropertyEditor(Frame):
         # EventHandler.add_event_listeners(self, OPEN_EVENT)
 
     def _init_widgets(self):
-        
+        print("complete me for init plotter widget")
         self._init_plot_prop_view()
         self.prop_view.pack(fill=X)
         self.prop_view.columnconfigure(1, weight=1)
         self._init_prop_list()
         self.prop_list.pack(expand=TRUE, fill=BOTH)
 
+
     def _init_plot_prop_view(self):
-        
         # Property view frame
         self.prop_view = LabelFrame(self, text='Plot Property')
-
-        # Source
-        Label(self.prop_view, text='Data Source:').grid(row=0, sticky=W)
-        #self.source_vl = ValidLabel(self.prop_view)
-        #self.source_vl.grid(row=1, column=2, sticky=E)
-        self.source_var = StringVar()
-        #self.source_var.trace_variable('w', self._callback_source)
-        Entry(self.prop_view, textvariable=self.source_var, state=DISABLED)\
-            .grid(row=0, column=1, sticky=WE)
-        
         # Name
         Label(self.prop_view, text='File name:').grid(row=0, sticky=W)
         self.name_vl = ValidLabel(self.prop_view)
@@ -418,6 +414,7 @@ class PlotterPropertyEditor(Frame):
         self._display_property(self.cur_prop)
 
     def _add_property(self, prop):
+        
         iid = self.list_view.insert('', 'end', values=(prop.name, prop.status))
         return iid
 

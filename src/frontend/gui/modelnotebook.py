@@ -6,8 +6,8 @@ from frontend.gui.modeltab import ModelTab
 from frontend.mod.filehandler import *
 from frontend.mod.constants import *
 from frontend.mod.session import Session
-from frontend.gui.plotwindow import PlotterModelTab
 from frontend.gui.editortab import EditorTab 
+from frontend.gui.plottab import PlotTab
 
 
 class ModelNotebook(Notebook):
@@ -39,6 +39,8 @@ class ModelNotebook(Notebook):
         self.add(self.model_tab, text=MODEL)
         self.editor_tab = EditorTab(self)
         self.add(self.editor_tab, text=EDITOR)
+        self.plot_tab = PlotTab(self)
+        self.add(self.plot_tab, text=PLOT)
 
         return
 

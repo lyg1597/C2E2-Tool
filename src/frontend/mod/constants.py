@@ -24,6 +24,7 @@ Verified = "Verified" #TODO LMB REMOVE ME
 Plotted = "Plotted"  #TODO LMB REMOVE ME
 SIMULATED = "Simulated"
 VERIFIED = "Verified"
+NOT_PLOTTED = "Not Plotted"
 PLOTTED = "Plotted"
 
 #Result
@@ -60,8 +61,9 @@ DISCARD = 'Discard'
 # Save Contexts / LMB 4/9/2018 / Determines what we're saving - the XML or the TreeView Model
 MODEL = 'Model'
 EDITOR = 'Editor'
+PLOT = 'Plot'
 
-# Save Options / LMB 4/2/2018 / Save Options
+# Save Options / LMB 4/2/2018 / File dialog save options
 SAVE_OPT = {
     'defaultextension': '.hyxml',
     'filetypes': [('HyXML files', '.hyxml')],
@@ -69,3 +71,19 @@ SAVE_OPT = {
 
 # Plot colors
 PLOT_COLORS = ['blue', 'green', 'red', 'yellow', 'orange', 'cyan', 'pink']
+
+# Data Dictionary Keys / LMB 6/19/2018 / Dictionary used for data file parsing
+PROPNAME = 'Property Name'
+SIMVER = 'Sim Ver'
+MODENAMES = 'Mode Names'
+VARIABLENAMES = 'Variable Names'
+TIMESTEP = 'Time Step'
+TIMEHORIZON = 'Time Horizon'
+KVALUE = 'K Value'
+SIMULATOR = 'Simulator'
+REFINEMENTSTRAT = 'Refinement Strategy'
+INITIALSET = 'Initial Set'
+UNSAFESET = 'Unsafe Set'
+
+# Debug Mode / LMB 06/226/2018 / Turn debug mode on or off
+DEBUG = True

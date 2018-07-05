@@ -603,18 +603,72 @@ class FileHandler:
 
     @staticmethod
     def prepend_cur_prop(simver):
+        """ Prepend current property values to output file """
         
-        lines = simver + '\n'
+        # Property Name
+        lines = Session.cur_prop.name + '\n'
+        # Simulated or Verified
+        lines += simver + '\n'
+        # Modes Names
         for mode in Session.hybrid.mode_names:
             lines += mode + ' '
         lines += '\n'
+        # Variable Names
+        lines += 'time '  # Time is always first variable
         for var_ in Session.hybrid.local_var_names:
             lines += var_ + ' '
         lines += '\n'
+        # Time Step
+        lines += str(Session.cur_prop.time_step) + '\n'
+        # Time Horizon
+        lines += str(Session.cur_prop.time_horizon) + '\n'
+        # K Value
+        lines += str(Session.cur_prop.k_value) + '\n'
+        # Simulator
+        lines += Session.simulator + '\n'
+        # Refinement Strategy
+        lines += Session.refine_strat + '\n'
+        # Initial Set
+        lines += Session.cur_prop.initial_set_str + '\n'
+        # Unsafe Set
+        lines += Session.cur_prop.unsafe_set_str + '\n'
 
         FileHandler.prepend('../work-dir/' + Session.cur_prop.name, lines)
-   
+
     @staticmethod
+    def parse_data_file(file_path):
+        """ Parse data file, must be in C2E2 format """
+
+        file_object = open(file_path, 'r')
+        lines = file_object.readlines()
+        data = {}
+
+        # Property Name
+        data[PROPNAME] = lines[0].strip()
+        # Simulated or Verified
+        data[SIMVER] = lines[1].strip()
+        # Mode Names
+        data[MODENAMES] = lines[2].split()
+        # Variable Names
+        data[VARIABLENAMES] = lines[3].split()
+        # Time Step
+        data[TIMESTEP] = float(lines[4].strip())
+        # Time Horizon
+        data[TIMEHORIZON] = float(lines[5].strip())
+        # K Value
+        data[KVALUE] = float(lines[6].strip())
+        # Simulator
+        data[SIMULATOR] = lines[7].strip()
+        # Refinement Strategy
+        data[REFINEMENTSTRAT] = lines[8].strip()
+        # Initial Set
+        data[INITIALSET] = lines[9].strip()
+        # Unsafe Set
+        data[UNSAFESET] = lines[10].strip()
+
+        return data
+   
+    @staticmethod   
     def clean_eq(eq):
         r_dict = {'&lt;':'<', '&gt;':'>', '&amp;':'&', ' and ':'&&', ' or ':'||'}
         for term in r_dict:

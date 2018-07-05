@@ -1,5 +1,6 @@
 import re
 import sympy
+import tkinter as tk
 from scipy import optimize as opt
 from tkinter import *
 from tkinter.scrolledtext import *
@@ -226,6 +227,51 @@ class Property():
 
 
 class PlotProperty():
+
+    def __init__(self, identifier):
+
+        self.identifier = identifier
+
+        self.input_path = ''
+        self.input_path_full = ''
+        self.output_path = ''
+        self.output_path_full = ''
+
+        self.plot_name = ''
+        self.plot_status = NOT_PLOTTED
+
+        self.variable_list = []  # [String]
+        self.mode_list = []  # [String]
+        self.horizontal_index = ''  # Int
+        self.vertical_indices = []  # Int
+        self.vertical_select = []  # Int
+
+        self.prop_name = ''
+        self.prop_status = ''
+        self.time_step = ''
+        self.time_horizon = ''
+        self.k_value = ''
+        self.simulator = ''
+        self.refine_strat = ''
+        self.initial_set = ''
+        self.unsafe_set = ''
+
+    def load(data_dict):
+
+        self.prop_name = data_dict[PROPNAME]
+        self.prop_status = data_dict[SIMVER]
+        self.mode_list = data_dict[MODENAMES]
+        self.var_list = data_dict[VARIABLENAMES]    
+        self.time_step = data_dict[TIMESTEP]
+        self.time_horizon = data_dict[TIMEHORIZON]
+        self.k_value = data_dict[KVALUE]
+        self.simulator = data_dict[SIMULATOR]
+        self.refine_strat = data_dict[REFINEMENTSTRAT]
+        self.initial_set = data_dict[INITIALSET]
+        self.unsafe_set = data_dict[UNSAFESET]
+        
+
+class PlotProperty_REMOVE():
 
     def __init__(self,identifier):
 
