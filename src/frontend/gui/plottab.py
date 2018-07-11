@@ -629,6 +629,12 @@ class PlotSidebar(tk.Frame):
     # def _clear_properties(self):
     #    # TODO WRITE ME
 
-    def _update_property_status(self):
+    def _update_property_status(self, plotted=True):
 
-        print("Under construction.")
+        if plotted:
+            self.cur_prop.plot_status = "Plotted"
+        else:
+            self.cur_prop.plot_status = "Not Plotted"
+            
+        self.plot_tree.item(self.sel_iid,
+            values=(self.cur_prop.plot_name, self.cur_prop.plot_status))
