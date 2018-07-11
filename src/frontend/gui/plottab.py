@@ -243,28 +243,27 @@ class PlotSidebar(tk.Frame):
         # Plot View Frame
         self.plot_view = tk.LabelFrame(self, text="Plot")
 
-        # Input File
-        tk.Label(self.plot_view, text="Input:")\
-            .grid(row=0, column=0, sticky=tk.W)
-        tk.Entry(self.plot_view, textvariable=self.input_path, 
-            state=tk.DISABLED)\
-            .grid(row=0, column=1, sticky=tk.EW)
-        tk.Button(self.plot_view, text="...", command=self._callback_open)\
-            .grid(row=0, column=2, sticky=tk.EW)
-        
         # Output File
         tk.Label(self.plot_view, text="Output:")\
-            .grid(row=1, column=0, sticky=tk.W)
-        # TODO Dummy Entry
+            .grid(row=0, column=0, sticky=tk.W)
         tk.Entry(self.plot_view, textvariable=self.output_path)\
-            .grid(row=1, column=1, sticky=tk.EW)
+            .grid(row=0, column=1, sticky=tk.EW)
 
         # Plot Name
         tk.Label(self.plot_view, text="Name:")\
-            .grid(row=2, column=0, sticky=tk.W)
+            .grid(row=1, column=0, sticky=tk.W)
         tk.Entry(self.plot_view, textvariable=self.plot_name)\
-            .grid(row=2, column=1, sticky=tk.EW)
+            .grid(row=1, column=1, sticky=tk.EW)
         self.plot_name.trace_variable('w', self._callback_plot_name)
+
+        # Input File
+        tk.Label(self.plot_view, text="Input:")\
+            .grid(row=2, column=0, sticky=tk.W)
+        tk.Entry(self.plot_view, textvariable=self.input_path, 
+            state=tk.DISABLED)\
+            .grid(row=2, column=1, sticky=tk.EW)
+        tk.Button(self.plot_view, text="...", command=self._callback_open)\
+            .grid(row=2, column=2, sticky=tk.EW)
 
         # Horizontal Axis
         self.horizontal_axis_frame = tk.LabelFrame(self.plot_view, 
@@ -281,69 +280,70 @@ class PlotSidebar(tk.Frame):
     def _init_prop_view(self):
         
         # Property View Frame
-        self.prop_view = tk.LabelFrame(self, text="Property")
+        #self.prop_view = tk.LabelFrame(self, text="Property")
+        self.prop_view = SimpleToggleFrame(self, text="Property")
 
         # Name
-        tk.Label(self.prop_view, text="Name:")\
+        tk.Label(self.prop_view.body_frame, text="Name:")\
             .grid(row=0, column=0, sticky=tk.W)
-        tk.Entry(self.prop_view, textvariable=self.prop_name, 
+        tk.Entry(self.prop_view.body_frame, textvariable=self.prop_name, 
             state=tk.DISABLED)\
             .grid(row=0, column=1, sticky=tk.EW)
         
         # Status
-        tk.Label(self.prop_view, text="Status:")\
+        tk.Label(self.prop_view.body_frame, text="Status:")\
             .grid(row=1, column=0, sticky=tk.W)
-        tk.Entry(self.prop_view, textvariable=self.prop_status, 
+        tk.Entry(self.prop_view.body_frame, textvariable=self.prop_status, 
             state=tk.DISABLED)\
             .grid(row=1, column=1, sticky=tk.EW)
 
         # Time Step
-        tk.Label(self.prop_view, text="Time Step:")\
+        tk.Label(self.prop_view.body_frame, text="Time Step:")\
             .grid(row=2, column=0, sticky=tk.W)
-        tk.Entry(self.prop_view, textvariable=self.time_step,
+        tk.Entry(self.prop_view.body_frame, textvariable=self.time_step,
             state=tk.DISABLED)\
             .grid(row=2, column=1, sticky=tk.EW)
 
         # Time Horizon
-        tk.Label(self.prop_view, text="Time Horizon:")\
+        tk.Label(self.prop_view.body_frame, text="Time Horizon:")\
             .grid(row=3, column=0, sticky=tk.W)
-        tk.Entry(self.prop_view, textvariable=self.time_horizon,
+        tk.Entry(self.prop_view.body_frame, textvariable=self.time_horizon,
             state=tk.DISABLED)\
             .grid(row=3, column=1, sticky=tk.EW)
 
         # K Value
-        tk.Label(self.prop_view, text="K Value:")\
+        tk.Label(self.prop_view.body_frame, text="K Value:")\
             .grid(row=4, column=0, sticky=tk.W)
-        tk.Entry(self.prop_view, textvariable=self.k_value,
+        tk.Entry(self.prop_view.body_frame, textvariable=self.k_value,
             state=tk.DISABLED)\
             .grid(row=4, column=1, sticky=tk.EW)
 
         # Simulator
-        tk.Label(self.prop_view, text="Simulator:")\
+        tk.Label(self.prop_view.body_frame, text="Simulator:")\
             .grid(row=5, column=0, sticky=tk.W)
-        tk.Entry(self.prop_view, textvariable=self.simulator,
+        tk.Entry(self.prop_view.body_frame, textvariable=self.simulator,
             state=tk.DISABLED)\
             .grid(row=5, column=1, sticky=tk.EW)
 
         # Refinenment Strategy
-        tk.Label(self.prop_view, text="Refinement:")\
+        tk.Label(self.prop_view.body_frame, text="Refinement:")\
             .grid(row=6, column=0, sticky=tk.W)
-        tk.Entry(self.prop_view, textvariable=self.refine_strat,
+        tk.Entry(self.prop_view.body_frame, textvariable=self.refine_strat,
             state=tk.DISABLED)\
             .grid(row=6, column=1, sticky=tk.EW)
 
         # Initial Set
-        tk.Label(self.prop_view, text="Initial Set:")\
+        tk.Label(self.prop_view.body_frame, text="Initial Set:")\
             .grid(row=7, column=0, sticky=tk.W)
-        self.initial_set_widget = Text(self.prop_view, height=4, width=42, 
-            wrap=tk.WORD, state=tk.DISABLED, 
+        self.initial_set_widget = Text(self.prop_view.body_frame, height=4, 
+            width=42, wrap=tk.WORD, state=tk.DISABLED, 
             foreground='gray50', background='gray85')
         self.initial_set_widget.grid(row=8, column=0, columnspan=3)
 
         # Unsafe Set
-        tk.Label(self.prop_view, text="Unsafe Set:")\
+        tk.Label(self.prop_view.body_frame, text="Unsafe Set:")\
             .grid(row=9, column=0, sticky=tk.W)
-        self.unsafe_set_widget = Text(self.prop_view, height=4, width=42,
+        self.unsafe_set_widget = Text(self.prop_view.body_frame, height=4, width=42,
             wrap=tk.WORD, state=tk.DISABLED,
             foreground='gray50', background='gray85')
         self.unsafe_set_widget.grid(row=10, column=0, columnspan=3)

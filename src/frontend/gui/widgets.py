@@ -133,13 +133,41 @@ class SetText(Frame):
     def insert(self, str_):
         self.text.insert(INSERT, str_)
 
+class SimpleToggleFrame(Frame):
+
+    def __init__(self, parent, text):
+        Frame.__init__(self, parent)
+
+        # Title and Collapse Button
+
+        self.header_frame = Frame(self)
+        Label(self.header_frame, text=text).pack(side=LEFT, fill=X,expand=True)
+
+        self.visible = BooleanVar()
+        self.visible.set(False)
+        self.toggle_btn = Checkbutton(self.header_frame, text="+", width=2,
+            variable=self.visible, command=self._btn_toggle,style='Toolbutton')
+        self.toggle_btn.pack(side=LEFT)
+
+        self.header_frame.pack(fill=X, expand=True)
+
+        self.body_frame = Frame(self)
+
+    def _btn_toggle(self):
+
+        if self.visible.get():
+            self.body_frame.pack(fill=X, expand=True)
+            self.toggle_btn.config(text="-")
+        else:
+            self.body_frame.forget()
+            self.toggle_btn.config(text="+")
+
 
 class ToggleFrame(Frame):
 
     def __init__(self, parent, text):
         Frame.__init__(self, parent)
-          
-        
+              
         # Title / Collapse button
         
         self.header_frame = Frame(self)
@@ -148,12 +176,12 @@ class ToggleFrame(Frame):
         
         self.visible = BooleanVar()
         self.visible.set(False)
-        self.toggle_btn = Checkbutton(self.header_frame, text='+', width=2, variable=self.visible, command=self._btn_toggle, style='Toolbutton')
+        self.toggle_btn = Checkbutton(self.header_frame, text='+', width=2, 
+            variable=self.visible, command=self._btn_toggle,style='Toolbutton')
         self.toggle_btn.pack(side=LEFT)
 
         self.header_frame.pack(fill=X, expand=TRUE)
     
-
         # Content (Entry Fields)
 
         self.body_frame = Frame(self)
@@ -162,13 +190,11 @@ class ToggleFrame(Frame):
         self.entry_fields = []  # Entry fields 
         self.row_index = 0
                
-
         # Add Button
 
         self.btn_frame = Frame(self.body_frame)
         Button(self.btn_frame, text='Add Row', command=self.add_row).pack()
         
-    
     def _btn_toggle(self):
         """ Toggle visibility when user clicks button """
 
