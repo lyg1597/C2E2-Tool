@@ -17,7 +17,9 @@ class MenuBar(Menu):
     
         self.parent = parent
         self.notebook = notebook
-        self.tree = notebook.model_tab.tree # Menu interacts with TreeView
+        self.tree = notebook.model_tab.tree
+        self.model_sidebar = notebook.model_tab.sidebar
+        self.plot_sidebar = notebook.plot_tab.sidebar
 
         # Open file constants
         self.OPEN_OPT = {
@@ -61,13 +63,31 @@ class MenuBar(Menu):
             command=self.quit_callback)
         self.add_cascade(label='File', menu=file_menu)
 
-        # Edit menu 
+        # Model menu
 
-        edit_menu = Menu(self, tearoff=0, postcommand=self._update_edit_menu)
+        model_menu = Menu(self, tearoff=0)
 
+        #   Hybrid Submenu
+
+        hybrid_submenu = Menu(self, tearoff=0)
+        hybrid_submenu.add_command(label="Parse",
+            command=self.model_sidebar._callback_parse)
+        hybrid_submenu.add_command(label="Compose",
+            command=self.model_sidebar._callback_compose)
+        hybrid_submenu.add_command(label="Verify",
+            command=self.model_sidebar._callback_ver)
+        hybrid_submenu.add_command(label="Simulate",
+            command=self.model_sidebar._callback_sim)
+        model_menu.add_cascade(label="Hybrid", menu=hybrid_submenu)
+
+        #   Edit Submenu
+
+        edit_submenu = Menu(self, tearoff=0, postcommand=self._update_edit_menu)
+        
         self.variables_submenu = Menu(self, tearoff=0)
         self.variables_submenu.add_command(label='Edit Variables', 
             command=lambda: self.tree.launch_entry_popup(VARIABLES, EDIT))
+        
         self.modes_submenu = Menu(self, tearoff=0)
         self.modes_submenu.add_command(label='Add Mode', 
             command=lambda: self.tree.launch_entry_popup(MODES, ADD))
@@ -83,13 +103,44 @@ class MenuBar(Menu):
             command=lambda: self.tree.launch_entry_popup(TRANSITIONS, EDIT))
         self.transitions_submenu.add_command(label='Delete Transition', 
             command=lambda: self.tree.launch_entry_popup(TRANSITIONS, DELETE))
- 
-        edit_menu.add_cascade(label='Variables', menu=self.variables_submenu)
-        edit_menu.add_cascade(label='Modes', menu=self.modes_submenu)
-        edit_menu.add_cascade(label='Transitions', 
+        
+        edit_submenu.add_cascade(label="Variables",menu=self.variables_submenu)
+        edit_submenu.add_cascade(label="Modes", menu=self.modes_submenu)
+        edit_submenu.add_cascade(label="Transitions", 
             menu=self.transitions_submenu)
 
-        self.add_cascade(label='Edit', menu=edit_menu)
+        model_menu.add_cascade(label="Edit", menu=edit_submenu)
+
+        #   Properties Submenu
+
+        model_prop_submenu = Menu(self, tearoff=0)
+        model_prop_submenu.add_command(label="New",
+            command=self.model_sidebar._callback_new)
+        model_prop_submenu.add_command(label="Copy",
+            command=self.model_sidebar._callback_cpy)
+        model_prop_submenu.add_command(label="Remove",
+            command=self.model_sidebar._callback_rmv)
+        model_menu.add_cascade(label="Properties", menu=model_prop_submenu)
+
+        self.add_cascade(label="Model", menu=model_menu)
+
+        # Plot menu
+
+        plot_menu = Menu(self, tearoff=0)
+        
+        plot_menu.add_command(label="Plot",
+            command=self.plot_sidebar._callback_plot)
+        
+        plot_prop_submenu = Menu(self, tearoff=0)
+        plot_prop_submenu.add_command(label="New",
+            command=self.plot_sidebar._callback_new)
+        plot_prop_submenu.add_command(label="Copy",
+            command=self.plot_sidebar._callback_copy)
+        plot_prop_submenu.add_command(label="Remove",
+            command=self.plot_sidebar._callback_remove)
+        plot_menu.add_cascade(label="Properties", menu=plot_prop_submenu)
+
+        self.add_cascade(label="Plotter", menu=plot_menu)
 
         # Help menu
 

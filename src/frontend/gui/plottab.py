@@ -24,8 +24,8 @@ class PlotTab(tk.Frame):
         Session.write("Initializing the Plot Tab")
         self.display = PlotDisplay(self)
         self.display.pack(expand=True, fill=tk.BOTH, side=tk.LEFT, anchor=tk.E)
-        PlotSidebar(self)\
-            .pack(expand=True, fill=tk.Y, side=tk.TOP, anchor=tk.E)
+        self.sidebar = PlotSidebar(self)
+        self.sidebar.pack(expand=True, fill=tk.Y, side=tk.TOP, anchor=tk.E)
 
 
 class PlotDisplay(tk.Canvas):
@@ -583,8 +583,6 @@ class PlotSidebar(tk.Frame):
 
     def _callback_plot(self):
 
-        print("Under construction - test function")
-
         self.vertical_indices = []
         for i, select in enumerate(self.vertical_select):
             if select.get():
@@ -635,6 +633,6 @@ class PlotSidebar(tk.Frame):
             self.cur_prop.plot_status = "Plotted"
         else:
             self.cur_prop.plot_status = "Not Plotted"
-            
+
         self.plot_tree.item(self.sel_iid,
             values=(self.cur_prop.plot_name, self.cur_prop.plot_status))

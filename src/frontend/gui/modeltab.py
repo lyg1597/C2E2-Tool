@@ -916,22 +916,23 @@ class ModelSidebar(Frame):
         Sim == 1, FIX_STEP == 0, Adaptive == 2
         Different result uses different plotter 
         """
-        unsafe_set = Session.cur_prop.unsafe_set_obj
-        file_path = '../work-dir/' + Session.cur_prop.name
-        time_step = Session.cur_prop.time_step
-        time_horizon = Session.cur_prop.time_horizon
-        varlist = Session.hybrid.local_var_names
-        modelist = Session.hybrid.mode_names
+        # unsafe_set = Session.cur_prop.unsafe_set_obj
+        # file_path = '../work-dir/' + Session.cur_prop.name
+        # time_step = Session.cur_prop.time_step
+        # time_horizon = Session.cur_prop.time_horizon
+        # varlist = Session.hybrid.local_var_names
+        # modelist = Session.hybrid.mode_names
 
-        # self.parent.parent is the ModelNotebook object (modelnotebook.py)
-        self.parent.parent._init_plot_widgets(varlist, 
-                                              modelist, 
-                                              time_step, 
-                                              time_horizon, 
-                                              unsafe_set, 
-                                              file_path, 
-                                              sim_adpative, 
-                                              Session.cur_prop.name)
+        # # self.parent.parent is the ModelNotebook object (modelnotebook.py)
+        # self.parent.parent._init_plot_widgets(varlist, 
+        #                                       modelist, 
+        #                                       time_step, 
+        #                                       time_horizon, 
+        #                                       unsafe_set, 
+        #                                       file_path, 
+        #                                       sim_adpative, 
+        #                                       Session.cur_prop.name)
+        print("_open_the_plotter_window under construction")
         
     def _expire_properties(self):
         """ Expire all Simulated and Verified properties """
