@@ -62,16 +62,16 @@ class MenuBar(Menu):
         self.add_cascade(label='File', menu=file_menu)
 
         # Build Menu
-        build_menu = Menu(self, tearoff=0)
-        build_menu.add_command(label="Parse",
+        self.build_menu = Menu(self, tearoff=0, postcommand=self._update_build_menu)
+        self.build_menu.add_command(label="Parse",
             command=self.model_sidebar._callback_parse)
-        build_menu.add_command(label="Compose",
+        self.build_menu.add_command(label="Compose",
             command=self.model_sidebar._callback_compose)
-        build_menu.add_command(label="Verify",
+        self.build_menu.add_command(label="Verify",
             command=self.model_sidebar._callback_ver)
-        build_menu.add_command(label="Simulate",
+        self.build_menu.add_command(label="Simulate",
             command=self.model_sidebar._callback_sim)
-        self.add_cascade(label="Build", menu=build_menu)
+        self.add_cascade(label="Build", menu=self.build_menu)
 
         # Model Menu
         model_menu = Menu(self, tearoff=0, postcommand=self._update_model_menu)
@@ -117,7 +117,8 @@ class MenuBar(Menu):
         self.add_cascade(label="Model", menu=model_menu)
         
         # Requirements Menu
-        self.requirements_menu = Menu(self, tearoff=0)
+        self.requirements_menu = Menu(self, tearoff=0, 
+            postcommand=self._update_requirements_menu)
         self.requirements_menu.add_command(label="New", 
             command=self.model_sidebar._callback_new)
         self.requirements_menu.add_command(label="Copy",
@@ -127,7 +128,8 @@ class MenuBar(Menu):
         self.add_cascade(label="Requirements", menu=self.requirements_menu)
 
         # Plotter Menu
-        self.plotter_menu = Menu(self, tearoff=0)
+        self.plotter_menu = Menu(self, tearoff=0, 
+            postcommand=self._update_plotter_menu)
         self.plotter_menu.add_command(label="New",
             command=self.plot_sidebar._callback_new)
         self.plotter_menu.add_command(label="Copy",
@@ -155,8 +157,19 @@ class MenuBar(Menu):
             lambda event: self.close_callback())
         self.parent.bind_all('<Control-q>', lambda event: self.quit_callback())
 
+    def _update_build_menu(self):
+        """ Disable build menu options based on selected tab """
+
+        if (not Session.file_opened) or (self.notebook.current_tab != MODEL):
+            state_ = DISABLED
+        else:
+            state_ = NORMAL
+
+        for i in range(4):
+            self.build_menu.entryconfig(i, state=state_)
+
     def _update_model_menu(self):
-        """ Disable menu options based on item selected in TreeView """
+        """ Disable model menu options based on item selected in TreeView """
 
         self.variables_submenu.entryconfig(0, state=DISABLED)
         for i in range(3):
@@ -164,12 +177,11 @@ class MenuBar(Menu):
             self.modes_submenu.entryconfig(i, state=DISABLED)
             self.transitions_submenu.entryconfig(i, state=DISABLED)
 
-        # Adding an Automaton is always valid
-        self.automata_submen.entryconfig(0, state=NORMAL) 
-
-        if ((self.notebook.current_tab != MODEL) or \
-            (not Session.file_opened) or \
-            (self.tree.slct_automaton is None)):
+        if (not Session.file_opened) or (self.notebook.current_tab != MODEL):
+            return
+        
+        self.automata_submenu.entryconfig(0, state=NORMAL) 
+        if self.tree.slct_automaton is None:
             return
      
         self.automata_submenu.entryconfig(0, state=NORMAL)
@@ -186,7 +198,29 @@ class MenuBar(Menu):
             self.transitions_submenu.entryconfig(1, state=NORMAL)
             self.transitions_submenu.entryconfig(2, state=NORMAL)
 
-        return           
+    def _update_requirements_menu(self):
+        """ Disable requirements menu options based on selected tab """
+
+        if (not Session.file_opened) or (self.notebook.current_tab != MODEL):
+            state_ = DISABLED
+        else:
+            state_ = NORMAL
+
+        for i in range(3):
+            self.requirements_menu.entryconfig(i, state=state_)
+
+    def _update_plotter_menu(self):
+        """ Disable requirements menu options based on selected tab """
+
+        if (not Session.file_opened) or (self.notebook.current_tab != PLOT):
+            state_ = DISABLED
+        else:
+            state_ = NORMAL
+
+        for i in range(3): 
+            self.plotter_menu.entryconfig(i, state=state_)
+        # Entry 3 is the separator
+        self.plotter_menu.entryconfig(4, state=state_)  
 
     def open_callback(self):
         """ Select and open file """
@@ -207,8 +241,6 @@ class MenuBar(Menu):
             if status:
                 Session.file_opened = True
                 EventHandler.event_generate(OPEN_EVENT)
-                
-        return
 
     def new_callback(self):
         """ Open template file """
