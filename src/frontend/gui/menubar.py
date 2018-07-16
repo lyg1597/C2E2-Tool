@@ -41,13 +41,11 @@ class MenuBar(Menu):
         """
 
         self._init_widgets()
-        
 
     def _init_widgets(self):
         """ Initialize menus """
 
-        # File menu
-
+        # File Menu
         file_menu = Menu(self, tearoff=0)
         file_menu.add_command(label='Open', accelerator='Crtl+O', underline=0,
             command=self.open_callback)
@@ -63,94 +61,91 @@ class MenuBar(Menu):
             command=self.quit_callback)
         self.add_cascade(label='File', menu=file_menu)
 
-        # Model menu
-
-        model_menu = Menu(self, tearoff=0)
-
-        #   Hybrid Submenu
-
-        hybrid_submenu = Menu(self, tearoff=0)
-        hybrid_submenu.add_command(label="Parse",
+        # Build Menu
+        build_menu = Menu(self, tearoff=0)
+        build_menu.add_command(label="Parse",
             command=self.model_sidebar._callback_parse)
-        hybrid_submenu.add_command(label="Compose",
+        build_menu.add_command(label="Compose",
             command=self.model_sidebar._callback_compose)
-        hybrid_submenu.add_command(label="Verify",
+        build_menu.add_command(label="Verify",
             command=self.model_sidebar._callback_ver)
-        hybrid_submenu.add_command(label="Simulate",
+        build_menu.add_command(label="Simulate",
             command=self.model_sidebar._callback_sim)
-        model_menu.add_cascade(label="Hybrid", menu=hybrid_submenu)
+        self.add_cascade(label="Build", menu=build_menu)
 
-        #   Edit Submenu
-
-        edit_submenu = Menu(self, tearoff=0, postcommand=self._update_edit_menu)
+        # Model Menu
+        model_menu = Menu(self, tearoff=0, postcommand=self._update_model_menu)
         
+        #     Automata Submenu
+        self.automata_submenu = Menu(self, tearoff=0)
+        self.automata_submenu.add_command(label="Add Automaton",
+            command=lambda: self.tree.launch_entry_popup(AUTOMATON, ADD))
+        self.automata_submenu.add_command(label="Edit Automaton",
+            command=lambda: self.tree.launch_entry_popup(AUTOMATON, EDIT))
+        self.automata_submenu.add_command(label="Delete Automaton",
+            command=lambda: self.tree.launch_entry_popup(AUTOMATON, DELETE))
+                
+        #     Variables Submenu
         self.variables_submenu = Menu(self, tearoff=0)
-        self.variables_submenu.add_command(label='Edit Variables', 
+        self.variables_submenu.add_command(label="Edit Variables",
             command=lambda: self.tree.launch_entry_popup(VARIABLES, EDIT))
         
+        #     Modes Submenu
         self.modes_submenu = Menu(self, tearoff=0)
-        self.modes_submenu.add_command(label='Add Mode', 
+        self.modes_submenu.add_command(label="Add Mode",
             command=lambda: self.tree.launch_entry_popup(MODES, ADD))
-        self.modes_submenu.add_command(label='Edit Mode', 
+        self.modes_submenu.add_command(label="Edit Mode",
             command=lambda: self.tree.launch_entry_popup(MODES, EDIT))
-        self.modes_submenu.add_command(label='Delete Mode', 
+        self.modes_submenu.add_command(label="Delete Mode",
             command=lambda: self.tree.launch_entry_popup(MODES, DELETE))
-        
+
+        #     Transitions Submenu
         self.transitions_submenu = Menu(self, tearoff=0)
-        self.transitions_submenu.add_command(label='Add Transition', 
+        self.transitions_submenu.add_command(label="Add Transition",
             command=lambda: self.tree.launch_entry_popup(TRANSITIONS, ADD))
-        self.transitions_submenu.add_command(label='Edit Transition', 
+        self.transitions_submenu.add_command(label="Edit Transtion",
             command=lambda: self.tree.launch_entry_popup(TRANSITIONS, EDIT))
-        self.transitions_submenu.add_command(label='Delete Transition', 
+        self.transitions_submenu.add_command(label="Delete Transition",
             command=lambda: self.tree.launch_entry_popup(TRANSITIONS, DELETE))
-        
-        edit_submenu.add_cascade(label="Variables",menu=self.variables_submenu)
-        edit_submenu.add_cascade(label="Modes", menu=self.modes_submenu)
-        edit_submenu.add_cascade(label="Transitions", 
+
+        #     Add Cascade Menus
+        model_menu.add_cascade(label="Automata", menu=self.automata_submenu)
+        model_menu.add_cascade(label="Variables", menu=self.variables_submenu)
+        model_menu.add_cascade(label="Modes", menu=self.modes_submenu)
+        model_menu.add_cascade(label="Transitions", 
             menu=self.transitions_submenu)
-
-        model_menu.add_cascade(label="Edit", menu=edit_submenu)
-
-        #   Properties Submenu
-
-        model_prop_submenu = Menu(self, tearoff=0)
-        model_prop_submenu.add_command(label="New",
-            command=self.model_sidebar._callback_new)
-        model_prop_submenu.add_command(label="Copy",
-            command=self.model_sidebar._callback_cpy)
-        model_prop_submenu.add_command(label="Remove",
-            command=self.model_sidebar._callback_rmv)
-        model_menu.add_cascade(label="Properties", menu=model_prop_submenu)
-
         self.add_cascade(label="Model", menu=model_menu)
-
-        # Plot menu
-
-        plot_menu = Menu(self, tearoff=0)
         
-        plot_menu.add_command(label="Plot",
-            command=self.plot_sidebar._callback_plot)
-        
-        plot_prop_submenu = Menu(self, tearoff=0)
-        plot_prop_submenu.add_command(label="New",
+        # Requirements Menu
+        self.requirements_menu = Menu(self, tearoff=0)
+        self.requirements_menu.add_command(label="New", 
+            command=self.model_sidebar._callback_new)
+        self.requirements_menu.add_command(label="Copy",
+            command=self.model_sidebar._callback_cpy)
+        self.requirements_menu.add_command(label="Remove",
+            command=self.model_sidebar._callback_rmv)
+        self.add_cascade(label="Requirements", menu=self.requirements_menu)
+
+        # Plotter Menu
+        self.plotter_menu = Menu(self, tearoff=0)
+        self.plotter_menu.add_command(label="New",
             command=self.plot_sidebar._callback_new)
-        plot_prop_submenu.add_command(label="Copy",
+        self.plotter_menu.add_command(label="Copy",
             command=self.plot_sidebar._callback_copy)
-        plot_prop_submenu.add_command(label="Remove",
+        self.plotter_menu.add_command(label="Remove",
             command=self.plot_sidebar._callback_remove)
-        plot_menu.add_cascade(label="Properties", menu=plot_prop_submenu)
-
-        self.add_cascade(label="Plotter", menu=plot_menu)
+        self.plotter_menu.add(SEPARATOR)
+        self.plotter_menu.add_command(label="Plot",
+            command=self.plot_sidebar._callback_plot)
+        self.add_cascade(label="Plotter", menu=self.plotter_menu)
 
         # Help menu
-
         help_menu = Menu(self, tearoff=0)
         help_menu.add_command(label='About')
         self.add_cascade(label='Help', menu=help_menu)
         self.parent.config(menu=self)
 
         # Bind accelerators
-        
         self.parent.bind_all('<Control-o>', lambda event: self.open_callback())
         self.parent.bind_all('<Control-n>', lambda event: self.new_callback())
         self.parent.bind_all('<Control-s>', lambda event: self.save_callback())
@@ -160,25 +155,30 @@ class MenuBar(Menu):
             lambda event: self.close_callback())
         self.parent.bind_all('<Control-q>', lambda event: self.quit_callback())
 
-
-    def _update_edit_menu(self):
+    def _update_model_menu(self):
         """ Disable menu options based on item selected in TreeView """
 
         self.variables_submenu.entryconfig(0, state=DISABLED)
         for i in range(3):
+            self.automata_submenu.entryconfig(i, state=DISABLED)
             self.modes_submenu.entryconfig(i, state=DISABLED)
             self.transitions_submenu.entryconfig(i, state=DISABLED)
 
-        if self.notebook.current_tab == EDITOR:
-            return  # Edit menu options not valid in Editor tab
+        # Adding an Automaton is always valid
+        self.automata_submen.entryconfig(0, state=NORMAL) 
 
-        if (not Session.file_opened) or (self.tree.slct_automaton is None):
+        if ((self.notebook.current_tab != MODEL) or \
+            (not Session.file_opened) or \
+            (self.tree.slct_automaton is None)):
             return
-        else:
-            self.variables_submenu.entryconfig(0, state=NORMAL)
-            self.modes_submenu.entryconfig(0, state=NORMAL)
-            self.transitions_submenu.entryconfig(0, state=NORMAL)
-       
+     
+        self.automata_submenu.entryconfig(0, state=NORMAL)
+        self.automata_submenu.entryconfig(1, state=NORMAL)
+        self.automata_submenu.entryconfig(2, state=NORMAL)
+        self.variables_submenu.entryconfig(0, state=NORMAL)
+        self.modes_submenu.entryconfig(0, state=NORMAL)
+        self.transitions_submenu.entryconfig(0, state=NORMAL)
+
         if self.tree.slct_mode is not None:       
             self.modes_submenu.entryconfig(1, state=NORMAL)
             self.modes_submenu.entryconfig(2, state=NORMAL)
