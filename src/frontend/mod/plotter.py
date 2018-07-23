@@ -67,7 +67,7 @@ def plot_line(data_points, horizontal_index, vertical_indices, variable_list,
         print("title: ", title)
         print("filename:", filename)
 
-    bokeh_plot = figure()
+    bokeh_plot = figure(title=title)
 
     x_axis = []
     y_axes = []
@@ -90,7 +90,8 @@ def plot_line(data_points, horizontal_index, vertical_indices, variable_list,
         print("y_axes: ", y_axes)
 
     for i, y_axis in enumerate(y_axes):
-        bokeh_plot.line(x_axis, y_axis, line_width=2, color=PLOT_COLORS[i-1])
+        bokeh_plot.line(x_axis, y_axis, line_width=2, color=PLOT_COLORS[i-1],
+            legend=variable_list[vertical_indices[i]])
 
 
     #  TODO: Send to Yangge
@@ -128,7 +129,7 @@ def plot_quad(data_points, horizontal_index, vertical_indices, variable_list,
         print("title: ", title)
         print("filename:", filename)
 
-    bokeh_plot = figure()
+    bokeh_plot = figure(title=title)
 
     for i, vertical_index in enumerate(vertical_indices):
         top = []

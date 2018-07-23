@@ -244,20 +244,20 @@ class PlotSidebar(tk.Frame):
         self.plot_view = tk.LabelFrame(self, text="Plot")
 
         # Output File
-        tk.Label(self.plot_view, text="Output:")\
+        tk.Label(self.plot_view, text="Filename:")\
             .grid(row=0, column=0, sticky=tk.W)
         tk.Entry(self.plot_view, textvariable=self.output_path)\
             .grid(row=0, column=1, sticky=tk.EW)
 
         # Plot Name
-        tk.Label(self.plot_view, text="Name:")\
+        tk.Label(self.plot_view, text="Plot Name:")\
             .grid(row=1, column=0, sticky=tk.W)
         tk.Entry(self.plot_view, textvariable=self.plot_name)\
             .grid(row=1, column=1, sticky=tk.EW)
         self.plot_name.trace_variable('w', self._callback_plot_name)
 
         # Input File
-        tk.Label(self.plot_view, text="Input:")\
+        tk.Label(self.plot_view, text="Source:")\
             .grid(row=2, column=0, sticky=tk.W)
         tk.Entry(self.plot_view, textvariable=self.input_path, 
             state=tk.DISABLED)\
