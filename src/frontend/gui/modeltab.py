@@ -477,10 +477,10 @@ class ModelSidebar(Frame):
         self.re_us = unsafe_set
 
         # Property view frame
-        self.prop_view = LabelFrame(self, text='Property')
+        self.prop_view = LabelFrame(self, text='Requirement')
 
         # Name
-        Label(self.prop_view, text='Property name:').grid(row=0, sticky=W)
+        Label(self.prop_view, text='Name:').grid(row=0, sticky=W)
         self.name_vl = ValidLabel(self.prop_view)
         self.name_vl.grid(row=0, column=2, sticky=E)
         self.name_var = StringVar()
@@ -715,7 +715,7 @@ class ModelSidebar(Frame):
         """ Initialize Property List GUI elements """
 
         # Property list frame
-        self.prop_list = LabelFrame(self, text='Properties')
+        self.prop_list = LabelFrame(self, text='Requirement List')
 
         # Property list
         self.list_view = Treeview(self.prop_list)
@@ -729,7 +729,7 @@ class ModelSidebar(Frame):
         self.list_view.column('name', width=100)
         self.list_view.column('status', width=100)
         self.list_view.column('result', width=100)
-        self.list_view.heading('name', text='Property')
+        self.list_view.heading('name', text='Requirement')
         self.list_view.heading('status', text='Status')
         self.list_view.heading('result', text='Result')
 
