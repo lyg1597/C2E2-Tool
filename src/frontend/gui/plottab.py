@@ -87,8 +87,6 @@ class PlotDisplay(tk.Canvas):
         import webbrowser
         webbrowser.open('../work-dir/plotresult/'+filename+'.html')
 
-
-
     def _callback_btn_press_double_OLD(self, filename):
         
         top = Toplevel()
@@ -131,8 +129,8 @@ class PlotDisplay(tk.Canvas):
             self.result_list[identifier] = tk.LabelFrame(self.frame, 
                 text=filename)
             self.result_list[identifier].config(bg='white', bd=5)
-            self.result_list[identifier].grid(row=int(self.image_counter / 3), 
-                column=self.image_counter % 3)
+            self.result_list[identifier].grid(row=int(self.image_counter/3), 
+                column=self.image_counter%3)
         else:  # Edit Image
             for widget in self.result_list[identifier].winfo_children():
                 widget.destroy()
