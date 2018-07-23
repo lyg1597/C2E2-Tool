@@ -104,28 +104,16 @@ def plot_line(data_points, horizontal_index, vertical_indices, variable_list,
                 color=PLOT_COLORS[j-1], 
                 legend=variable_list[vertical_indices[j]])
 
-
-    #  TODO: Send to Yangge
-    # # X - axis
-    # bokeh_plot.xaxis.axis_label = var_list[var_index_list[0]]
-    # # Y - axis
-    # y_axis_label = var_list[var_index_list[1]]
-    # for i in range(2, len(var_index_list)):
-    #     y_axis_label += ", " + var_list[var_index_list[i]]
-    # bokeh_plot.yaxis.axis_label = y_axis_label
-
     # X - axis
-    bokeh_plot.xaxis.axis_label = variable_list[0]
+    bokeh_plot.xaxis.axis_label = variable_list[horizontal_index]
     # Y - axis
     y_axis_label = variable_list[vertical_indices[0]]
     for i in range(1, len(vertical_indices)):
         y_axis_label += ", " + variable_list[vertical_indices[i]]
-
     bokeh_plot.yaxis.axis_label = y_axis_label
 
     save(bokeh_plot, filename=filename+'.html', title=title)
     export_png(bokeh_plot, filename=filename+'.png' )
-
 
 def plot_quad(data_points, horizontal_index, vertical_indices, variable_list, 
     mode_list, title, filename):
@@ -163,7 +151,15 @@ def plot_quad(data_points, horizontal_index, vertical_indices, variable_list,
                 float(data_points[j][vertical_index])))
 
         bokeh_plot.quad(left=left, right=right, bottom=bottom, top=top,
-            color=PLOT_COLORS[i])
+            color=PLOT_COLORS[i], legend=variable_list[vertical_indices[i]])
+
+    # X - axis
+    bokeh_plot.xaxis.axis_label = variable_list[horizontal_index]
+    # Y - axis
+    y_axis_label = variable_list[vertical_indices[0]]
+    for i in range(1, len(vertical_indices)):
+        y_axis_label += ", " + variable_list[vertical_indices[i]]
+    bokeh_plot.yaxis.axis_label = y_axis_label
 
     save(bokeh_plot, filename=filename + '.html', title=title)
     export_png(bokeh_plot, filename=filename + '.png')
