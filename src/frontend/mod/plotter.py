@@ -75,11 +75,20 @@ def plot_line(data_points, horizontal_index, vertical_indices, variable_list,
         y_axes.append([])
     
     toggle = True
+    plot_index = -1
     for line in data_points:
+
+        if float(line[0]) == 0:
+            plot_index += 1
+            x_axis.append([])
+            for y_index in range(len(vertical_indices)):
+                y_axes[y_index].append([])
+            toggle = True
+
         if toggle:
-            x_axis.append(float(line[horizontal_index]))
+            x_axis[plot_index].append(float(line[horizontal_index]))
             for y_index, vert_index in enumerate(vertical_indices):
-                y_axes[y_index].append(float(line[vert_index]))
+                y_axes[y_index][plot_index].append(float(line[vert_index]))
             toggle = False
         else:
             toggle = True
@@ -89,9 +98,11 @@ def plot_line(data_points, horizontal_index, vertical_indices, variable_list,
         print("x_axis: ", x_axis)
         print("y_axes: ", y_axes)
 
-    for i, y_axis in enumerate(y_axes):
-        bokeh_plot.line(x_axis, y_axis, line_width=2, color=PLOT_COLORS[i-1],
-            legend=variable_list[vertical_indices[i]])
+    for i in range(plot_index+1):
+        for j, y_axis in enumerate(y_axes):
+            bokeh_plot.line(x_axis[i], y_axis[i], line_width=2, 
+                color=PLOT_COLORS[j-1], 
+                legend=variable_list[vertical_indices[j]])
 
 
     #  TODO: Send to Yangge

@@ -86,4 +86,4 @@ INITIALSET = 'Initial Set'
 UNSAFESET = 'Unsafe Set'
 
 # Debug Mode / LMB 06/226/2018 / Turn debug mode on or off
-DEBUG = True
+DEBUG = False
