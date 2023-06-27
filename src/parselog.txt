@@ -1,0 +1,202 @@
+remote_connection.py: 486:POST http://127.0.0.1:56323/wd/hub/session {"desiredCapabilities": {"javascriptEnabled": true, "version": "", "platform": "ANY", "browserName": "phantomjs"}, "capabilities": {"alwaysMatch": {"platformName": "any", "browserName": "phantomjs"}, "firstMatch": [{}]}}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea/url {"sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea", "url": "file:////tmp/bokehd27reu9s.html"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea/window/current/maximize {"windowHandle": "current", "sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea/execute {"sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea", "script": "document.body.style.width = '100%';", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea/execute {"sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea", "script": "\n            const b = window.Bokeh;\n            return b && b.documents && b.documents.length > 0;\n        ", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea/execute {"sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea", "script": "\n// add private window prop to check that render is complete\nwindow._bokeh_render_complete = false;\nfunction done() {\n  window._bokeh_render_complete = true;\n}\n\nvar doc = window.Bokeh.documents[0];\n\nif (doc.is_idle)\n  done();\nelse\n  doc.idle.connect(done);\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea/execute {"sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea", "script": "return window._bokeh_render_complete;", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea/log {"sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea", "type": "browser"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:GET http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea/screenshot {"sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea/execute {"sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea", "script": "\nreturn document.getElementsByClassName('bk-root')[0].children[0].getBoundingClientRect()\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:DELETE http://127.0.0.1:56323/wd/hub/session/23b03350-eeed-11e8-bf7f-9d5ef6b3feea {"sessionId": "23b03350-eeed-11e8-bf7f-9d5ef6b3feea"}
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'pHYs' 41 9
+PngImagePlugin.py: 135:STREAM b'IDAT' 62 8192
+  Image.py: 389:Importing BmpImagePlugin
+  Image.py: 389:Importing BufrStubImagePlugin
+  Image.py: 389:Importing CurImagePlugin
+  Image.py: 389:Importing DcxImagePlugin
+  Image.py: 389:Importing EpsImagePlugin
+  Image.py: 389:Importing FitsStubImagePlugin
+  Image.py: 389:Importing FliImagePlugin
+  Image.py: 389:Importing FpxImagePlugin
+  Image.py: 389:Importing GbrImagePlugin
+  Image.py: 389:Importing GifImagePlugin
+  Image.py: 389:Importing GribStubImagePlugin
+  Image.py: 389:Importing Hdf5StubImagePlugin
+  Image.py: 389:Importing IcnsImagePlugin
+  Image.py: 389:Importing IcoImagePlugin
+  Image.py: 389:Importing ImImagePlugin
+  Image.py: 389:Importing ImtImagePlugin
+  Image.py: 389:Importing IptcImagePlugin
+  Image.py: 389:Importing JpegImagePlugin
+  Image.py: 389:Importing Jpeg2KImagePlugin
+  Image.py: 389:Importing McIdasImagePlugin
+  Image.py: 389:Importing MicImagePlugin
+  Image.py: 389:Importing MpegImagePlugin
+  Image.py: 389:Importing MpoImagePlugin
+  Image.py: 389:Importing MspImagePlugin
+  Image.py: 389:Importing PalmImagePlugin
+  Image.py: 389:Importing PcdImagePlugin
+  Image.py: 389:Importing PcxImagePlugin
+  Image.py: 389:Importing PdfImagePlugin
+  Image.py: 389:Importing PixarImagePlugin
+  Image.py: 389:Importing PngImagePlugin
+  Image.py: 389:Importing PpmImagePlugin
+  Image.py: 389:Importing PsdImagePlugin
+  Image.py: 389:Importing SgiImagePlugin
+  Image.py: 389:Importing SpiderImagePlugin
+  Image.py: 389:Importing SunImagePlugin
+  Image.py: 389:Importing TgaImagePlugin
+  Image.py: 389:Importing TiffImagePlugin
+  Image.py: 389:Importing WebPImagePlugin
+  Image.py: 389:Importing WmfImagePlugin
+  Image.py: 389:Importing XbmImagePlugin
+  Image.py: 389:Importing XpmImagePlugin
+  Image.py: 389:Importing XVThumbImagePlugin
+remote_connection.py: 486:POST http://127.0.0.1:49043/wd/hub/session {"desiredCapabilities": {"javascriptEnabled": true, "version": "", "platform": "ANY", "browserName": "phantomjs"}, "capabilities": {"alwaysMatch": {"platformName": "any", "browserName": "phantomjs"}, "firstMatch": [{}]}}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425/url {"sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425", "url": "file:////tmp/bokehogx088dy.html"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425/window/current/maximize {"windowHandle": "current", "sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425/execute {"sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425", "script": "document.body.style.width = '100%';", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425/execute {"sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425", "script": "\n            const b = window.Bokeh;\n            return b && b.documents && b.documents.length > 0;\n        ", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425/execute {"sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425", "script": "\n// add private window prop to check that render is complete\nwindow._bokeh_render_complete = false;\nfunction done() {\n  window._bokeh_render_complete = true;\n}\n\nvar doc = window.Bokeh.documents[0];\n\nif (doc.is_idle)\n  done();\nelse\n  doc.idle.connect(done);\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425/execute {"sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425", "script": "return window._bokeh_render_complete;", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425/log {"sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425", "type": "browser"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:GET http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425/screenshot {"sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425/execute {"sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425", "script": "\nreturn document.getElementsByClassName('bk-root')[0].children[0].getBoundingClientRect()\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:DELETE http://127.0.0.1:49043/wd/hub/session/27dfac30-eeed-11e8-b2cf-b9bacabfe425 {"sessionId": "27dfac30-eeed-11e8-b2cf-b9bacabfe425"}
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'pHYs' 41 9
+PngImagePlugin.py: 135:STREAM b'IDAT' 62 8192
+remote_connection.py: 486:POST http://127.0.0.1:45229/wd/hub/session {"desiredCapabilities": {"javascriptEnabled": true, "version": "", "platform": "ANY", "browserName": "phantomjs"}, "capabilities": {"alwaysMatch": {"platformName": "any", "browserName": "phantomjs"}, "firstMatch": [{}]}}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84/url {"sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84", "url": "file:////tmp/bokeh5hjq1ge5.html"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84/window/current/maximize {"windowHandle": "current", "sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84/execute {"sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84", "script": "document.body.style.width = '100%';", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84/execute {"sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84", "script": "\n            const b = window.Bokeh;\n            return b && b.documents && b.documents.length > 0;\n        ", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84/execute {"sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84", "script": "\n// add private window prop to check that render is complete\nwindow._bokeh_render_complete = false;\nfunction done() {\n  window._bokeh_render_complete = true;\n}\n\nvar doc = window.Bokeh.documents[0];\n\nif (doc.is_idle)\n  done();\nelse\n  doc.idle.connect(done);\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84/execute {"sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84", "script": "return window._bokeh_render_complete;", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84/log {"sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84", "type": "browser"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:GET http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84/screenshot {"sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84/execute {"sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84", "script": "\nreturn document.getElementsByClassName('bk-root')[0].children[0].getBoundingClientRect()\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:DELETE http://127.0.0.1:45229/wd/hub/session/5bb887c0-eeed-11e8-a3d3-9b076d433a84 {"sessionId": "5bb887c0-eeed-11e8-a3d3-9b076d433a84"}
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'pHYs' 41 9
+PngImagePlugin.py: 135:STREAM b'IDAT' 62 8192
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'IDAT' 41 15872
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'IDAT' 41 15872
+remote_connection.py: 486:POST http://127.0.0.1:34815/wd/hub/session {"desiredCapabilities": {"javascriptEnabled": true, "version": "", "platform": "ANY", "browserName": "phantomjs"}, "capabilities": {"alwaysMatch": {"platformName": "any", "browserName": "phantomjs"}, "firstMatch": [{}]}}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740/url {"sessionId": "791884f0-eeed-11e8-a32d-790393289740", "url": "file:////tmp/bokehcsplylsr.html"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740/window/current/maximize {"windowHandle": "current", "sessionId": "791884f0-eeed-11e8-a32d-790393289740"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740/execute {"sessionId": "791884f0-eeed-11e8-a32d-790393289740", "script": "document.body.style.width = '100%';", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740/execute {"sessionId": "791884f0-eeed-11e8-a32d-790393289740", "script": "\n            const b = window.Bokeh;\n            return b && b.documents && b.documents.length > 0;\n        ", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740/execute {"sessionId": "791884f0-eeed-11e8-a32d-790393289740", "script": "\n// add private window prop to check that render is complete\nwindow._bokeh_render_complete = false;\nfunction done() {\n  window._bokeh_render_complete = true;\n}\n\nvar doc = window.Bokeh.documents[0];\n\nif (doc.is_idle)\n  done();\nelse\n  doc.idle.connect(done);\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740/execute {"sessionId": "791884f0-eeed-11e8-a32d-790393289740", "script": "return window._bokeh_render_complete;", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740/log {"sessionId": "791884f0-eeed-11e8-a32d-790393289740", "type": "browser"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:GET http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740/screenshot {"sessionId": "791884f0-eeed-11e8-a32d-790393289740"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740/execute {"sessionId": "791884f0-eeed-11e8-a32d-790393289740", "script": "\nreturn document.getElementsByClassName('bk-root')[0].children[0].getBoundingClientRect()\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:DELETE http://127.0.0.1:34815/wd/hub/session/791884f0-eeed-11e8-a32d-790393289740 {"sessionId": "791884f0-eeed-11e8-a32d-790393289740"}
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'pHYs' 41 9
+PngImagePlugin.py: 135:STREAM b'IDAT' 62 8192
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'IDAT' 41 19590
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'IDAT' 41 19590
+remote_connection.py: 486:POST http://127.0.0.1:48333/wd/hub/session {"desiredCapabilities": {"javascriptEnabled": true, "version": "", "platform": "ANY", "browserName": "phantomjs"}, "capabilities": {"alwaysMatch": {"platformName": "any", "browserName": "phantomjs"}, "firstMatch": [{}]}}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f/url {"sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f", "url": "file:////tmp/bokeh6xh7r3v9.html"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f/window/current/maximize {"windowHandle": "current", "sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f/execute {"sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f", "script": "document.body.style.width = '100%';", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f/execute {"sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f", "script": "\n            const b = window.Bokeh;\n            return b && b.documents && b.documents.length > 0;\n        ", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f/execute {"sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f", "script": "\n// add private window prop to check that render is complete\nwindow._bokeh_render_complete = false;\nfunction done() {\n  window._bokeh_render_complete = true;\n}\n\nvar doc = window.Bokeh.documents[0];\n\nif (doc.is_idle)\n  done();\nelse\n  doc.idle.connect(done);\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f/execute {"sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f", "script": "return window._bokeh_render_complete;", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f/log {"sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f", "type": "browser"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:GET http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f/screenshot {"sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f/execute {"sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f", "script": "\nreturn document.getElementsByClassName('bk-root')[0].children[0].getBoundingClientRect()\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:DELETE http://127.0.0.1:48333/wd/hub/session/7d096e30-eeed-11e8-b10e-43074049d07f {"sessionId": "7d096e30-eeed-11e8-b10e-43074049d07f"}
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'pHYs' 41 9
+PngImagePlugin.py: 135:STREAM b'IDAT' 62 8192
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'IDAT' 41 19590
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'IDAT' 41 19590
+remote_connection.py: 486:POST http://127.0.0.1:46787/wd/hub/session {"desiredCapabilities": {"javascriptEnabled": true, "version": "", "platform": "ANY", "browserName": "phantomjs"}, "capabilities": {"alwaysMatch": {"platformName": "any", "browserName": "phantomjs"}, "firstMatch": [{}]}}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9/url {"sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9", "url": "file:////tmp/bokeha4b4t6a6.html"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9/window/current/maximize {"windowHandle": "current", "sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9/execute {"sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9", "script": "document.body.style.width = '100%';", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9/execute {"sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9", "script": "\n            const b = window.Bokeh;\n            return b && b.documents && b.documents.length > 0;\n        ", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9/execute {"sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9", "script": "\n// add private window prop to check that render is complete\nwindow._bokeh_render_complete = false;\nfunction done() {\n  window._bokeh_render_complete = true;\n}\n\nvar doc = window.Bokeh.documents[0];\n\nif (doc.is_idle)\n  done();\nelse\n  doc.idle.connect(done);\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9/execute {"sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9", "script": "return window._bokeh_render_complete;", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9/log {"sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9", "type": "browser"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:GET http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9/screenshot {"sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9"}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:POST http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9/execute {"sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9", "script": "\nreturn document.getElementsByClassName('bk-root')[0].children[0].getBoundingClientRect()\n", "args": []}
+remote_connection.py: 573:Finished Request
+remote_connection.py: 486:DELETE http://127.0.0.1:46787/wd/hub/session/9d799190-eeed-11e8-ab3f-81dd000b8ab9 {"sessionId": "9d799190-eeed-11e8-ab3f-81dd000b8ab9"}
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'pHYs' 41 9
+PngImagePlugin.py: 135:STREAM b'IDAT' 62 8192
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'IDAT' 41 18804
+PngImagePlugin.py: 135:STREAM b'IHDR' 16 13
+PngImagePlugin.py: 135:STREAM b'IDAT' 41 18804

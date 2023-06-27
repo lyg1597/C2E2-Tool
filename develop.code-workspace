@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "Develop"
+		},
+		{
+			"path": "src/frontend"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.tcc": "cpp",
+			"deque": "cpp",
+			"list": "cpp",
+			"unordered_map": "cpp",
+			"vector": "cpp",
+			"system_error": "cpp"
+		}
+	}
+}

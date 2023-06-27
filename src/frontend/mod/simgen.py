@@ -639,7 +639,52 @@ def initialize_cpp_model(sim_bool):
     model.unsafe_b[:] = unsafe_b
 
     model.visualize_filename = '../work-dir/' + Session.cur_prop.name
+    writeModelFile(model)
 
+def writeModelFile(model):
+    code_file=open("../work-dir/main.cpp","w+")
+    code_file.write('#include "model.hpp"\n')
+    code_file.write("#define SIMU 1\n")
+    code_file.write("#define VERI 0\n")
+    code_file.write("int main(){\n")
+    code_file.write("    Model cpp_Model;\n")
+    code_file.write("    cpp_Model.dimensions="+str(model.dimensions)+";\n")
+    code_file.write("    cpp_Model.modes="+str(model.modes)+";\n")
+    code_file.write("    cpp_Model.initial_mode="+str(model.initial_mode)+";\n")
+    code_file.write("    cpp_Model.initial_eqns="+str(model.initial_eqns)+";\n")
+    code_file.write("    cpp_Model.unsafe_eqns="+str(model.unsafe_eqns)+";\n")
+    code_file.write("    cpp_Model.annot_type="+str(model.annot_type)+";\n")
+    code_file.write("    cpp_Model.refine="+str(model.refine)+";\n")
+    code_file.write("    cpp_Model.simu_flag=VERI;\n")
+    for i in range(len(model.mode_linear)):
+        code_file.write("    cpp_Model.mode_linear.push_back("+str(model.mode_linear[i])+");\n")
+    code_file.write("    cpp_Model.abs_err="+str(model.abs_err)+";\n")
+    code_file.write("    cpp_Model.rel_err="+str(model.rel_err)+";\n")
+    code_file.write("    cpp_Model.delta_time="+str(model.delta_time)+";\n")
+    code_file.write("    cpp_Model.end_time="+str(model.end_time)+";\n")
+    for i in range(len(model.gammas)):
+        code_file.write("    cpp_Model.gammas.push_back("+str(model.gammas[i])+");\n")
+    
+    for i in range(len(model.k_consts)):
+        code_file.write("    cpp_Model.k_consts.push_back("+str(model.k_consts[i])+");\n")
+
+    for i in range(len(model.initial_matrix)):
+        code_file.write("    cpp_Model.initial_matrix.push_back("+str(model.initial_matrix[i])+");\n")
+
+    for i in range(len(model.initial_b)):
+        code_file.write("    cpp_Model.initial_b.push_back("+str(model.initial_b[i])+");\n")
+
+    for i in range(len(model.unsafe_matrix)):
+        code_file.write("    cpp_Model.unsafe_matrix.push_back("+str(model.unsafe_matrix[i])+");\n")
+
+    for i in range(len(model.unsafe_b)):
+        code_file.write("    cpp_Model.unsafe_b.push_back("+str(model.unsafe_b[i])+");\n")
+
+    code_file.write('    cpp_Model.visualize_filename="'+model.visualize_filename+'";\n')
+    code_file.write("    cpp_Model.simulate_verify();\n")
+    code_file.write("    return 0;\n") 
+    code_file.write("}\n")      
+    code_file.close()
 
 def extract_matrix(mat_in, mat_eqn):
     
@@ -663,7 +708,7 @@ def compile_executable():
     if((Session.simulator == ODEINT_ADP) or (Session.simulator == ODEINT_FIX)):
         Session.write("  Using ODEINT Simulator.\n")
         Session.update()
-        command_line = "g++ -w -O2 -std=c++11 simulator.cpp -o simu"
+        command_line = "g++ -g -w -O2 -std=c++11 simulator.cpp -o simu"
         args = shlex.split(command_line)
         p = subprocess.Popen(args, cwd= "../work-dir")
         print()
@@ -671,17 +716,17 @@ def compile_executable():
     else:
         Session.write("  Using CAPD Simulator.\n")
         Session.update()
-        command_line = "g++ -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`"
+        command_line = "g++ -g -w -O2 simulator.cpp -o simu `../capd/bin/capd-config --cflags --libs`"
         p = subprocess.Popen(command_line, cwd= "../work-dir", shell=True)
         print()
         p.communicate()
 
-    command_line = "g++ -fPIC -shared hybridSimGI.cpp -o libhybridsim.so -lppl -lgmp"
+    command_line = "g++ -g -fPIC -shared hybridSimGI.cpp -o libhybridsim.so -lppl -lgmp"
     args = shlex.split(command_line)
     p = subprocess.Popen(args, cwd= "../work-dir")
     p.communicate()
 
-    command_line = "g++ -fPIC -shared bloatedSimGI.cpp -o libbloatedsim.so -lppl -lgmp"
+    command_line = "g++ -g -fPIC -shared bloatedSimGI.cpp -o libbloatedsim.so -lppl -lgmp"
     args = shlex.split(command_line)
     p = subprocess.Popen(args, cwd= "../work-dir")
     p.communicate()

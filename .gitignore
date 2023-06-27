@@ -44,3 +44,7 @@ Parsing/
 
 # Visual Studio Code settings
 .vscode/settings.json
+.idea/
+venv/
+**.so
+**/__pycache__/

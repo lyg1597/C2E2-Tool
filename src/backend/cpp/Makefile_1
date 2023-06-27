@@ -1,0 +1,5 @@
+all:
+	g++ -L../lib -lc2e2 -lppl -std=c++11 -g -o test  main.cpp
+
+clean: 
+	rm *.o test
